@@ -21,10 +21,12 @@
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+#include <memory/paddr.h>
 enum {
   TK_NOTYPE = 256, TK_EQ,
   TK_NUM_DEC, TK_NUM_HEX,
-  TK_L,TK_R,TK_NEG,
+  TK_L,TK_R,TK_NEG,TK_POINT,
+  TK_REG,TK_NEQ,TK_AND,
   /* TODO: Add more token types */
 
 };
@@ -43,12 +45,43 @@ static struct rule {
   {"\\-", '-'}, 
   {"\\*", '*'}, 
   {"/", '/'}, 
+  {"0[xX][0-9a-fA-F]+",TK_NUM_HEX},
   {"[0-9]+",TK_NUM_DEC},
-  {"0x[0-9a-fA-F]+",TK_NUM_HEX},
   {"\\(",TK_L},
   {"\\)",TK_R},
   {"==", TK_EQ},        // equal
+  {"\\$[0-9a-zA-Z]+", TK_REG},
+  {"!=", TK_NEQ},
+  {"&&",TK_AND},
 };
+
+static struct{
+  int token_type;
+  int priority;
+} priority_table[] = {
+  {TK_POINT, 50},
+  {TK_NEG, 50},
+  {'*' , 40},
+  {'/' , 40},
+  {'+' , 30},
+  {'-' , 30},
+  {TK_EQ, 20},
+  {TK_NEQ, 20},
+  {TK_AND, 10},
+};
+
+static inline bool isOP(int type){
+  for(int i = 0;i<9;i++){
+    if(type == priority_table[i].token_type) return true;
+  }
+  return false;
+}
+static inline int getPriority(int type){
+  for(int i = 0;i<9;i++){
+    if(type == priority_table[i].token_type) return priority_table[i].priority;
+  }
+  return 0;
+}
 
 #define NR_REGEX ARRLEN(rules)
 
@@ -76,7 +109,7 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[256] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 static void get_substr(char * str,int len,char* src){
   for(int i = 0;i<len;i++){
@@ -98,8 +131,8 @@ static bool make_token(char *e) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+        //     i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
         if(rules[i].token_type != TK_NOTYPE){
           get_substr(substr_start,substr_len,tokens[nr_token].str);
@@ -116,8 +149,34 @@ static bool make_token(char *e) {
       return false;
     }
   }
-
-  return true;
+  //处理负数和指针操作
+  for(int i = 0;i<nr_token;i++){
+    if(tokens[i].type == '-'){
+      if(i == 0 || (tokens[i-1].type!=TK_NUM_DEC &&
+         tokens[i-1].type!=TK_NUM_HEX && tokens[i-1].type!=TK_R)){// check '-'
+        tokens[i].type = TK_NEG;
+        // printf("- %d\n",i);
+      }
+    }else if(tokens[i].type == '*'){
+      if(i == 0 || (tokens[i-1].type!=TK_NUM_DEC &&
+         tokens[i-1].type!=TK_NUM_HEX && tokens[i-1].type!=TK_R)){// check '*'
+        tokens[i].type = TK_POINT;
+        // printf("* %d\n",i);
+      }
+    }
+  }
+  //检查括号是否匹配
+  int cnt = 0;
+  for(int i = 0;i<nr_token;i++){
+    if(tokens[i].type == TK_L){
+      cnt++;
+    }else if(tokens[i].type == TK_R){
+      cnt--;
+    }
+    if(cnt < 0) return false;
+  }
+  if ( cnt == 0) return true;
+  else return false;
 }
 
 static bool check_parentheses(int p,int q){
@@ -136,19 +195,45 @@ static bool check_parentheses(int p,int q){
   if ( cnt == 0) return true;
   else return false;
 }
+
 #include <stdlib.h>
 static int get_main_op(int p,int q){
   int idx = p;
   int res = p;
   int cnt = 0;
+  int main_op = 0;
+  
   while(idx <= q){
-    if(tokens[idx].type == '+' || tokens[idx].type == '-' || 
-      tokens[idx].type == '*' || tokens[idx].type == '/' ){
+    if(isOP(tokens[idx].type)){
+        // printf("%d %d\n",TK_POINT,tokens[idx].type);
         if( cnt == 0 ){
-          if(tokens[idx].type == '+' || tokens[idx].type == '-') res = idx;
-          else{
-            if(tokens[res].type != '+' && tokens[res].type != '-') res = idx;
+          int priority = getPriority(tokens[idx].type);
+          // printf("priority:%d,getPriority(main_op):%d\n",priority,getPriority(main_op));
+          if(main_op == 0 || getPriority(main_op) >= priority){
+            res = idx;
+            main_op = tokens[idx].type;
+            // printf("res %d,main_op %d\n",res,main_op);
           }
+          // if(tokens[idx].type == '+' || tokens[idx].type == '-') {
+          //   res = idx;
+          //   main_op = tokens[idx].type;
+          // }
+          // else if((main_op == 0 || main_op == TK_NEG || main_op == TK_POINT ||
+          // main_op == '*' || main_op == '/' || main_op == TK_EQ || main_op == TK_NEQ||
+          // main_op == TK_AND)&& 
+          //   (tokens[idx].type == TK_EQ || tokens[idx].type == TK_NEQ)) {
+          //     res = idx;
+          //     main_op = tokens[idx].type;
+          //   }
+          // else if((main_op == 0 || main_op == TK_NEG || main_op == TK_POINT ||
+          // main_op == '*' || main_op == '/' ) && ()){
+
+          // }
+          // else if((main_op == 0 || main_op == TK_NEG || main_op == TK_POINT )&& 
+          //   (tokens[idx].type == TK_NEG || tokens[idx].type == TK_POINT)) {
+          //     res = idx;
+          //     main_op = tokens[idx].type;
+          //   }
         }
     }else if(tokens[idx].type == TK_L) cnt++;
     else if(tokens[idx].type == TK_R) cnt--;
@@ -156,36 +241,67 @@ static int get_main_op(int p,int q){
   }
   return res;
 }
-static void get_expr_val(int p,int q,word_t* val){
-  if(p > q)
+
+static void get_expr_val(int p,int q,word_t* val,bool*success){
+  if(p > q){
+    *success=false;
     return;
+  }
   else if (p == q) {
-    if(tokens[p].type == TK_NUM_DEC || tokens[p].type == TK_NUM_HEX){
-      int num;
-      if(tokens[p].type == TK_NUM_DEC)
+    if(tokens[p].type == TK_NUM_DEC || tokens[p].type == TK_NUM_HEX 
+      || tokens[p].type == TK_REG){
+      word_t num;
+      if(tokens[p].type == TK_NUM_DEC){
         num = atoi(tokens[p].str);
-      else sscanf(tokens[p].str,"%x",&num);
-      *val = num;
+        *val = num;
+        *success=true;
+      }
+      else if(tokens[p].type == TK_NUM_HEX){
+        sscanf(tokens[p].str,"%x",&num);
+        *val = num;
+        *success=true;
+      }
+      else {
+        num = isa_reg_str2val(tokens[p].str+1,success);
+        *val = num;
+      }
       return;
     }else return;
   }
   else if (check_parentheses(p, q) == true) {
-    get_expr_val(p + 1, q - 1,val);
+    bool su;
+    get_expr_val(p + 1, q - 1,val,&su);
+    *success=su;
     return;
   }
   else {
     int main_op = get_main_op(p,q);
-    printf("p %d q %d main_op %d\n",p,q,main_op);
+    // printf("p %d q %d main_op %d\n",p,q,main_op);
     word_t val1,val2;
-    get_expr_val(p,main_op-1, &val1);
-    get_expr_val(main_op+1,q, &val2);
-    switch (tokens[main_op].type)
-    {
-      case '+': *val = val1 + val2; break;
-      case '-': *val = val1 - val2; break;
-      case '*': *val = val1 * val2; break;
-      case '/': *val = val1 / val2; break;
-      default: assert(0);
+    bool su1,su2;
+    if(tokens[main_op].type==TK_NEG || tokens[main_op].type==TK_POINT){
+      // printf("- *\n");
+      get_expr_val(main_op+1,q, &val1,&su1);
+      // printf("main_op+1 %d q %d val1 %d su1 %d\n",main_op+1,q, val1,su1);
+      if(!(*success=su1)) return;
+      if(tokens[main_op].type==TK_NEG) *val = -val1;
+      else *val = paddr_read(val1,4);
+    }else{
+      get_expr_val(p,main_op-1, &val1,&su1);
+      if(!(*success=su1)) return;
+      get_expr_val(main_op+1,q, &val2,&su2);
+      if(!(*success=su2)) return;
+      switch (tokens[main_op].type)
+      {
+        case '+': *val = val1 + val2; break;
+        case '-': *val = val1 - val2; break;
+        case '*': *val = val1 * val2; break;
+        case '/': *val = val1 / val2; break;
+        case TK_AND: *val = (val1 && val2); break;
+        case TK_EQ: *val = (val1 == val2); break;
+        case TK_NEQ: *val = (val1 != val2); break;
+        default: assert(0);
+      }
     }
     return;
   }
@@ -198,6 +314,6 @@ word_t expr(char *e, bool *success) {
   }
   /* TODO: Insert codes to evaluate the expression. */
   word_t res;
-  get_expr_val(0,nr_token-1,&res);
+  get_expr_val(0,nr_token-1,&res,success);
   return res;
 }

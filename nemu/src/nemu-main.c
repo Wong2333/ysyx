@@ -19,6 +19,7 @@ void init_monitor(int, char *[]);
 void am_init_monitor();
 void engine_start();
 int is_exit_status_bad();
+int test_expr_from_file(char *argv);
 
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
@@ -27,9 +28,102 @@ int main(int argc, char *argv[]) {
 #else
   init_monitor(argc, argv);
 #endif
-
+  // 如果带参数运行，就当作测试模式
+//   if (argc == 2) {
+//     test_expr_from_file(argv[1]);
+//     return 0;
+//   }
   /* Start engine. */
+  printf("%lu\n",sizeof(int*));
   engine_start();
 
   return is_exit_status_bad();
+}
+
+#include <stdio.h>  // 这里必须包含，解决 FILE 和 stderr 未定义的问题
+#include <stdlib.h> // 包含 strtoul, malloc 等
+#include <stdint.h> // 包含 uint32_t
+#include <string.h> // 包含 strlen 等
+#include <stdbool.h> // 包含 bool 类型
+
+// 定义 word_t 类型
+// typedef uint32_t word_t;
+
+// 声明你的函数
+// 请确保在你的其他 .c 文件中实现了这个函数，或者在编译时链接了它
+extern word_t expr(char *e, bool *success);
+
+// 辅助函数：去除字符串末尾的换行符
+void trim_newline(char *str) {
+    int len = strlen(str);
+    while (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r')) {
+        str[--len] = '\0';
+    }
+}
+
+int test_expr_from_file(char *argv) {
+    // FILE 类型在 stdio.h 中定义
+    FILE *fp = fopen(argv, "r");
+    if (!fp) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    char line[1024];
+    int total_tests = 0;
+    int passed_tests = 0;
+
+    printf("Starting test...\n\n");
+
+    while (fgets(line, sizeof(line), fp)) {
+        // 去除换行符
+        trim_newline(line);
+
+        // 跳过空行
+        if (strlen(line) == 0) continue;
+        // --- 解析部分 ---
+        char *ptr = line;
+        char *endptr = NULL;
+        
+        unsigned long expected_val_long = strtoul(ptr, &endptr, 10);
+        
+        if (endptr == ptr) {
+            continue;
+        }
+        ptr = endptr;
+        while (*ptr == ' ' || *ptr == '\t') {
+            ptr++;
+        }
+
+        if (*ptr == '\0') {
+            continue;
+        }
+        char *expression = ptr;
+        
+        bool success = false;
+        printf("testing: %s\n",expression);
+        word_t result = expr(expression, &success);
+        word_t expected_val = (word_t)expected_val_long;
+
+        total_tests++;
+
+        if (success && result == expected_val) {
+            passed_tests++;
+            // 如果需要查看通过的项，可以取消下面注释
+            // printf("[PASS] %s == %u\n", expression, result);
+        } else {
+            printf("[FAIL] Line: \"%s\"\n", line);
+            printf("       Expression: \"%s\"\n", expression);
+            printf("       Expected: %u, Got: %u (Success: %s)\n", 
+                   expected_val, result, success ? "true" : "false");
+        }
+    }
+
+    fclose(fp);
+
+    printf("\nTest finished.\n");
+    printf("Total: %d, Passed: %d, Failed: %d\n", 
+           total_tests, passed_tests, total_tests - passed_tests);
+
+    return 0;
 }

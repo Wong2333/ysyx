@@ -14,20 +14,23 @@
 ***************************************************************************************/
 
 #include "sdb.h"
+#include <isa.h>
 
 #define NR_WP 32
-
+#define SIZE_WP 128UL
+#define LEN_EXPR (SIZE_WP - sizeof(int) - sizeof(int *) - sizeof(word_t))
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
+  char expr_str[LEN_EXPR];
+  word_t old_val;
+  
 
 } WP;
 
 static WP wp_pool[NR_WP] = {};
 static WP *head = NULL, *free_ = NULL;
-
+static uint32_t WP_NO = 0;
 void init_wp_pool() {
   int i;
   for (i = 0; i < NR_WP; i ++) {
@@ -37,6 +40,159 @@ void init_wp_pool() {
 
   head = NULL;
   free_ = wp_pool;
+}
+WP* pop_node(WP** list){
+  WP* res;
+  if(list == NULL) return NULL;
+  if(*list == NULL) return NULL;
+  if((*list)->next == *list){
+    res = *list;
+    res->next = NULL;
+    *list = NULL;
+  }
+  else{
+    res = (*list)->next;
+    (*list)->next = (*list)->next->next;
+    res->next = NULL;
+  }
+  return res;
+}
+void insert_node(WP* node,WP** list){
+  if(node == NULL) return;
+  if(list == NULL) return;
+  if(*list == NULL){
+    *list = node;
+    node->next = node;
+  }else{
+    node->next = (*list)->next;
+    (*list)->next = node;
+  }
+}
+
+bool in_list(WP* node, WP** list){
+    if(node == NULL) return false;
+    if(list == NULL) return false;  
+    if(*list == NULL) return false; 
+
+    WP* current = (*list)->next; 
+
+    do {
+        if(current == node){
+            return true; 
+        }
+        current = current->next;
+    } while (current != (*list)->next); 
+
+    return false; 
+}
+void remove_node(WP*node,WP**list){
+    if(in_list(node,list)){
+      if(node->next == node){
+        *list = NULL;
+        node->next = NULL;
+      }else{
+        WP* last = node->next;
+        while(last->next != node) last = last->next;
+        last->next = node->next;
+        node->next = NULL;
+        *list=last;
+      }
+    }
+}
+
+WP* new_wp(){
+  WP* res = pop_node(&free_);
+  if(res == NULL) return NULL;
+  else{
+    insert_node(res,&head);
+  }
+  return res;
+}
+
+void free_wp(WP *wp){
+  if(wp){
+    if(in_list(wp,&head)){
+      remove_node(wp,&head);
+      insert_node(wp,&free_);
+    }
+  }
+}
+
+bool add_wp(char *expr_str){
+  bool success = false;
+  if(strlen(expr_str) >= LEN_EXPR){
+    printf("error: string is too long\n");
+    return false;
+  }
+  word_t val = expr(expr_str,&success);
+  if(!success){
+    printf("error: experssion is wrong\n");
+    return false;
+  }
+  WP* wp = new_wp();
+  if(wp == NULL){
+    printf("error: cannot add watchpoint\n");
+    return false;
+  }else{
+    wp->NO = WP_NO++;
+    strcpy(wp->expr_str,expr_str);
+    wp->old_val = val;
+    printf("set watchpoint %u\n",WP_NO-1);
+    return true;
+  }
+}
+
+bool remove_wp(uint32_t no){
+  if(head == NULL){
+    printf("NO. %u watchpoint not exists\n",no);
+    return false;
+  }
+  WP* cur = head->next;
+  do
+  {
+    if(cur->NO == no) break;
+    cur = cur->next;
+  } while (cur != head->next);
+  if(cur->NO == no){
+    free_wp(cur);
+    printf("remove NO. %u watchpoint at %s\n",no,cur->expr_str);
+    return true;
+  }else{
+    printf("NO. %u watchpoint not exists\n",no);
+    return false;
+  }
+}
+
+bool check_wp(){
+  bool res = false;
+  if(head){
+    WP* cur = head->next;
+    do{
+      bool success;
+      word_t val = expr(cur->expr_str,&success);
+      if(val != cur->old_val){
+        res = true;
+        printf("Watchpoint %u: %s\n",cur->NO,cur->expr_str);
+        printf("Old value = %x\nNew value = %x\n",cur->old_val,val);
+        printf("\n");
+        cur->old_val = val;
+      }
+      cur = cur->next;
+    }while(cur != head->next);
+  }
+  return res;
+}
+
+void info_wp(){
+  if(head){
+    WP* cur = head->next;
+    printf("Num     Value       What\n");
+    do{
+      printf("%-8u0x%-10x%s\n",cur->NO,cur->old_val,cur->expr_str);
+      cur = cur->next;
+    }while(cur != head->next);
+  }
+  return;
 }
 
 /* TODO: Implement the functionality of watchpoint */

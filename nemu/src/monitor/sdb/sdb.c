@@ -72,7 +72,7 @@ static int cmd_info(char *args){
     if(args[0]=='r'){
       isa_reg_display();
     }else if(args[0] == 'w'){
-
+      info_wp();
     }
     return 0;
   }else{
@@ -103,10 +103,27 @@ static int cmd_x(char *args){
 static int cmd_p(char *args){
   bool success;
   word_t res = expr(args,&success);
-  printf("%d\n",res);
+  if(success)
+    printf("0x%x\n",res);
+  else printf("error expression\n");
   return 0;
 }
 
+static int cmd_w(char *args){
+  add_wp(args);
+  return 0;
+}
+static int cmd_d(char *args){
+  int no;
+  if (sscanf(args, "%u", &no) == 1) {
+    remove_wp(no);
+    return 0;
+  } else {
+    printf("error args\n");
+    return 0;
+  }
+  return 0;
+}
 static struct {
   const char *name;
   const char *description;
@@ -119,6 +136,8 @@ static struct {
   { "info", "Print program status", cmd_info },
   { "x", "Scan memory content", cmd_x },
   { "p", "Expression calcluate",cmd_p},
+  { "w", "Add a watchpoint", cmd_w},
+  { "d", "Remove a watchpoint", cmd_d},
 
   /* TODO: Add more commands */
 

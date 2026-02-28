@@ -19,5 +19,8 @@
 #include <common.h>
 
 word_t expr(char *e, bool *success);
-
+bool add_wp(char *expr_str);
+bool remove_wp(uint32_t no);
+bool check_wp();
+void info_wp();
 #endif
