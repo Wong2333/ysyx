@@ -29,12 +29,11 @@ int main(int argc, char *argv[]) {
   init_monitor(argc, argv);
 #endif
   // 如果带参数运行，就当作测试模式
-//   if (argc == 2) {
-//     test_expr_from_file(argv[1]);
-//     return 0;
-//   }
+  if (argc == 2) {
+    test_expr_from_file(argv[1]);
+    return 0;
+  }
   /* Start engine. */
-  printf("%lu\n",sizeof(int*));
   engine_start();
 
   return is_exit_status_bad();
@@ -109,8 +108,6 @@ int test_expr_from_file(char *argv) {
 
         if (success && result == expected_val) {
             passed_tests++;
-            // 如果需要查看通过的项，可以取消下面注释
-            // printf("[PASS] %s == %u\n", expression, result);
         } else {
             printf("[FAIL] Line: \"%s\"\n", line);
             printf("       Expression: \"%s\"\n", expression);
