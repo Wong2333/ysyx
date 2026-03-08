@@ -136,7 +136,6 @@ int main(int argc, char *argv[]) {
         }
     } 
     else if (WIFSIGNALED(status)) {
-        // 理论上 popen 返回的是 shell 的状态，这里是为了防万一
         if (WTERMSIG(status) == SIGFPE) {
             is_sigfpe = 1;
         }

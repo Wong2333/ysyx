@@ -22,15 +22,20 @@ const char *regs[] = {
   "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
-
+extern CPU_state cpu;
 void isa_reg_display() {
   for (size_t i = 0; i < 32; i++)
   {
     printf("%-10s %-10x %-10d\n",reg_name(i),gpr(i),gpr(i));
   }
+  printf("%-10s %-10x %-10d\n","pc",cpu.pc,cpu.pc);
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+  if(strcmp("pc",s)==0){
+    *success=true;
+    return cpu.pc;
+  }
   for(int i = 0;i < 32;i++){
     if(strcmp(reg_name(i),s)==0){
       *success=true;

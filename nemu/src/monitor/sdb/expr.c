@@ -296,7 +296,12 @@ static void get_expr_val(int p,int q,word_t* val,bool*success){
         case '+': *val = val1 + val2; break;
         case '-': *val = val1 - val2; break;
         case '*': *val = val1 * val2; break;
-        case '/': *val = val1 / val2; break;
+        case '/': 
+          if(val2 == 0){
+            printf("Division by zero\n");
+            *success=false;
+          }else *val = val1 / val2; 
+          break;
         case TK_AND: *val = (val1 && val2); break;
         case TK_EQ: *val = (val1 == val2); break;
         case TK_NEQ: *val = (val1 != val2); break;
