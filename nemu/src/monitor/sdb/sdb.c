@@ -20,6 +20,8 @@
 #include "sdb.h"
 #include <memory/paddr.h>
 
+#include <utils.h>
+
 static int is_batch_mode = false;
 
 void init_regex();
@@ -50,6 +52,8 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
+  printf("quit nemu\n");
   return -1;
 }
 

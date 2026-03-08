@@ -45,16 +45,15 @@ WP* pop_node(WP** list){
   WP* res;
   if(list == NULL) return NULL;
   if(*list == NULL) return NULL;
-  if((*list)->next == *list){
+  if((*list)->next == NULL){
     res = *list;
-    res->next = NULL;
     *list = NULL;
   }
   else{
-    res = (*list)->next;
-    (*list)->next = (*list)->next->next;
-    res->next = NULL;
+    res = *list;
+    *list = (*list)->next; 
   }
+  res->next = NULL;
   return res;
 }
 void insert_node(WP* node,WP** list){
@@ -62,10 +61,10 @@ void insert_node(WP* node,WP** list){
   if(list == NULL) return;
   if(*list == NULL){
     *list = node;
-    node->next = node;
+    node->next = NULL;
   }else{
-    node->next = (*list)->next;
-    (*list)->next = node;
+    node->next = (*list);
+    (*list) = node;
   }
 }
 
@@ -74,30 +73,34 @@ bool in_list(WP* node, WP** list){
     if(list == NULL) return false;  
     if(*list == NULL) return false; 
 
-    WP* current = (*list)->next; 
+    WP* current = (*list); 
 
-    do {
-        if(current == node){
-            return true; 
-        }
-        current = current->next;
-    } while (current != (*list)->next); 
+    while(current){
+      if(current == node) return true;
+      current = current->next;
+    }
 
     return false; 
 }
 void remove_node(WP*node,WP**list){
-    if(in_list(node,list)){
-      if(node->next == node){
-        *list = NULL;
-        node->next = NULL;
-      }else{
-        WP* last = node->next;
-        while(last->next != node) last = last->next;
-        last->next = node->next;
-        node->next = NULL;
-        *list=last;
-      }
+    if(node == NULL) return;
+    if(list == NULL) return;  
+    if(*list == NULL) return; 
+
+    WP* current = (*list); 
+    if(current == node) {
+      *list = (*list)->next;
+      return;
     }
+    while(current->next){
+      if(current->next == node){
+        current->next = node->next;
+        return;
+      }
+      current = current->next;
+    }
+
+    return; 
 }
 
 WP* new_wp(){
@@ -147,13 +150,12 @@ bool remove_wp(uint32_t no){
     printf("NO. %u watchpoint not exists\n",no);
     return false;
   }
-  WP* cur = head->next;
-  do
-  {
-    if(cur->NO == no) break;
+  WP* cur = head;
+  while(cur){
+    if(cur->NO == no)break;
     cur = cur->next;
-  } while (cur != head->next);
-  if(cur->NO == no){
+  }
+  if(cur && cur->NO == no){
     free_wp(cur);
     printf("remove NO. %u watchpoint at %s\n",no,cur->expr_str);
     return true;
@@ -166,8 +168,8 @@ bool remove_wp(uint32_t no){
 bool check_wp(){
   bool res = false;
   if(head){
-    WP* cur = head->next;
-    do{
+    WP* cur = head;
+    while(cur){
       bool success;
       word_t val = expr(cur->expr_str,&success);
       if(val != cur->old_val){
@@ -178,19 +180,19 @@ bool check_wp(){
         cur->old_val = val;
       }
       cur = cur->next;
-    }while(cur != head->next);
+    }
   }
   return res;
 }
 
 void info_wp(){
   if(head){
-    WP* cur = head->next;
+    WP* cur = head;
     printf("Num     Value       What\n");
-    do{
+    while(cur){
       printf("%-8u0x%-10x%s\n",cur->NO,cur->old_val,cur->expr_str);
       cur = cur->next;
-    }while(cur != head->next);
+    }
   }
   return;
 }

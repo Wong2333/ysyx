@@ -29,30 +29,26 @@ int main(int argc, char *argv[]) {
   init_monitor(argc, argv);
 #endif
   // 如果带参数运行，就当作测试模式
+#ifdef CONFIG_EXPERSSION_TEST
   if (argc == 2) {
-    test_expr_from_file(argv[1]);
+    test_expr_from_file("tools/gen-expr/input");
     return 0;
   }
+#endif
   /* Start engine. */
   engine_start();
 
   return is_exit_status_bad();
 }
 
-#include <stdio.h>  // 这里必须包含，解决 FILE 和 stderr 未定义的问题
-#include <stdlib.h> // 包含 strtoul, malloc 等
-#include <stdint.h> // 包含 uint32_t
-#include <string.h> // 包含 strlen 等
-#include <stdbool.h> // 包含 bool 类型
+#include <stdio.h>  
+#include <stdlib.h> 
+#include <stdint.h> 
+#include <string.h> 
+#include <stdbool.h> 
 
-// 定义 word_t 类型
-// typedef uint32_t word_t;
-
-// 声明你的函数
-// 请确保在你的其他 .c 文件中实现了这个函数，或者在编译时链接了它
 extern word_t expr(char *e, bool *success);
 
-// 辅助函数：去除字符串末尾的换行符
 void trim_newline(char *str) {
     int len = strlen(str);
     while (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r')) {
@@ -61,7 +57,7 @@ void trim_newline(char *str) {
 }
 
 int test_expr_from_file(char *argv) {
-    // FILE 类型在 stdio.h 中定义
+
     FILE *fp = fopen(argv, "r");
     if (!fp) {
         perror("Error opening file");
