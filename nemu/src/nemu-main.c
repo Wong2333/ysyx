@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 #else
   init_monitor(argc, argv);
 #endif
-  // 如果带参数运行，就当作测试模式
+
 #ifdef CONFIG_EXPERSSION_TEST
   if (argc == 2) {
     test_expr_from_file("tools/gen-expr/input");

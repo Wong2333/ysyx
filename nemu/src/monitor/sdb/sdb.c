@@ -86,23 +86,43 @@ static int cmd_info(char *args){
 
 }
 
-static int cmd_x(char *args){
-  if(args){
-    int len;
-    paddr_t addr;
-    if (sscanf(args, "%d %x", &len, &addr) == 2) {
-      for(int i = 0; i < len; i++){
-        word_t word = paddr_read(addr + i*4,4);
-        printf(" 0x%08x\n",word);
-      }
-      return 0;
-    } else {
-      printf("error args\n");
-      return 0;
-    }
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
 
-  }else return 0;
+  char *arg1 = strtok(args, " ");
+  if (arg1 == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
 
+  int n;
+  if (sscanf(arg1, "%d", &n) != 1 || n <= 0) {
+    printf("Invalid N: %s\n", arg1);
+    return 0;
+  }
+
+  char *expr_str = strtok(NULL, "");  
+  if (expr_str == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  bool success;
+  word_t addr = expr(expr_str, &success);
+  if (!success) {
+    printf("Invalid expression: %s\n", expr_str);
+    return 0;
+  }
+
+  for (int i = 0; i < n; i++) {
+    word_t word = paddr_read(addr + i * 4, 4);
+    printf("0x%08x\n", word); 
+  }
+
+  return 0;
 }
 static int cmd_p(char *args){
   bool success;
