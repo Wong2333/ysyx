@@ -16,3 +16,7 @@
 NAME = gen-expr
 SRCS = gen-expr.c
 include $(NEMU_HOME)/scripts/build.mk
+
+NUM?=100
+gen:
+	./build/gen-expr $(NUM) > input
