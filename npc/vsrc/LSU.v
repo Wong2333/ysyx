@@ -59,11 +59,9 @@ module LSU(
             if (wen) begin // 有写请求时
                 pmem_write(waddr, wdata, {4'b0,mask});
                 rdata = 0;
-                $display("LSU:write %h to %h",wdata,waddr);
             end
             else begin
                 rdata = pmem_read(raddr);
-                $display("LSU:read %h from %h",rdata,raddr);
             end
         end
         else begin

@@ -121,7 +121,6 @@ module IDU(
                 WB_sel = 3'b10;
                 mem_ctl = 4'b11;
                 mem_valid = 1;
-                // $display("imm=%x rd=%x",imm,src1);
             end
         end
         7'b0100011:begin
