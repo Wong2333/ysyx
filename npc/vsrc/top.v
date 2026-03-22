@@ -1,65 +1,113 @@
 module top(
   input clk,
   input rst,
-  output [6:0] seg0,
-  output [6:0] seg1
+  output [31:0]pc,
+  output [31:0]inst
 );
+  wire [31:0] reg_wdata;
+  wire [4:0] reg_waddr;
+  wire reg_we;
 
-  reg [7:0] R[4];
-  reg [7:0] OUT;
-  reg [7:0] PC;
+  wire [4:0] reg_raddr1;
+  wire [31:0] reg_rdata1;
+  wire [4:0] reg_raddr2;
+  wire [31:0] reg_rdata2;
 
-  wire [7:0] data;
-  rom u_rom(PC,data);
+
+  RFS u_RFS(
+    .clk   (clk),
+    .wdata (reg_wdata),
+    .waddr (reg_waddr),
+    .wen   (reg_we),
+    .raddr1 (reg_raddr1),
+    .rdata1 (reg_rdata1),
+    .raddr2 (reg_raddr2),
+    .rdata2 (reg_rdata2)
+  );
+
+  wire [31:0]pc_next;
+  wire pc_we;
+
+  IFU u_IFU(
+    .clk     	(clk      ),
+    .rst     	(rst      ),
+    .pc_next 	(pc_next  ),
+    .pc_we   	(pc_we    ),
+    .pc      	(pc       ),
+    .inst     (inst)
+  );
+
+  wire [31:0]imm;
+  wire [31:0]src1;
+  wire [31:0]src2;
+  wire [3:0]ALU_ctl;
+  wire [31:0]ALU_out;
+  wire [2:0]WB_sel;
+  wire [1:0]pc_sel;
+
+  wire mem_valid;
+  wire mem_wen;
+  wire [31:0]mem_rdata;
+
+
+  wire [3:0]mem_ctl;
+  LSU u_LSU(
+    .valid 	(mem_valid  ),
+    .wen   	(mem_wen    ),
+    .mem_ctl(mem_ctl),//1:LW 2:LB 3:SW 4:SB
+    .src1(src1),
+    .src2(src2),
+    .ALU_out(ALU_out),
+    .mem_out(mem_rdata)
+  );
   
-  hex_to_7seg u1_hex_to_7seg(
-    .en  	(1   ),
-    .hex 	(OUT[3:0]  ),
-    .seg 	(seg0  )
+
+  IDU u_IDU(
+    .pc (pc),
+    .inst (inst),
+
+    .rs1(reg_raddr1),//寄存器读取
+    .reg_rdata1(reg_rdata1),
+    .rs2(reg_raddr2),
+    .reg_rdata2(reg_rdata2),
+
+    .imm(imm),
+    .src1(src1),
+    .src2(src2),
+    .ALU_ctl(ALU_ctl),
+
+    .WB_sel(WB_sel),
+    .reg_waddr(reg_waddr),
+    .reg_we(reg_we),
+
+    .pc_sel(pc_sel),
+    .pc_we(pc_we),
+    
+    .mem_ctl(mem_ctl),
+    .mem_wen(mem_wen),
+    .mem_valid(mem_valid)
   );
-  hex_to_7seg u2_hex_to_7seg(
-    .en  	(1   ),
-    .hex 	(OUT[7:4]  ),
-    .seg 	(seg1  )
+
+  EXU u_EXU(
+    .imm(imm),
+    .src1(src1),
+    .src2(src2),
+    .ALU_ctl(ALU_ctl),
+    .out(ALU_out)
   );
 
-  wire [1:0] op = data[7:6];
-  wire [1:0] rd = data[5:4];
-  wire [1:0] rs1 = data[3:2];
-  wire [1:0] rs2 = data[1:0];
-  wire [3:0] imm = data[3:0];
-  wire [3:0] addr = data[5:2];
 
-  always @(posedge clk) begin
-    if(rst == 1)begin
-      R[0]<=0;
-      R[1]<=0;
-      R[2]<=0;
-      R[3]<=0;
-      OUT<=0;
-      PC<=0;
-    end
-    else begin
-      case (op)
-        2'b00: begin 
-          PC<=PC+1;
-          R[rd] <=R[rs1] + R[rs2];
-        end
-        2'b01: begin
-          PC<=PC+1;
-          OUT<=R[rs2];
-        end
-        2'b10: begin 
-          PC<=PC+1;
-          R[rd]<={4'b0000,imm};
-        end
-        2'b11: begin
-          if(R[0] != R[rs2])
-            PC<={4'b0000,addr};
-          else PC<=PC+1;
-        end
-      endcase
+  WBU u_WBU(
+    .pc           (pc   ),
+    .imm          (imm),
+    .ALU_out  	  (ALU_out),
+    .mem_rdata    (mem_rdata),
+    .WB_sel    	  (WB_sel),
+    .pc_sel    	  (pc_sel),
+    .reg_wdata 	  (reg_wdata),
+    .pc_next 	    (pc_next)
+  );
+  
 
-    end
-  end
 endmodule
+
