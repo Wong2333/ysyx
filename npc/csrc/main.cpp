@@ -15,7 +15,6 @@ void printMEM(){
 
 static void single_cycle() {
   top.clk = ~top.clk; 
-  printf("0x%x: inst=0x%x\n",top.pc,top.inst);
   // printMEM();
   top.eval();
   // printf("0x%x: 0x%x\n",top.pc,top.inst);
@@ -27,10 +26,6 @@ static void single_cycle() {
 void reset(char*path){
   if(path != NULL)
     load_img(path);
-  printf("%x\n",mem[0x80000000/4]);
-  for(int i = 0;i<20;i++){
-    printf("0x%x: %x\n",0x80000000+i*4,mem[(0x80000000+i*4)/4]);
-  }
   top.clk = 0;
   top.eval();
   // top.rst = 1;
