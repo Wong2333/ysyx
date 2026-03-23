@@ -9,6 +9,6 @@ void ebreak() {
 }
 
 void invalid_instruction(int pc,int inst){
-    printf("invalid_instruction: 0x%x at 0x%x\n",inst,pc);
+    printf("invalid_instruction: 0x%x at 0x%x\n",(uint32_t)inst,(uint32_t)pc);
     exit(1);
 }
