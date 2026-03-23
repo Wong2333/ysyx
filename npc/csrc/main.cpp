@@ -27,6 +27,7 @@ static void single_cycle() {
 void reset(char*path){
   if(path != NULL)
     load_img(path);
+  printf("0x80000020: %x\n",mem[0x80000020/4]);
   top.clk = 0;
   top.eval();
   // top.rst = 1;
