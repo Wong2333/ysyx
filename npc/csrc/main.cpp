@@ -63,9 +63,9 @@ int main(int argc,char**argv) {
     // printf("%x\n",mem[13]);
   }
   #else
-  int cnt = 7000;
-  int num = 0;
-  while(cnt -- > 0) {
+
+  // int num = 0;
+  while(1) {
     nvboard_update();
     single_cycle();
     // printf("cycle:%d\n",num++);
