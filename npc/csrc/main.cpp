@@ -15,6 +15,7 @@ void printMEM(){
 
 static void single_cycle() {
   top.clk = ~top.clk; 
+  printf("0x%x: inst=0x%x\n",top.pc,top.inst);
   // printMEM();
   top.eval();
   // printf("0x%x: 0x%x\n",top.pc,top.inst);
