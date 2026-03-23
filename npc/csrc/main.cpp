@@ -27,7 +27,7 @@ static void single_cycle() {
 void reset(char*path){
   if(path != NULL)
     load_img(path);
-  printf("%x\n",mem[0x80000000ULL/4]);
+  printf("%x\n",mem[0x80000000/4]);
   for(int i = 0;i<20;i++){
     printf("0x%x: %x\n",0x80000000+i*4,mem[(0x80000000+i*4)/4]);
   }
