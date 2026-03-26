@@ -58,7 +58,7 @@ module LSU(
         if (valid) begin // 有读写请求时
 
             if (write_en) begin // 有写请求时
-                $display("write %h to %h address of memory with mask=%h"wdata,waddr,mask);
+                $display("write %h to %h address of memory with mask=%h",wdata,waddr,mask);
                 pmem_write(waddr, wdata, {4'b0,mask});
                 rdata = 0;
             end
