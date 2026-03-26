@@ -15,7 +15,12 @@ module LSU(
     reg [3:0]mask;
     reg [31:0]rdata;
     reg [31:0]wdata;
+
     reg write_en;
+    reg [31:0]wdata_reg;
+    reg [31:0]waddr_reg;
+    reg [7:0]mask_reg;
+
     always @(*) begin
         mask = 4'b0;
         mem_out = 32'b0;
@@ -57,9 +62,7 @@ module LSU(
     always @(*) begin
         if (valid) begin // 有读写请求时
 
-            if (write_en) begin // 有写请求时
-                $display("write %h to %h address of memory with mask=%h",wdata,waddr,mask);
-                pmem_write(waddr, wdata, {4'b0,mask});
+            if (wen) begin // 有写请求时
                 rdata = 0;
             end
             else begin
@@ -72,8 +75,10 @@ module LSU(
     end
 
     always @(posedge clk) begin
-        if(wen) write_en <= 1;
-        else write_en <= 0;
+        if(valid & wen) begin
+            $display("write %h to %h address of memory with mask=%h",wdata,waddr,mask);
+            pmem_write(waddr, wdata, {4'b0,mask});
+        end
     end
     
 endmodule
