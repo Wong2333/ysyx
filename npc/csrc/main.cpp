@@ -62,11 +62,11 @@ int main(int argc,char**argv) {
   }
   #else
 
-  // int num = 0;
+  int num = 0;
   while(1) {
     nvboard_update();
     single_cycle();
-    // printf("cycle:%d\n",num++);
+    printf("cycle:%d\n",num++);
   }
   #endif
 
