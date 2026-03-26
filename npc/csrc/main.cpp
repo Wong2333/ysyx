@@ -1,6 +1,6 @@
 #include <nvboard.h>
 #include <Vtop.h>
-#define DEBUG
+// #define DEBUG
 static TOP_NAME top;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
