@@ -19,7 +19,6 @@ uint32_t img[1024*1024] = {
   0x000027b7, // 32: lui a5,2
   0x0245a803, // lw a6, 36(a1)
   0x030585a3, // sb a6 43(a1)
-  0x00000001, // error inst
   0x00100073, // ebreak
   0x44332211,
   0x00000000,
@@ -42,7 +41,7 @@ void load_img(char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+0x80000000,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
     fclose(fp);

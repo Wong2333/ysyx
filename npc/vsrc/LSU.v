@@ -1,6 +1,7 @@
 module LSU(
     input valid,
     input wen,
+    input clk,
     input [3:0]mem_ctl,//1:LW 2:LB 3:SW 4:SB
     input [31:0]src1,
     input [31:0]src2,
@@ -14,7 +15,7 @@ module LSU(
     reg [3:0]mask;
     reg [31:0]rdata;
     reg [31:0]wdata;
-
+    reg write_en;
     always @(*) begin
         mask = 4'b0;
         mem_out = 32'b0;
@@ -56,7 +57,7 @@ module LSU(
     always @(*) begin
         if (valid) begin // 有读写请求时
 
-            if (wen) begin // 有写请求时
+            if (write_en) begin // 有写请求时
                 pmem_write(waddr, wdata, {4'b0,mask});
                 rdata = 0;
             end
@@ -68,4 +69,10 @@ module LSU(
             rdata = 0;
         end
     end
+
+    always @(posedge clk) begin
+        if(wen) write_en <= 1;
+        else write_en <= 0;
+    end
+    
 endmodule

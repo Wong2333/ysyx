@@ -1,6 +1,6 @@
 #include <nvboard.h>
 #include <Vtop.h>
-// #define DEBUG
+#define DEBUG
 static TOP_NAME top;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
@@ -51,7 +51,6 @@ int main(int argc,char**argv) {
   while(cnt -- > 0) {
     nvboard_update();
     single_cycle();
-    printf("mem[0x31500]=%x\n",mem[0x31500/4]);
   }
   printf("[debug] ");
   while(scanf("%s",cmd) == 1) {
@@ -60,7 +59,6 @@ int main(int argc,char**argv) {
       single_cycle();
     }
     printf("[debug] ");
-    // printf("%x\n",mem[13]);
   }
   #else
 

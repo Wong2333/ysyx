@@ -21,6 +21,7 @@ module RFS #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
     always @(posedge clk) begin
         if (wen) begin
             rf[waddr] <= wdata;
+            $display("reg[%h] <= %h",waddr,wdata);
         end
 
     end
