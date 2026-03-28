@@ -65,6 +65,7 @@ int main(int argc,char**argv) {
   int num = 0;
   while(1) {
     nvboard_update();
+    printf("mem[0x80000500]=%x\n",mem[0x80000500/4]);
     printf("-----------\n");
     printf("cycle:%d IP:0x%x inst:0x%x\n ",num++,top.pc,top.inst);
     single_cycle();
