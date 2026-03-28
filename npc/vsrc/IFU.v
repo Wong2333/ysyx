@@ -12,11 +12,11 @@ module IFU(
     assign pc = PC;
     assign inst=pmem_read(PC);
     initial begin
-        PC=32'h0;
+        PC=32'h80000000;
     end
     always @(posedge clk) begin
         if(rst)begin
-            PC<=32'h0;
+            PC<=32'h80000000;
         end
         else begin
             if(pc_we) begin
