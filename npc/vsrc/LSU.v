@@ -51,7 +51,7 @@ module LSU(
         end
         else if(mem_ctl == 5)begin
             case (waddr[1:0])
-                2'b00:begin mask = 4'b0001; wdata = src2; end
+                2'b00:begin mask = 4'b0000; wdata = src2; end
                 2'b01:begin mask = 4'b0010; wdata = src2 << 8; end
                 2'b10:begin mask = 4'b0100; wdata = src2 << 16; end
                 2'b11:begin mask = 4'b1000; wdata = src2 << 24; end
