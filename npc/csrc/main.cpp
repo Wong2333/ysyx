@@ -51,7 +51,6 @@ int main(int argc,char**argv) {
   while(cnt -- > 0) {
     nvboard_update();
     single_cycle();
-    printf("mem[0x31500]=%x\n",mem[0x31500/4]);
   }
   printf("[debug] ");
   while(scanf("%s",cmd) == 1) {
@@ -60,15 +59,18 @@ int main(int argc,char**argv) {
       single_cycle();
     }
     printf("[debug] ");
-    // printf("%x\n",mem[13]);
   }
   #else
-  int cnt = 7000;
+
   int num = 0;
-  while(cnt -- > 0) {
+  while(1) {
     nvboard_update();
+    for(int i = 0;i<10;i++)
+      printf("mem[%x]=%x\n",0x80000500+i*4,mem[0x80000500/4+i]);
+    printf("-----------\n");
+    printf("cycle:%d IP:0x%x inst:0x%x\n ",num++,top.pc,top.inst);
     single_cycle();
-    // printf("cycle:%d\n",num++);
+
   }
   #endif
 

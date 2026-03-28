@@ -54,6 +54,7 @@ module top(
   LSU u_LSU(
     .valid 	(mem_valid  ),
     .wen   	(mem_wen    ),
+    .clk(clk),
     .mem_ctl(mem_ctl),//1:LW 2:LB 3:SW 4:SB
     .src1(src1),
     .src2(src2),

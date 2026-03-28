@@ -2,9 +2,9 @@ module IDU(
     input [31:0]pc,
     input [31:0] inst,
 
-    output [4:0]rs1,//寄存器读取
+    output reg[4:0]rs1,//寄存器读取
     input [31:0]reg_rdata1,
-    output [4:0]rs2,
+    output reg[4:0]rs2,
     input [31:0]reg_rdata2,
 
     output reg [31:0]imm,//ALU控制信号
@@ -27,15 +27,19 @@ module IDU(
     import "DPI-C" function void invalid_instruction(input int pc,input int inst);
     wire [6:0]opcode = inst[6:0];
     wire [4:0]rd = inst[11:7];
-    assign rs1 = inst[19:15];
-    assign rs2 = inst[24:20];
+
     wire [2:0]funct3 = inst[14:12];
     wire [6:0]funct7 = inst[31:25];
     wire [31:0]immI = { {20{inst[31]}}, inst[31:20]};
     wire [31:0]immU = {inst[31:12],12'b0};
     wire [31:0]immS = {{20{inst[31]}},inst[31:25],inst[11:7]};
 
+    wire [4:0]rs1_inst = inst[19:15];
+    wire [4:0]rs2_inst = inst[24:20];
     always @(*) begin
+        rs1 = inst[19:15];
+        rs2 = inst[24:20];
+
         imm     = 32'b0;
         src1    = 32'b0;
         src2    = 32'b0;
@@ -77,7 +81,7 @@ module IDU(
         7'b1110011:begin
             if(funct3 == 3'b000)begin //ebreak
                 if(immI == 32'b1 
-                && rs1 == 5'b00000 
+                && rs1_inst == 5'b00000 
                 && rd == 5'b00000
                 )begin
                     ebreak();
