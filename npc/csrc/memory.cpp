@@ -19,6 +19,7 @@ uint32_t img[1024*1024] = {
   0x000027b7, // 32: lui a5,2
   0x0245a803, // lw a6, 36(a1)
   0x030585a3, // sb a6 43(a1)
+  0x00100513, // addi a0 zero,1
   0x00100073, // ebreak
   0x44332211,
   0x00000000,
@@ -62,18 +63,18 @@ extern "C" void pmem_write(int addr, int data, char mask) {
     waddr = waddr & (~0x3);
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
     }
     if (wmask & 0x2) {
         pmem_byte[waddr + 1] = (uint8_t)(wdata >> 8);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
     }
     if (wmask & 0x4) {
         pmem_byte[waddr + 2] = (uint8_t)(wdata >> 16);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
     }
     if (wmask & 0x8) {
         pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
 }
