@@ -62,18 +62,18 @@ extern "C" void pmem_write(int addr, int data, char mask) {
     waddr = waddr & (~0x3);
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
     }
     if (wmask & 0x2) {
         pmem_byte[waddr + 1] = (uint8_t)(wdata >> 8);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
     }
     if (wmask & 0x4) {
         pmem_byte[waddr + 2] = (uint8_t)(wdata >> 16);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
     }
     if (wmask & 0x8) {
         pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
-        printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
+        // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
 }

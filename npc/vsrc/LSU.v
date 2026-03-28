@@ -76,7 +76,7 @@ module LSU(
 
     always @(posedge clk) begin
         if(valid & wen) begin
-            $display("write %h to %h address of memory with mask=%h",wdata,waddr,mask);
+            // $display("write %h to %h address of memory with mask=%h",wdata,waddr,mask);
             pmem_write(waddr, wdata, {4'b0,mask});
         end
     end
