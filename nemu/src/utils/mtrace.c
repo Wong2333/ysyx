@@ -223,7 +223,7 @@ void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
 
         // 打印 ret
         fprintf(ftrace_fp, "%*s0x%08x:   ret  [%s]\n", 
-                (ftrace_top + 1) * 2, "", pc, name);
+                (ftrace_top) * 2, "", pc, name);
     }
 #endif
 }
