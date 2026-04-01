@@ -156,15 +156,15 @@ config MTRACE
   bool "Enable memory tracer"
   default y
 
-config MTRACE_START
+config MTRACE_START_ADDR
   depends on MTRACE
-  int "When mtracing is enabled (unit: number of memory access)"
+  hex "When mtracing is enabled (unit: address)"
   default 0
 
-config MTRACE_END
+config MTRACE_END_ADDR
   depends on MTRACE
-  int "When mtracing is disabled (unit: number of memory access)"
-  default 10000
+  hex "When mtracing is disabled (unit: address)"
+  default 0xffffffff
 
 config WATCHPOINT
   bool "Enable watchpoint"

@@ -1,7 +1,6 @@
 #include <common.h>
-
+#include <trace.h>
 FILE *mtrace_fp = NULL;
-uint64_t nr_mem_trace = 0;
 
 void init_mtrace(){
 #ifdef CONFIG_MTRACE
@@ -12,9 +11,21 @@ void init_mtrace(){
 #endif
 }
 
-extern uint64_t nr_mem_trace;
-bool mtrace_enable() {
-  return MUXDEF(CONFIG_MTRACE, (nr_mem_trace >= CONFIG_MTRACE_START) &&
-      (nr_mem_trace <= CONFIG_MTRACE_END), false);
+
+bool mtrace_enable(paddr_t addr) {
+  return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START_ADDR) &&
+      (addr <= CONFIG_MTRACE_END_ADDR), false);
 }
 
+void record_mtrace(MTRACE_MODE mode,paddr_t addr,int len,word_t data){
+#ifdef CONFIG_MTRACE
+    if (mtrace_enable(addr) && mtrace_fp != NULL) { 
+        if(mode == READ_MTRACE)
+            fprintf(mtrace_fp,"read memory: raddr=%u rlen=%u rdata=%u \n",addr,len, data); 
+        else
+            fprintf(mtrace_fp,"write memory: waddr=%u wlen=%u wdata=%u \n",addr,len, data); 
+        fflush(mtrace_fp); 
+    } 
+
+#endif
+}

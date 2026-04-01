@@ -206,7 +206,6 @@ void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
 
 
 void init_elf(const char *elf_file){
-    ftrace_fp = NULL;
 #ifdef CONFIG_FTRACE
     funcs_count = extract_elf_functions(elf_file,&funcs);
 
