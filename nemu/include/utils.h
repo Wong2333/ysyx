@@ -73,5 +73,17 @@ uint64_t get_time();
     log_write(__VA_ARGS__); \
   } while (0)
 
+#define write_mtrace(...) IFDEF(CONFIG_MTRACE, \
+  do { \
+    extern FILE* mtrace_fp; \
+    extern bool mtrace_enable(); \
+    if (mtrace_enable() && mtrace_fp != NULL) { \
+      fprintf(mtrace_fp, __VA_ARGS__); \
+      fflush(mtrace_fp); \
+    } \
+    extern uint64_t nr_mem_trace; \
+    nr_mem_trace++; \
+  } while (0) \
+)
 
 #endif

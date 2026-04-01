@@ -29,14 +29,11 @@ void init_log(const char *log_file) {
   }
   Log("Log is written to %s", log_file ? log_file : "stdout");
 }
-extern uint64_t nr_mem_trace;
+
 bool log_enable() {
   return MUXDEF(CONFIG_TRACE, (g_nr_guest_inst >= CONFIG_TRACE_START) &&
          (g_nr_guest_inst <= CONFIG_TRACE_END), false);
 }
 
-bool log_mem_enable() {
-  return MUXDEF(CONFIG_MTRACE, (nr_mem_trace >= CONFIG_MTRACE_START) &&
-      (nr_mem_trace <= CONFIG_MTRACE_END), false);
-}
+
 #endif

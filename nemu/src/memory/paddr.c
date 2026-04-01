@@ -36,8 +36,9 @@ static word_t pmem_read(paddr_t addr, int len) {
 static void pmem_write(paddr_t addr, int len, word_t data) {
   host_write(guest_to_host(addr), len, data);
 }
-
+void print_itrace();
 static void out_of_bound(paddr_t addr) {
+  print_itrace();
   panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
 }
@@ -50,15 +51,10 @@ void init_mem() {
   IFDEF(CONFIG_MEM_RANDOM, memset(pmem, rand(), CONFIG_MSIZE));
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
-uint64_t nr_mem_trace = 0;
-bool log_mem_enable();
+
+
 word_t paddr_read(paddr_t addr, int len) {
-  #ifdef CONFIG_MTRACE
-  if(log_mem_enable()){
-    log_write("read memory: raddr=%u rlen=%u rdata=%u \n",addr,len, pmem_read(addr, len));
-    nr_mem_trace++;
-  }
-  #endif
+  write_mtrace("read memory: raddr=%u rlen=%u rdata=%u \n",addr,len, pmem_read(addr, len));
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
@@ -66,12 +62,8 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  #ifdef CONFIG_MTRACE
-    if(log_mem_enable()){
-      log_write("write memory: waddr=%u wlen=%u wdata=%u \n",addr,len, data);
-      nr_mem_trace++;
-    }
-  #endif
+
+  write_mtrace("write memory: waddr=%u wlen=%u wdata=%u \n",addr,len, data);
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);
