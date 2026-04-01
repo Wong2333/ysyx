@@ -83,7 +83,7 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     fseek(fp, strtab_shdr->sh_offset, SEEK_SET);
     size_t len = fread(strtab, 1, strtab_shdr->sh_size, fp);
     if(len <=0 ) return -1;
-    
+
     // 5. 读取符号表到内存
     int sym_count = symtab_shdr->sh_size / symtab_shdr->sh_entsize;
     Elf32_Sym *syms = malloc(symtab_shdr->sh_size);
@@ -131,6 +131,93 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     return func_count;
 }
 
-void init_elf(const char *elf_file){
-    extract_elf_functions(elf_file,&funcs);
+FILE *ftrace_fp = NULL;
+
+int funcs_count = 0;
+#define FTRACE_STACK_MAX_DEPTH 1024
+
+typedef struct {
+    int func_idx;       // 保存 funcs 数组的下标，-1 表示未知函数
+    uint32_t ret_addr;  // 记录预期的返回地址，用于识别尾调用
+} FtraceFrame;
+
+FtraceFrame ftrace_stack[FTRACE_STACK_MAX_DEPTH];
+int ftrace_top = -1;
+
+// --- 新增：根据 PC 获取函数在 funcs 数组中的下标 ---
+int get_func_idx(uint32_t pc) {
+    if (!funcs || funcs_count == 0) return -1;
+    for (int i = 0; i < funcs_count; i++) {
+        if (pc >= funcs[i].start_addr && pc < funcs[i].end_addr) {
+            return i; // 返回下标
+        }
+    }
+    return -1; // 没找到
 }
+
+/**
+ * @brief 在执行 jal/jalr 时调用，记录 ftrace
+ */
+void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
+#ifdef CONFIG_FTRACE
+    if (!ftrace_fp) return;
+
+    // 1. 识别函数调用 (rd == 1 即 ra)
+    if (rd == 1) {
+        int idx = get_func_idx(target_pc); // 拿下标，极快
+        uint32_t next_pc = pc + 4; 
+
+        // 检测是否为尾调用
+        if (ftrace_top >= 0 && target_pc == ftrace_stack[ftrace_top].ret_addr) {
+            // 尾调用：不增加栈深度，只替换栈顶的下标
+            ftrace_stack[ftrace_top].func_idx = idx;
+        } else {
+            // 普通嵌套调用：压栈 (仅仅赋值一个 int，极快)
+            if (ftrace_top < FTRACE_STACK_MAX_DEPTH - 1) {
+                ftrace_top++;
+                ftrace_stack[ftrace_top].func_idx = idx;
+                ftrace_stack[ftrace_top].ret_addr = next_pc;
+            }
+        }
+
+        // 打印 call (通过下标去取名字，只在真正需要打印时才去访问内存)
+        const char *name = (idx != -1) ? funcs[idx].name : "???";
+        fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n", 
+                ftrace_top * 2, "", pc, name, target_pc);
+    }
+    // 2. 识别函数返回 (rd == 0 且 rs1 == 1 或 5)
+    else if (rd == 0 && (rs1 == 1 || rs1 == 5)) {
+        const char *name = "???";
+        int idx = -1;
+        
+        // 弹栈，拿到下标
+        if (ftrace_top >= 0) {
+            idx = ftrace_stack[ftrace_top].func_idx;
+            name = (idx != -1) ? funcs[idx].name : "???";
+            ftrace_top--;
+        }
+
+        // 打印 ret
+        fprintf(ftrace_fp, "%*s0x%08x:   ret  [%s]\n", 
+                (ftrace_top + 1) * 2, "", pc, name);
+    }
+#endif
+}
+
+
+void init_elf(const char *elf_file){
+    ftrace_fp = NULL;
+#ifdef CONFIG_FTRACE
+    funcs_count = extract_elf_functions(elf_file,&funcs);
+
+    FILE *fp = fopen("./ftrace.txt", "w");
+    Assert(fp, "Can not open ./ftrace.txt");
+    ftrace_fp = fp;
+
+        // 初始化栈
+    ftrace_top = -1; 
+    
+    Log("ftrace is written to ./ftrace.txt (Found %d functions)", funcs_count);
+#endif
+}
+

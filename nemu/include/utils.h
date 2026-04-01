@@ -86,4 +86,5 @@ uint64_t get_time();
   } while (0) \
 )
 
+void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1);
 #endif
