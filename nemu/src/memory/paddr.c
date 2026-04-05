@@ -17,6 +17,7 @@
 #include <memory/paddr.h>
 #include <device/mmio.h>
 #include <isa.h>
+#include <utils.h>
 
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
@@ -35,8 +36,9 @@ static word_t pmem_read(paddr_t addr, int len) {
 static void pmem_write(paddr_t addr, int len, word_t data) {
   host_write(guest_to_host(addr), len, data);
 }
-
+void print_itrace();
 static void out_of_bound(paddr_t addr) {
+  print_itrace();
   panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
 }
@@ -50,7 +52,9 @@ void init_mem() {
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
 
+
 word_t paddr_read(paddr_t addr, int len) {
+  record_mtrace(WRITE_MTRACE,addr,len, pmem_read(addr, len));
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
@@ -58,6 +62,8 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
+
+  record_mtrace(READ_MTRACE,addr,len, data);
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);

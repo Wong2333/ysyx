@@ -74,4 +74,6 @@ uint64_t get_time();
   } while (0)
 
 
+#include<trace.h>
+
 #endif

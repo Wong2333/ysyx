@@ -34,13 +34,35 @@ void device_update();
 
 bool check_wp();
 
+char iringbuf[32][128];
+uint32_t p_head = 0,p_tail = 0;
+void push_itrace(char *itrace){
+  if((p_tail + 1) % 32 == p_head){
+    strcpy(iringbuf[p_tail],itrace);
+    p_head = (p_head +1 ) % 32;
+    p_tail = (p_tail + 1) % 32;
+  }else{
+    strcpy(iringbuf[p_tail],itrace);
+    p_tail = (p_tail + 1) % 32;
+  }
+}
+void print_itrace(){
+  uint32_t head = p_head;
+  printf("itrace:\n");
+  while(head != p_tail){
+    printf("%s\n",iringbuf[head]);
+    head = (head + 1) % 32;
+  }
+}
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  push_itrace(_this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+
 #ifdef CONFIG_WATCHPOINT
   if(check_wp()){
     if(nemu_state.state == NEMU_RUNNING)
