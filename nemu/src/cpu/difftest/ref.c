@@ -19,7 +19,6 @@
 #include <memory/paddr.h>
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  printf("1111111111111111");
   assert(0);
 }
 
