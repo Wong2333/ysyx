@@ -246,6 +246,7 @@ void init_trace(const char *trace_dir,const char *elf_file){
 #endif
     // init ftrace
 #ifdef CONFIG_FTRACE
+    if(elf_file == NULL) return;
     if(trace_dir){
         strcpy(trace_path,trace_dir);
         strcat(trace_path,"/ftrace.txt");
