@@ -3,10 +3,6 @@
 FILE *mtrace_fp = NULL;
 char *TRACE_DIR = NULL;
 
-void init_mtrace(){
-
-}
-
 
 bool mtrace_enable(paddr_t addr) {
   return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START_ADDR) &&
@@ -228,11 +224,9 @@ void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
 #endif
 }
 
-void init_trace(const char *trace_dir,const char *elf_file){
+void init_mtrace(const char *trace_dir){
     char trace_path[1024*4];
     FILE *fp = NULL;
-    // init mtrace
-#ifdef CONFIG_MTRACE
     if(trace_dir){
         strcpy(trace_path,trace_dir);
         strcat(trace_path,"/mtrace.txt");
@@ -243,9 +237,11 @@ void init_trace(const char *trace_dir,const char *elf_file){
     Assert(fp, "Can not open '%s'", trace_path);
     mtrace_fp = fp;
     Log("mtrace is written to ./mtrace.txt");
-#endif
-    // init ftrace
-#ifdef CONFIG_FTRACE
+}
+
+void init_ftrace(const char *trace_dir,const char *elf_file){
+    char trace_path[1024*4];
+    FILE *fp = NULL;
     if(elf_file == NULL) return;
     if(trace_dir){
         strcpy(trace_path,trace_dir);
@@ -263,5 +259,17 @@ void init_trace(const char *trace_dir,const char *elf_file){
     ftrace_top = -1; 
     
     Log("ftrace is written to ./ftrace.txt (Found %d functions)", funcs_count);
+}
+
+void init_trace(const char *trace_dir,const char *elf_file){
+
+    // init mtrace
+#ifdef CONFIG_MTRACE
+    init_mtrace(const char *trace_dir)
 #endif
+    // init ftrace
+#ifdef CONFIG_FTRACE
+    init_ftrace(const char *trace_dir,const char *elf_file)
+#endif
+
 }
