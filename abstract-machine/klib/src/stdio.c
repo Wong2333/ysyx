@@ -12,10 +12,11 @@ int printf(const char *fmt, ...) {
     sprintf(out, fmt, ap);
 
     va_end(ap);
-    for(int i = 0;i<1024;i++){
-      // if(out[i] != 0)
-        putch(out[i]);
-    }
+    putch('1');
+    // for(int i = 0;i<1024;i++){
+    //   // if(out[i] != 0)
+    //     putch(out[i]);
+    // }
 
     return strlen(out);
 }
