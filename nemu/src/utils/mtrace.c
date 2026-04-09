@@ -268,7 +268,7 @@ void init_trace(const char *trace_dir,const char *elf_file){
     init_mtrace(trace_dir);
 #endif
     // init ftrace
-#ifdef CONFIG_FTRACE
+#ifdef CONFIG_FTRACE 
     init_ftrace(trace_dir,elf_file);
 #endif
 
