@@ -11,12 +11,11 @@ int printf(const char *fmt, ...) {
     va_start(ap, fmt);
     sprintf(out, fmt, ap);
 
-    // va_end(ap);
-    // // printf("1111111111111111111111111\n");
-    // // for(int i = 0;i<1024;i++){
-    // //   if(out[i] != 0)
-    // //     putch(out[i]);
-    // // }
+    va_end(ap);
+    for(int i = 0;i<1024;i++){
+      if(out[i] != 0)
+        putch(out[i]);
+    }
 
     return strlen(out);
 }
