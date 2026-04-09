@@ -12,6 +12,7 @@ void putch(char ch) {
 }
 
 void halt(int code) {
+  while (1);
   nemu_trap(code);
 
   // should not reach here
