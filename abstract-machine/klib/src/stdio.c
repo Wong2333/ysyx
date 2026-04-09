@@ -13,10 +13,10 @@ int printf(const char *fmt, ...) {
 
     va_end(ap);
 
-    for(int i = 0;i<1024;i++){
-      if(out[i] != 0)
-        putch(out[i]);
-    }
+    // for(int i = 0;i<1024;i++){
+    //   if(out[i] != 0)
+    //     putch(out[i]);
+    // }
 
     return strlen(out);
 }
