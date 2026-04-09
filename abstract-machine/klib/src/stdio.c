@@ -82,6 +82,8 @@ int sprintf(char *out, const char *fmt, ...) {
       }
       case 'd': {
         int d = va_arg(ap, int);
+        putch('-');
+        putch(d);
         p += print_int(p, d);
         break;
       }
