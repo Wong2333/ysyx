@@ -63,6 +63,11 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
         p += print_int(p, d);
         break;
       }
+      case 'u': {
+        int d = va_arg(ap, int); // 使用 ap
+        p += print_unsigned(p, d);
+        break;
+      }
       case '%':
         *p++ = '%';
         break;
