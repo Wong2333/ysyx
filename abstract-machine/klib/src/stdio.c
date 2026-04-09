@@ -9,10 +9,10 @@ int printf(const char *fmt, ...) {
     char out[1024];
     va_list ap;
     va_start(ap, fmt);
-    sprintf(out, fmt, ap);
+    int len = sprintf(out, fmt, ap);
 
     va_end(ap);
-    for(int i = 0;i<1024;i++){
+    for(int i = 0;i<len;i++){
       if(out[i] != 0)
         putch(out[i]);
     }
