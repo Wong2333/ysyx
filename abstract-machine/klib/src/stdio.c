@@ -6,20 +6,18 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 int printf(const char *fmt, ...) {
-    // char out[1024];
-    // va_list ap;
-    // va_start(ap, fmt);
-    // sprintf(out, fmt, ap);
+    char out[1024];
+    va_list ap;
+    va_start(ap, fmt);
+    sprintf(out, fmt, ap);
 
-    // va_end(ap);
-    putch('1');
-    return 1;
-    // for(int i = 0;i<1024;i++){
-    //   // if(out[i] != 0)
-    //     putch(out[i]);
-    // }
+    va_end(ap);
+    for(int i = 0;i<1024;i++){
+      // if(out[i] != 0)
+        putch(out[i]);
+    }
 
-    // return strlen(out);
+    return strlen(out);
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
