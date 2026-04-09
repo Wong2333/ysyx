@@ -9,7 +9,7 @@ int printf(const char *fmt, ...) {
     char out[1024];
     va_list ap;
     va_start(ap, fmt);
-    vsprintf(out, fmt, ap);
+    sprintf(out, fmt, ap);
 
     // va_end(ap);
     // // printf("1111111111111111111111111\n");
