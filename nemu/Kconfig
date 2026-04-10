@@ -171,6 +171,21 @@ config FTRACE
   bool "Enable function call tracer"
   default n
 
+config DTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable device tracer"
+  default y
+
+config DTRACE_START_ADDR
+  depends on DTRACE
+  hex "When dtracing is enabled (unit: address)"
+  default 0
+
+config DTRACE_END_ADDR
+  depends on DTRACE
+  hex "When dtracing is disabled (unit: address)"
+  default 0xffffffff
+
 config WATCHPOINT
   bool "Enable watchpoint"
   default y
