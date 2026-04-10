@@ -10,10 +10,10 @@ bool mtrace_enable(paddr_t addr) {
       (addr <= CONFIG_MTRACE_END_ADDR), false);
 }
 
-void record_mtrace(MTRACE_MODE mode,paddr_t addr,int len,word_t data){
+void record_mtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data){
 #ifdef CONFIG_MTRACE
     if (mtrace_enable(addr) && mtrace_fp != NULL) { 
-        if(mode == READ_MTRACE)
+        if(mode == READ_TRACE)
             fprintf(mtrace_fp,"read memory: raddr=%u rlen=%u rdata=%u \n",addr,len, data); 
         else
             fprintf(mtrace_fp,"write memory: waddr=%u wlen=%u wdata=%u \n",addr,len, data); 
@@ -224,6 +224,19 @@ void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
     }
 #endif
 }
+
+void record_dtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data,const char *name){
+#ifdef CONFIG_FTRACE
+    if (dtrace_fp != NULL) { 
+        if(mode == READ_TRACE)
+            fprintf(dtrace_fp,"read device: raddr=%u rlen=%u rdata=%u name=%s\n",addr,len, data, name); 
+        else
+            fprintf(dtrace_fp,"write device: waddr=%u wlen=%u wdata=%u name=%s\n",addr,len, data, name); 
+        fflush(dtrace_fp); 
+    } 
+#endif
+}
+
 #ifdef CONFIG_MTRACE
 void init_mtrace(const char *trace_dir){
     char trace_path[1024*4];
