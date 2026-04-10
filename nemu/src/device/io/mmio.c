@@ -56,7 +56,7 @@ void add_mmio_map(const char *name, paddr_t addr, void *space, uint32_t len, io_
 /* bus interface */
 word_t mmio_read(paddr_t addr, int len) {
   IOMap *map = fetch_mmio_map(addr);
-  printf("mmio_read\n");
+  printf("mmio_read %x\n",addr);
   word_t data = map_read(addr, len, map);
   record_dtrace(READ_TRACE,addr,len,data,map->name);
   return data;
