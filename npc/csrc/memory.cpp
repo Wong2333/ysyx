@@ -51,6 +51,7 @@ void load_img(char* path){
 extern "C" int pmem_read(int addr) {
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
+    printf("%x\n",raddr >> 2);
     return mem[raddr >> 2]; 
 }
 
