@@ -114,7 +114,7 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
     assert(!is_write);
     break;
   default:
-    fprintf(stderr,"audio write offset error\n");
+    fprintf(stderr,"audio write offset error, offset:%d\n",offset);
     assert(0);
     break;
   }
