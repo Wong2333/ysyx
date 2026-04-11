@@ -89,6 +89,7 @@ static void audio_reg_init(){
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
   // assert(is_write);
+  printf("audio io handler\n");
   switch (offset)
   {
   case 0:
@@ -122,6 +123,7 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
 
 static void audio_write_buf_handler(uint32_t offset, int len, bool is_write){
   assert(is_write);
+  printf("audio write buf handler\n");
   audio_base[5] += len;
 }
 
