@@ -8,10 +8,10 @@
 #define AUDIO_INIT_ADDR      (AUDIO_ADDR + 0x10)
 #define AUDIO_COUNT_ADDR     (AUDIO_ADDR + 0x14)
 
-uintptr_t tail = AUDIO_ADDR;
+uintptr_t tail = AUDIO_SBUF_ADDR;
 
 void __am_audio_init() {
-  tail = AUDIO_ADDR;
+  tail = AUDIO_SBUF_ADDR;
   outl(AUDIO_INIT_ADDR,1);
 }
 
@@ -30,7 +30,7 @@ void __am_audio_ctrl(AM_AUDIO_CTRL_T *ctrl) {
   printf("samples addr %d\n",AUDIO_SAMPLES_ADDR);
   outl(AUDIO_INIT_ADDR,1);
   printf("init addr %d\n",AUDIO_INIT_ADDR);
-  tail = AUDIO_ADDR;
+  tail = AUDIO_SBUF_ADDR;
 }
 
 void __am_audio_status(AM_AUDIO_STATUS_T *stat) {
@@ -47,7 +47,7 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
       outb(tail,*pos);
       printf("write %d\n",tail);
       pos++;
-      if (tail == AUDIO_ADDR+bufsize) tail = AUDIO_ADDR;
+      if (tail == AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
       else tail++;
   }
 }
