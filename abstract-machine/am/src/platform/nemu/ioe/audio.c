@@ -25,8 +25,11 @@ void __am_audio_ctrl(AM_AUDIO_CTRL_T *ctrl) {
   outl(AUDIO_FREQ_ADDR,ctrl->freq);
   printf("freq addr %d\n",AUDIO_FREQ_ADDR);
   outl(AUDIO_CHANNELS_ADDR,ctrl->channels);
+  printf("channels addr %d\n",AUDIO_CHANNELS_ADDR);
   outl(AUDIO_SAMPLES_ADDR,ctrl->samples);
+  printf("samples addr %d\n",AUDIO_SAMPLES_ADDR);
   outl(AUDIO_INIT_ADDR,1);
+  printf("init addr %d\n",AUDIO_INIT_ADDR);
   tail = AUDIO_ADDR;
 }
 
