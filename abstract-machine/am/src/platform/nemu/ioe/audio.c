@@ -38,12 +38,14 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   uint8_t *end = ctl->buf.end;
   size_t len = ctl->buf.end - ctl->buf.start;
   while(len > bufsize - inl(AUDIO_COUNT_ADDR));
-  
+  size_t cnt = inl(AUDIO_COUNT_ADDR);
   while(pos != end){
-      outb(tail,*pos);
-      pos++;
-      tail++;
-      if (tail == AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
+    outb(tail,*pos);
+    pos++;
+    tail++;
+    cnt++;
+    if (tail == AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
+    outl(AUDIO_COUNT_ADDR,cnt);
   }
-  outl(AUDIO_COUNT_ADDR,len);
+
 }
