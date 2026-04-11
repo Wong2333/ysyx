@@ -17,6 +17,12 @@
 #include <device/map.h>
 #include <SDL2/SDL.h>
 
+#define AUDIO_FREQ_ADDR      (AUDIO_ADDR + 0x00)
+#define AUDIO_CHANNELS_ADDR  (AUDIO_ADDR + 0x04)
+#define AUDIO_SAMPLES_ADDR   (AUDIO_ADDR + 0x08)
+#define AUDIO_SBUF_SIZE_ADDR (AUDIO_ADDR + 0x0c)
+#define AUDIO_INIT_ADDR      (AUDIO_ADDR + 0x10)
+#define AUDIO_COUNT_ADDR     (AUDIO_ADDR + 0x14)
 enum {
   reg_freq,
   reg_channels,
@@ -26,11 +32,40 @@ enum {
   reg_count,
   nr_reg
 };
-
+static uint32_t freq;
 static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
+  // assert(is_write);
+  switch (offset)
+  {
+  case 0:
+    freq = audio_base[0];
+    break;
+  case 4:
+    /* code */
+    break;
+  case 8:
+    /* code */
+    break;
+  case 12:
+    /* code */
+    break;
+  case 16:
+    /* code */
+    break;
+  case 20:
+    /* code */
+    break;
+  case 24:
+    /* code */
+    break;
+  default:
+    fprintf(stderr,"audio write offset error\n");
+    assert(0);
+    break;
+  }
 }
 
 void init_audio() {
