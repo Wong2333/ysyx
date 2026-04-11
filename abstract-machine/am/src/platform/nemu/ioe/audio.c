@@ -45,6 +45,7 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   while(ctl->buf.end - ctl->buf.start > bufsize - inl(AUDIO_COUNT_ADDR));
   while(pos != end){
       outb(tail,*pos);
+      printf("write %d\n",tail);
       pos++;
       if (tail == AUDIO_ADDR+bufsize) tail = AUDIO_ADDR;
       else tail++;
