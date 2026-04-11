@@ -80,10 +80,10 @@ static void audio_reg_init(){
     SDL_PauseAudio(1);
     SDL_CloseAudio();
     audio_pos = sbuf;
-    audio_base[5] = 0;
+    audio_base[reg_count] = 0;
     SDL_OpenAudio(&s,NULL);
     SDL_PauseAudio(0);
-    audio_base[4] = 0;
+    audio_base[reg_init] = 0;
   }
 }
 
@@ -93,36 +93,31 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
   {
   case 0:
     if(is_write)
-      s.freq = audio_base[0];
+      s.freq = audio_base[reg_freq];
     break;
   case 4:
     if(is_write)
-      s.channels = audio_base[1];
+      s.channels = audio_base[reg_channels];
     break;
   case 8:
     if(is_write)
-      s.samples = audio_base[2];
+      s.samples = audio_base[reg_samples];
     break;
   case 12:
     if(!is_write)
-      audio_base[3] = 64*1024;
+      audio_base[reg_sbuf_size] = 64*1024;
     break;
   case 16:
     audio_reg_init();
     break;
   case 20:
-    assert(!is_write);
+    
     break;
   default:
     fprintf(stderr,"audio write offset error, offset:%d\n",offset);
     assert(0);
     break;
   }
-}
-
-static void audio_write_buf_handler(uint32_t offset, int len, bool is_write){
-  assert(is_write);
-  audio_base[5] += len;
 }
 
 void init_audio() {
@@ -135,7 +130,7 @@ void init_audio() {
 #endif
 
   sbuf = (uint8_t *)new_space(CONFIG_SB_SIZE);
-  add_mmio_map("audio-sbuf", CONFIG_SB_ADDR, sbuf, CONFIG_SB_SIZE, audio_write_buf_handler);
+  add_mmio_map("audio-sbuf", CONFIG_SB_ADDR, sbuf, CONFIG_SB_SIZE, NULL);
   audio_pos = sbuf;
   if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
       fprintf(stderr,"SDL initiate failed: %s\n", SDL_GetError());
