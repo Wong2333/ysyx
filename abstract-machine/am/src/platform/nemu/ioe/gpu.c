@@ -8,7 +8,9 @@ void __am_gpu_init() {
   int w = io_read(AM_GPU_CONFIG).width;  
   int h = io_read(AM_GPU_CONFIG).width;  
   uint32_t *fb = (uint32_t *)(uintptr_t)FB_ADDR;
+  printf("gpu init\n");
   for (i = 0; i < w * h; i ++) fb[i] = i;
+  printf("gpu init finished\n");
   outl(SYNC_ADDR, 1);
 }
 
@@ -22,6 +24,15 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
 }
 
 void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
+  // size_t x =ctl->x,y = ctl->y;
+  // size_t w = ctl->w, h = ctl->h;
+  // uint32_t* buf = ctl->pixels;
+
+  // for(size_t j = y ; j < h ; j++)
+  // for(size_t i = x ; i < w ; i++){
+  //   outl()
+  // }
+  
   if (ctl->sync) {
     outl(SYNC_ADDR, 1);
   }
