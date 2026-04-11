@@ -8,7 +8,7 @@ void __am_gpu_init() {
   int w = io_read(AM_GPU_CONFIG).width;  
   int h = io_read(AM_GPU_CONFIG).width;  
   uint32_t *fb = (uint32_t *)(uintptr_t)FB_ADDR;
-  printf("gpu init\n");
+  printf("gpu init %d %d\n",w,h);
   for (i = 0; i < w * h; i ++) fb[i] = i;
   printf("gpu init finished\n");
   outl(SYNC_ADDR, 1);
