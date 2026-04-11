@@ -40,7 +40,7 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   while(pos != end){
       outb(tail,*pos);
       pos++;
+      tail++;
       if (tail == AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
-      else tail++;
   }
 }
