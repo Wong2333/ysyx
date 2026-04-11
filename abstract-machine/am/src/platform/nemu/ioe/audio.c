@@ -39,6 +39,7 @@ void __am_audio_status(AM_AUDIO_STATUS_T *stat) {
 
 void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   size_t bufsize = inl(AUDIO_SBUF_SIZE_ADDR);
+  printf("bufsize %d\n",AUDIO_SBUF_SIZE_ADDR);
   uint8_t *pos = ctl->buf.start;
   uint8_t *end = ctl->buf.end;
   while(ctl->buf.end - ctl->buf.start > bufsize - inl(AUDIO_COUNT_ADDR));
