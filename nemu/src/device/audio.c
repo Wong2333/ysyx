@@ -34,27 +34,27 @@ static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
 static uint8_t *audio_pos; 
-
+static bool flush_audio = false;
 void audio_callback(void *userdata, uint8_t *stream, int len) {
   memset(stream ,0,len);
   uint32_t count = audio_base[5];
-  if (count == 0) {
-        return;
-    }
+  if (count == 0 && flush_audio)
+    return;
+  flush_audio = false;
 
-    int write_len = (len > count) ? count : len;
-    if(audio_pos + write_len - sbuf >= CONFIG_SB_SIZE){
-      size_t len1 = CONFIG_SB_SIZE - (audio_pos - sbuf);
-      size_t len2 = write_len - len1;
-      SDL_memcpy(stream, audio_pos, len1);
-      SDL_memcpy(stream+len1 ,sbuf,len2);
-      audio_pos = sbuf + len2;
-    }else{
-      SDL_memcpy(stream, audio_pos, write_len);
-      audio_pos += write_len;
-    }
-    memset(stream + write_len,0,len - write_len);
-    audio_base[5] -= write_len;
+  int write_len = (len > count) ? count : len;
+  if(audio_pos + write_len - sbuf >= CONFIG_SB_SIZE){
+    size_t len1 = CONFIG_SB_SIZE - (audio_pos - sbuf);
+    size_t len2 = write_len - len1;
+    SDL_memcpy(stream, audio_pos, len1);
+    SDL_memcpy(stream+len1 ,sbuf,len2);
+    audio_pos = sbuf + len2;
+  }else{
+    SDL_memcpy(stream, audio_pos, write_len);
+    audio_pos += write_len;
+  }
+  memset(stream + write_len,0,len - write_len);
+  audio_base[5] -= write_len;
 }
 
 SDL_AudioSpec s = {
@@ -84,6 +84,7 @@ static void audio_reg_init(){
     SDL_OpenAudio(&s,NULL);
     SDL_PauseAudio(0);
     audio_base[reg_init] = 0;
+    flush_audio = false;
   }
 }
 
@@ -111,7 +112,8 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
     audio_reg_init();
     break;
   case 20:
-    
+    if(is_write)
+      flush_audio = true;
     break;
   default:
     fprintf(stderr,"audio write offset error, offset:%d\n",offset);
