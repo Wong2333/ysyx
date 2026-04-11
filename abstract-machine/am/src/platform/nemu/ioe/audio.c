@@ -21,15 +21,10 @@ void __am_audio_config(AM_AUDIO_CONFIG_T *cfg) {
 }
 
 void __am_audio_ctrl(AM_AUDIO_CTRL_T *ctrl) {
-  printf("%d %d %d\n",ctrl->freq,ctrl->channels,ctrl->samples);
   outl(AUDIO_FREQ_ADDR,ctrl->freq);
-  printf("freq addr %d\n",AUDIO_FREQ_ADDR);
   outl(AUDIO_CHANNELS_ADDR,ctrl->channels);
-  printf("channels addr %d\n",AUDIO_CHANNELS_ADDR);
   outl(AUDIO_SAMPLES_ADDR,ctrl->samples);
-  printf("samples addr %d\n",AUDIO_SAMPLES_ADDR);
   outl(AUDIO_INIT_ADDR,1);
-  printf("init addr %d\n",AUDIO_INIT_ADDR);
   tail = AUDIO_SBUF_ADDR;
 }
 
@@ -39,13 +34,11 @@ void __am_audio_status(AM_AUDIO_STATUS_T *stat) {
 
 void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   size_t bufsize = inl(AUDIO_SBUF_SIZE_ADDR);
-  printf("bufsize %d\n",AUDIO_SBUF_SIZE_ADDR);
   uint8_t *pos = ctl->buf.start;
   uint8_t *end = ctl->buf.end;
   while(ctl->buf.end - ctl->buf.start > bufsize - inl(AUDIO_COUNT_ADDR));
   while(pos != end){
       outb(tail,*pos);
-      printf("write %d\n",tail);
       pos++;
       if (tail == AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
       else tail++;
