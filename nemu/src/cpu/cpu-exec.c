@@ -31,8 +31,9 @@ static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
 void device_update();
-
+#ifdef CONFIG_WATCHPOINT
 bool check_wp();
+#endif
 
 char iringbuf[32][128];
 uint32_t p_head = 0,p_tail = 0;
