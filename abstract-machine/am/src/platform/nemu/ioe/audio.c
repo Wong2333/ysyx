@@ -46,5 +46,5 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
     if (tail >= AUDIO_SBUF_ADDR+bufsize) tail = AUDIO_SBUF_ADDR;
 
   }
-  outl(AUDIO_COUNT_ADDR,inl(AUDIO_COUNT_ADDR) + len);
+  outl(AUDIO_COUNT_ADDR,len);
 }
