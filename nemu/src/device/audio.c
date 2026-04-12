@@ -33,8 +33,8 @@ enum {
 static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
-static uint8_t *audio_rd_pos;
-static uint8_t *audio_wt_pos;
+static uint32_t audio_rd_pos;
+static uint32_t audio_wt_pos;
 static uint32_t count;
 static bool overflow = false;
 
@@ -42,14 +42,14 @@ void audio_callback(void *userdata, uint8_t *stream, int len) {
   if (count == 0)
     return;
   int write_len = (len > count) ? count : len;
-  if(audio_rd_pos + write_len - sbuf >= CONFIG_SB_SIZE){
-    size_t len1 = CONFIG_SB_SIZE - (audio_rd_pos - sbuf);
+  if(audio_rd_pos + write_len >= CONFIG_SB_SIZE){
+    size_t len1 = CONFIG_SB_SIZE - audio_rd_pos;
     size_t len2 = write_len - len1;
-    SDL_memcpy(stream, audio_rd_pos, len1);
+    SDL_memcpy(stream, sbuf+audio_rd_pos, len1);
     SDL_memcpy(stream+len1 ,sbuf,len2);
-    audio_rd_pos = sbuf + len2;
+    audio_rd_pos = len2;
   }else{
-    SDL_memcpy(stream, audio_rd_pos, write_len);
+    SDL_memcpy(stream, sbuf+audio_rd_pos, write_len);
     audio_rd_pos += write_len;
   }
   SDL_memset(stream + write_len,0,len - write_len);
@@ -78,8 +78,8 @@ static void audio_reg_init(){
   if(audio_base[4] == 1){
     SDL_PauseAudio(1);
     SDL_CloseAudio();
-    audio_rd_pos = sbuf;
-    audio_wt_pos = sbuf;
+    audio_rd_pos = 0;
+    audio_wt_pos = 0;
     count = 0;
     SDL_OpenAudio(&s,NULL);
     SDL_PauseAudio(0);
@@ -117,8 +117,8 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
         overflow = true;
       }
       count += audio_base[reg_count];
-      audio_wt_pos = (uint8_t*)(((uintptr_t)audio_wt_pos + audio_base[reg_count]) % CONFIG_SB_SIZE);
-      if(overflow) audio_rd_pos = (uint8_t*)((uintptr_t)(audio_wt_pos + 1) % CONFIG_SB_SIZE);
+      audio_wt_pos = (audio_wt_pos + audio_base[reg_count]) % CONFIG_SB_SIZE;
+      if(overflow) audio_rd_pos = (audio_wt_pos + 1) % CONFIG_SB_SIZE;
       overflow = false;
       SDL_UnlockAudio();
     }else{ // read count 
@@ -145,8 +145,8 @@ void init_audio() {
 
   sbuf = (uint8_t *)new_space(CONFIG_SB_SIZE);
   add_mmio_map("audio-sbuf", CONFIG_SB_ADDR, sbuf, CONFIG_SB_SIZE, NULL);
-  audio_rd_pos = sbuf;
-  audio_wt_pos = sbuf;
+  audio_rd_pos = 0;
+  audio_wt_pos = 0;
   count = 0;
   if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
       fprintf(stderr,"SDL initiate failed: %s\n", SDL_GetError());
