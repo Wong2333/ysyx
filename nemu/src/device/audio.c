@@ -39,6 +39,7 @@ static uint32_t count;
 static bool overflow = false;
 
 void audio_callback(void *userdata, uint8_t *stream, int len) {
+  SDL_memset(stream ,0,len);
   if (count == 0)
     return;
   int write_len = (len > count) ? count : len;
@@ -52,7 +53,6 @@ void audio_callback(void *userdata, uint8_t *stream, int len) {
     SDL_memcpy(stream, sbuf+audio_rd_pos, write_len);
     audio_rd_pos += write_len;
   }
-  SDL_memset(stream + write_len,0,len - write_len);
   count -= write_len;
 }
 
