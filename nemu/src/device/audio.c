@@ -41,7 +41,6 @@ static bool overflow = false;
 void audio_callback(void *userdata, uint8_t *stream, int len) {
   if (count == 0)
     return;
-  SDL_LockAudio();
   int write_len = (len > count) ? count : len;
   if(audio_rd_pos + write_len - sbuf >= CONFIG_SB_SIZE){
     size_t len1 = CONFIG_SB_SIZE - (audio_rd_pos - sbuf);
@@ -55,7 +54,6 @@ void audio_callback(void *userdata, uint8_t *stream, int len) {
   }
   SDL_memset(stream + write_len,0,len - write_len);
   count -= write_len;
-  SDL_UnlockAudio();
 }
 
 SDL_AudioSpec s = {
