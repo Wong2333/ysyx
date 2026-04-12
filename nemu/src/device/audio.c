@@ -57,10 +57,10 @@ void audio_callback(void *userdata, uint8_t *stream, int len) {
 }
 
 SDL_AudioSpec s = {
-    .freq = 44100,                    // 采样率：44.1 kHz (CD音质)
+    .freq = 0,                    // 采样率：44.1 kHz (CD音质)
     .format = AUDIO_S16SYS,           // 格式：16 位有符号整数，采用系统字节序
-    .channels = 1,                  // 声道数：单声道 (如果是立体声就是 2)
-    .samples = 4096,                  // 缓冲区大小：4096 个采样点 (影响延迟，越小延迟越低但越卡)
+    .channels = 0,                  // 声道数：单声道 (如果是立体声就是 2)
+    .samples = 0,                  // 缓冲区大小：4096 个采样点 (影响延迟，越小延迟越低但越卡)
     .callback = audio_callback,     // 注册回调函数！
     .userdata = NULL,                // 传给回调函数的参数
 
