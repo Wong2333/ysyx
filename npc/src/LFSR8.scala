@@ -15,7 +15,7 @@ class LFSR8 extends Module{
     }.otherwise{
         val feedback = reg(4) ^ reg(3) ^ reg(2) ^ reg(0)
         reg := Cat(feedback,reg(7,1))
-        printf(p"[SHIFT] Old: ${reg}%x, New feedback:${feedback}%b\n")
+        printf(p"[SHIFT] Old: ${Hexadecimal(reg)}, New feedback:${Binary(feedback)}\n")
     }
     
     io.out := reg
