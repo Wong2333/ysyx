@@ -18,6 +18,7 @@ int main(int argc,char**argv) {
   nvboard_bind_all_pins(&top);
   nvboard_init(); 
   int num = 0;
+  reset();
   while(1) {
     nvboard_update();
     single_cycle();
