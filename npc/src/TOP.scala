@@ -13,8 +13,8 @@ class Top extends Module{
     LFSR_u.io.enable := io.enable;
     val HexToSevenSeg_u1 = Module(new HexToSevenSeg())
     io.out1 := HexToSevenSeg_u1.io.seg_out
-
-    HexToSevenSeg_u2.io.hex_in := LFSR_u.io.out(3,0)
+    HexToSevenSeg_u1.io.hex_in := LFSR_u.io.out(3,0)
+    
     val HexToSevenSeg_u2 = Module(new HexToSevenSeg())
     io.out2 := HexToSevenSeg_u2.io.seg_out
     HexToSevenSeg_u2.io.hex_in := LFSR_u.io.out(7,4)
