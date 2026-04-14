@@ -10,6 +10,37 @@ BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 
+default: 
+	make verilog
+	make bin
+
+# constraint file
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+# project source
+VSRCS = $(shell find $(abspath ./build) -name "*.sv")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+CSRCS += $(SRC_AUTO_BIND)
+
+# rules for NVBoard
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+# rules for verilator
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+
+$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+	@rm -rf $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_CFLAGS) \
+		--top-module $(TOPNAME) $^ \
+		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+
+bin: $(BIN)
+
+
 test:
 	mill -i test
 
@@ -40,6 +71,20 @@ clean:
 
 sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by yourself."
+	make default
+	$(BUILD_DIR)/$(TOPNAME)
 
 -include ../Makefile
+
+DESIGN = top
+
+# 指定 RTL 文件（可以使用通配符，也可以显式列出）
+RTL_FILES = $(wildcard build/*.sv)
+
+# (可选) 如果有自己的约束文件
+# SDC_FILE = ./constraint.sdc
+
+# (可选) 指定不同的时钟频率
+CLK_FREQ_MHZ = 500
+
+include /home/wjm/yosys-sta/Makefile.common
