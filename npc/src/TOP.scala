@@ -5,12 +5,10 @@ import chisel3._
 class Top extends Module{
 
     val io = IO(new Bundle{
-    val value1        = Input(UInt(16.W))
-    val value2        = Input(UInt(16.W))
-    val loadingValues = Input(Bool())
-    val outputGCD     = Output(UInt(16.W))
-    val outputValid   = Output(Bool())
+        val in = Input(UInt(8.W));
+        val out = Output(UInt(3.W));
+        val vaild = Output(Bool());
     });
-    val gcd_u = Module(new GCD());
-    gcd_u.io <> io;
+    val encoder = Module(new PriorityEncoder(8));
+    encoder.io <> io;
 }

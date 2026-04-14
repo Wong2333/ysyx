@@ -11,8 +11,7 @@ OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 Top = $(BUILD_DIR)/$(TOPNAME).sv
 
-default: 
-	make verilog
+default: bin
 
 # constraint file
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
