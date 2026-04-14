@@ -9,15 +9,14 @@ class LFSR8 extends Module{
         val out = Output(UInt(8.W))
     })
     val reg = RegInit(1.U(8.W))
-    when(io.enable){
-        printf(p"111\n")
-        when(reg === 0.U){
-            reg := 1.U
-        }.otherwise{
-            val feedback = reg(4) ^ reg(3) ^ reg(2) ^ reg(0)
-            reg := Cat(feedback,reg(7,1))
-            printf(p"[SHIFT] Old: ${reg}%x, New feedback:${feedback}%b\n")
-        }
+
+    when(reg === 0.U){
+        reg := 1.U
+    }.otherwise{
+        val feedback = reg(4) ^ reg(3) ^ reg(2) ^ reg(0)
+        reg := Cat(feedback,reg(7,1))
+        printf(p"[SHIFT] Old: ${reg}%x, New feedback:${feedback}%b\n")
     }
+    
     io.out := reg
 }
