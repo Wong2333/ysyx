@@ -14,7 +14,7 @@ class GCD extends Module {
     val outputValid   = Output(Bool())
   })
 
-  val x = Reg(UInt()) 
+  val x = Reg(UInt())
   val y = Reg(UInt()) 
 
   when(x > y) { x := x - y }.otherwise { y := y - x }

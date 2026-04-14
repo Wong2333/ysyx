@@ -20,7 +20,7 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # project source
-VSRCS = $(shell find $(abspath ./build) -name "*.sv")
+VSRCS = ./$(BUILD_DIR)/*.sv
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
@@ -32,8 +32,8 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 
-bin:
-$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+bin: verilog $(BIN)
+$(BIN): ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $^ \
