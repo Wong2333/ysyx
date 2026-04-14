@@ -6,13 +6,11 @@ static TOP_NAME top;
 void nvboard_bind_all_pins(TOP_NAME* top);
 
 static void single_cycle() {
-  top.clock = ~top.clock; 
-  top.eval();
-  top.clock = ~top.clock; 
   top.eval();
 }
 void reset(char*path){
   top.clock = 0;
+  top.io_enable = 1;
   top.eval();
 }
 
