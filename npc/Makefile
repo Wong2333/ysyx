@@ -69,9 +69,8 @@ clean:
 
 .PHONY: test verilog help reformat checkformat clean
 
-sim:
+sim: default
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	make default
 	$(BUILD_DIR)/$(TOPNAME)
 
 -include ../Makefile
