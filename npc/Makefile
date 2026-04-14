@@ -21,6 +21,7 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 VSRCS = $(shell find $(abspath ./build) -name "*.sv")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
+CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
 
 # rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
@@ -39,7 +40,7 @@ $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
 test:
 	mill -i test
 
-verilog: 
+verilog: $(CHISEL_SRC)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
