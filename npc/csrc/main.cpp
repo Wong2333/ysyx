@@ -12,8 +12,6 @@ static void single_cycle() {
   top.eval();
 }
 void reset(char*path){
-  if(path != NULL)
-    load_img(path);
   top.clk = 0;
   top.eval();
 }
@@ -26,6 +24,5 @@ int main(int argc,char**argv) {
   while(1) {
     nvboard_update();
     single_cycle();
-
   }
 }
