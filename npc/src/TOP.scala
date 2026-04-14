@@ -2,7 +2,7 @@ package gcd
 
 import chisel3._
 
-class top extends Module{
+class Top extends Module{
 
     val io = IO(new Bundle{
     val value1        = Input(UInt(16.W))
@@ -11,6 +11,6 @@ class top extends Module{
     val outputGCD     = Output(UInt(16.W))
     val outputValid   = Output(Bool())
     });
-    val gcd_u = new gcd.GCD();
+    val gcd_u = Module(new GCD());
     gcd_u.io <> io;
 }
