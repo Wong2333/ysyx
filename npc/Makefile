@@ -1,63 +1,35 @@
-TOPNAME = top
-NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
-
-VERILATOR = verilator
-VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
-
 BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
 
-default: $(BIN)
+test:
+	mill -i test
 
-$(shell mkdir -p $(BUILD_DIR))
+verilog:
+	$(call git_commit, "generate verilog")
+	mkdir -p $(BUILD_DIR)
+	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 
-# constraint file
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+help:
+	mill -i runMain Elaborate --help
 
-# project source
-VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CSRCS += $(SRC_AUTO_BIND)
+reformat:
+	mill -i __.reformat
 
-# rules for NVBoard
-include $(NVBOARD_HOME)/scripts/nvboard.mk
+checkformat:
+	mill -i __.checkFormat
 
-# rules for verilator
-INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+bsp:
+	mill -i mill.bsp.BSP/install
 
-$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
-	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $^ \
-		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+idea:
+	mill -i mill.idea.GenIdea/idea
 
-IMG=
+clean:
+	-rm -rf $(BUILD_DIR)
+
+.PHONY: test verilog help reformat checkformat clean
 
 sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	make default
-	./build/top $(IMG)
+	@echo "Write this Makefile by yourself."
 
-include ../Makefile
-
-DESIGN = top
-
-# 指定 RTL 文件（可以使用通配符，也可以显式列出）
-RTL_FILES = $(wildcard vsrc/*.v)
-
-# (可选) 如果你有自己的约束文件
-# SDC_FILE = ./constraint.sdc
-
-# (可选) 指定不同的时钟频率
-CLK_FREQ_MHZ = 500
-
-# --- 引用公共工具链 ---
-# 注意：这里需要写绝对路径或者相对于你的固定路径
-include /home/wjm/yosys-sta/Makefile.common
+-include ../Makefile
