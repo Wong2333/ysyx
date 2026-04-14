@@ -10,6 +10,7 @@ class LFSR8 extends Module{
     })
     val reg = RegInit(1.U(8.W))
     when(io.enable){
+        printf(p"111\n")
         when(reg === 0.U){
             reg := 1.U
         }.otherwise{
