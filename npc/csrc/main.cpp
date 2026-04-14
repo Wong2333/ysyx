@@ -8,7 +8,7 @@ void nvboard_bind_all_pins(TOP_NAME* top);
 static void single_cycle() {
   top.eval();
 }
-void reset(char*path){
+void reset(){
   top.clock = 0;
   top.io_enable = 1;
   top.eval();
