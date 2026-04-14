@@ -10,7 +10,7 @@ class Top extends Module{
     val loadingValues = Input(Bool())
     val outputGCD     = Output(UInt(16.W))
     val outputValid   = Output(Bool())
-    });
+    }); 
     val gcd_u = Module(new GCD());
     gcd_u.io <> io;
 }
