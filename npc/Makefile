@@ -10,7 +10,9 @@ BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 
-default: verilog $(BIN)
+default: 
+	make verilog
+	make bin
 
 # constraint file
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
