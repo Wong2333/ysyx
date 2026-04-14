@@ -11,7 +11,6 @@ class top extends Module{
     val outputGCD     = Output(UInt(16.W))
     val outputValid   = Output(Bool())
     });
-
-    val gcd = new GCD();
-    gcd.io <> io;
+    val gcd_u = new gcd.GCD();
+    gcd_u.io <> io;
 }
