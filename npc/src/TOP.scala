@@ -32,10 +32,9 @@ class Top extends Module{
         when(keyboard.io.ready === true.B){
             when(keyboard.io.data === "hF0".U){
                 up := true.B
+                press := false.B;
             }.otherwise{
-                when(up){
-                    press := false.B
-                }.otherwise{
+                when(!up){
                     press := true.B
                 }
                 up := false.B
