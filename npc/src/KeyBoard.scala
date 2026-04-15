@@ -14,7 +14,7 @@ class KeyBoard extends Module{
     })
     val buffer = Reg(UInt(10.W))
     //reg [7:0] fifo[7:0];
-    val fifo = Vec(8,Reg(UInt(8.W)))
+    val fifo = Reg(Vec(8, UInt(8.W)))
     //reg [2:0] w_ptr,r_ptr;
     val w_ptr = Reg(UInt(3.W))
     val r_ptr = Reg(UInt(3.W))
