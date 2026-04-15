@@ -8,5 +8,5 @@ class Top extends Module{
         val rst = Input(Bool())
     })
     val IFU_u = Module(new IFU())
-    
+    IFU_u.io.rst := io.rst
 }
