@@ -13,7 +13,6 @@ class KeyBoard extends Module{
         val overflow = Output(Bool())
     })
 
-    val data = Reg(UInt(8.W))
     val ready = Reg(Bool())
     val overflow = Reg(Bool())
 
@@ -27,7 +26,7 @@ class KeyBoard extends Module{
     val ps2_clk_sync = Reg(UInt(3.W))
 
     val sampling = ps2_clk_sync(2) & ~ps2_clk_sync(1)
-    ps2_clk_sync :=  Cat(ps2_clk_sync(1,0),io.ps2_clk)
+
     when(io.clrn === 0.U){
         w_ptr := 0.U
         r_ptr := 0.U
@@ -36,7 +35,8 @@ class KeyBoard extends Module{
         overflow := 0.U
         ready := 0.U
     }.otherwise{
-        when(io.ready){
+        ps2_clk_sync :=  Cat(ps2_clk_sync(1,0),io.ps2_clk)
+        when(ready){
             when(io.nextdata_n === 0.U){
                 r_ptr := r_ptr + 1.U
                 when(w_ptr === r_ptr + 1.U){
@@ -47,7 +47,7 @@ class KeyBoard extends Module{
         when(sampling){
             when(count === 10.U){
                 when(buffer(0) === 0.U && 
-                    io.ps2_clk === 1.U &&
+                    io.ps2_data === 1.U &&
                     buffer(9,1).xorR
                 ){
                     fifo(w_ptr) := buffer(8,1)
