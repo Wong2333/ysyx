@@ -57,7 +57,7 @@ class KeyBoard extends Module{
                 }
                 count := 0.U
             }.otherwise{
-                buffer(count) := io.ps2_data
+                buffer := Cat(io.ps2_data,buffer(9,1))
                 count := count + 1.U
             }
         }
