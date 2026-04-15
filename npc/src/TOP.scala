@@ -31,9 +31,16 @@ class Top extends Module{
         }
         when(keyboard.io.ready === true.B){
             when(keyboard.io.data === "hF0".U){
-                printf("up\n")
+                up := true.B
             }.otherwise{
-
+                when(up) { up := false.B }
+                when(up){
+                    press := false.B 
+                    printf("up\n")
+                }.otherwise{
+                    press := true.B
+                    printf("press\n")
+                }
             }
             data := keyboard.io.data
             nextdata_n := false.B
