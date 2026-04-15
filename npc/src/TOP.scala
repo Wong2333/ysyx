@@ -50,6 +50,7 @@ class Top extends Module{
     seg0.io.hex_in := keyboard.io.data(3,0)
     seg1.io.hex_in := keyboard.io.data(7,0)
     when(press){
+        printf(p"data: ${Hexadecimal(keyboard.io.data)}")
         io.seg0 := seg0.io.seg_out
         io.seg1 := seg1.io.seg_out
     }.otherwise{
