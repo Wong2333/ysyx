@@ -28,8 +28,7 @@ class Top extends Module{
     }.otherwise{
         when(nextdata_n === false.B){
             nextdata_n := true.B
-        }
-        when(keyboard.io.ready === true.B){
+        }.elsewhen(keyboard.io.ready === true.B){
             when(keyboard.io.data === "hF0".U){
                 up := true.B
             }.otherwise{
