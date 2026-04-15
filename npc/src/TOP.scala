@@ -12,7 +12,9 @@ class Top extends Module{
         val seg1 = Output(UInt(7.W))
     })
     val nextdata_n = Reg(Bool())
+    val up = Reg(Bool())
     val data = Reg(UInt(8.W))
+    val press = Reg(Bool())
 
     val keyboard = Module(new KeyBoard())
     keyboard.io.clrn := io.clrn
@@ -21,6 +23,8 @@ class Top extends Module{
     keyboard.io.nextdata_n := nextdata_n
     when(io.clrn === false.B){
         nextdata_n := true.B
+        up := false.B
+        press := false.B
     }.otherwise{
         when(nextdata_n === false.B){
             nextdata_n := true.B
@@ -31,10 +35,27 @@ class Top extends Module{
         }
     }
 
+    when(data === "hF0".U){
+        up := true.B
+    }.otherwise{
+        when(up){
+            press := false.B
+        }.otherwise{
+            press := true.B
+        }
+        up := false.B
+    }
+
     val seg0 = Module(new HexToSevenSeg())
     val seg1 = Module(new HexToSevenSeg())
     seg0.io.hex_in := data(3,0)
     seg1.io.hex_in := data(7,0)
-    io.seg0 := seg0.io.seg_out
-    io.seg1 := seg1.io.seg_out
+    when(press){
+        io.seg0 := seg0.io.seg_out
+        io.seg1 := seg1.io.seg_out
+    }.otherwise{
+        io.seg0 := "b1111111".U
+        io.seg1 := "b1111111".U        
+    }
+
 }
