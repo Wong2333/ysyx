@@ -30,26 +30,26 @@ class Top extends Module{
             nextdata_n := true.B
         }
         when(keyboard.io.ready === true.B){
-            data := keyboard.io.data
+            when(keyboard.io.data === "hF0".U){
+                up := true.B
+            }.otherwise{
+                when(up){
+                    press := false.B
+                }.otherwise{
+                    press := true.B
+                }
+                up := false.B
+            }
             nextdata_n := false.B
         }
     }
 
-    when(data === "hF0".U){
-        up := true.B
-    }.otherwise{
-        when(up){
-            press := false.B
-        }.otherwise{
-            press := true.B
-        }
-        up := false.B
-    }
+
 
     val seg0 = Module(new HexToSevenSeg())
     val seg1 = Module(new HexToSevenSeg())
-    seg0.io.hex_in := data(3,0)
-    seg1.io.hex_in := data(7,0)
+    seg0.io.hex_in := keyboard.io.data(3,0)
+    seg1.io.hex_in := keyboard.io.data(7,0)
     when(press){
         io.seg0 := seg0.io.seg_out
         io.seg1 := seg1.io.seg_out
