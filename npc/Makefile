@@ -34,7 +34,7 @@ CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $^ \
