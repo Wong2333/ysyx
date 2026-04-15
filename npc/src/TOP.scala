@@ -40,6 +40,7 @@ class Top extends Module{
                     press := true.B
                     printf("press\n")
                 }
+                printf("update up\n")
                 up := false.B
             }
             data := keyboard.io.data
