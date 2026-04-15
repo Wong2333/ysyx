@@ -23,7 +23,7 @@ VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
-
+RESOURCES = $(shell find $(abspath ./resources) -name "*.v")
 # rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
@@ -45,7 +45,7 @@ test:
 	mill -i test
 
 verilog: $(Top)
-$(Top): $(CHISEL_SRC)
+$(Top): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
