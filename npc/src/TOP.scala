@@ -8,9 +8,9 @@ class Top extends Module{
         val rst = Input(Bool())
         val pc_next = Input(UInt(32.W))
         val pc_we = Input(Bool())
+        val pc = Output(UInt(32.W))
+        val inst = Output(UInt(32.W))
     })
     val IFU_u = Module(new IFU())
-    IFU_u.io.rst := io.rst
-    IFU_u.io.pc_next := io.pc_next
-    IFU_u.io.pc_we := io.pc_we
+    IFU_u.io <> io
 }
