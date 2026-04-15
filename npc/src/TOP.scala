@@ -17,7 +17,7 @@ class Top extends Module{
     keyboard.io.clrn := io.clrn
     keyboard.io.ps2_clk := io.ps2_clk
     keyboard.io.ps2_data := io.ps2_data
-
+    keyboard.io.nextdata_n := nextdata_n
     when(io.clrn === false.B){
         nextdata_n := true.B
     }.otherwise{
