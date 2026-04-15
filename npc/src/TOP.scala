@@ -40,7 +40,7 @@ class Top extends Module{
                     press := true.B
                     printf("press\n")
                 }
-                when(up) { up := false.B }
+                up := false.B
             }
             data := keyboard.io.data
             nextdata_n := false.B
@@ -52,7 +52,7 @@ class Top extends Module{
     val seg0 = Module(new HexToSevenSeg())
     val seg1 = Module(new HexToSevenSeg())
     seg0.io.hex_in := data(3,0)
-    seg1.io.hex_in := data(7,0)
+    seg1.io.hex_in := data(7,4)
     when(press){
         // printf(p"data: ${Hexadecimal(keyboard.io.data)}\n")
         io.seg0 := seg0.io.seg_out
