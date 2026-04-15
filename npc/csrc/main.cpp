@@ -8,16 +8,8 @@ void nvboard_bind_all_pins(TOP_NAME* top);
 static void single_cycle() {
   top.clock = !top.clock;
   top.eval();
-  if(top.io_nextdata_n == 0){
-    top.io_nextdata_n = 1;
-  }
-  if(top.io_ready){
-    printf("data: %x\n",top.io_data);
-    top.io_nextdata_n = 0;
-  }
 }
 void reset(){
-  top.io_nextdata_n = 1;
   top.clock = 0;
   top.io_clrn = 0;
   top.eval();
