@@ -11,11 +11,11 @@ static void single_cycle() {
 }
 void reset(){
   top.clock = 0;
-  top.io_clrn = 0;
+  top.io_rst = 0;
   top.eval();
   top.clock = 1;
   top.eval();
-  top.io_clrn = 1;
+  top.rst = 0;
   top.clock = 0;
   top.eval();
 }
