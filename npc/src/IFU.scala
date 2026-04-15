@@ -8,7 +8,7 @@ class PmemReadBlackBox extends BlackBox with HasBlackBoxResource{
         val raddr = Input(UInt(32.W))
         val rdata = Output(UInt(32.W))
     })
-    addResource("/main/resources/PmemReadBlackBox.v")
+    addResource("./resources/PmemReadBlackBox.v")
 }
 
 class IFU extends Module{
