@@ -16,11 +16,6 @@ module LSU(
     reg [31:0]rdata;
     reg [31:0]wdata;
 
-    reg write_en;
-    reg [31:0]wdata_reg;
-    reg [31:0]waddr_reg;
-    reg [7:0]mask_reg;
-
     always @(*) begin
         mask = 4'b0;
         mem_out = 32'b0;
