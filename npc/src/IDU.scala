@@ -104,6 +104,7 @@ class IDU extends Module{
                 io.reg_waddr := rd;
                 io.reg_we := true.B;
                 io.WB_sel := "b001".U;
+                invalid := true.B
             }
         }
         is("b1100111".U){
@@ -116,6 +117,7 @@ class IDU extends Module{
                 io.pc_we := true.B;
                 io.WB_sel := "b011".U;
                 io.pc_sel := "b01".U;
+                invalid := true.B
             }
         }
         is("b1110011".U){
@@ -136,6 +138,7 @@ class IDU extends Module{
                 io.reg_waddr := rd;
                 io.reg_we := true.B;
                 io.WB_sel := 1.U(3.W);
+                invalid := true.B
             }
         }
         is("b0110111".U){// lui
@@ -143,6 +146,7 @@ class IDU extends Module{
             io.reg_waddr := rd;
             io.reg_we := true.B;
             io.WB_sel := "b100".U;
+            invalid := true.B
         }
         is("b0000011".U){
             when(funct3 === "b010".U){//lw
@@ -154,6 +158,7 @@ class IDU extends Module{
                 io.WB_sel := "b010".U;
                 io.mem_ctl := 1.U(4.W);
                 io.mem_valid := true.B;
+                invalid := true.B
             }.elsewhen(funct3 === "b100".U){//lbu
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
@@ -163,6 +168,7 @@ class IDU extends Module{
                 io.WB_sel := "b010".U;
                 io.mem_ctl := "b0011".U;
                 io.mem_valid := true.B;
+                invalid := true.B
             }
         }
         is("b0100011".U){
@@ -174,6 +180,7 @@ class IDU extends Module{
                 io.mem_ctl := "b0100".U;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
+                invalid := true.B
             }.elsewhen(funct3 === "b000".U){// sb
                 io.imm := immS;
                 io.src1 := io.reg_rdata1;
@@ -182,10 +189,8 @@ class IDU extends Module{
                 io.mem_ctl := "b0101".U;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
+                invalid := true.B
             }
-        }
-        default {
-            invalid:=true.B
         }
     }
 }
