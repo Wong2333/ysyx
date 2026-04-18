@@ -42,7 +42,7 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx+0x80000000,1,1024,fp)) > 0){
         idx += len;
     }
     fclose(fp);

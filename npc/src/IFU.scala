@@ -30,6 +30,7 @@ class IFU extends Module{
         when(io.pc_we){
             PC := io.pc_next
         }.otherwise{
+            printf(p"pc = ${io.pc}\n")
             PC := PC + 4.U
         }
     }
