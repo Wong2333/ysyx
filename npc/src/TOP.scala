@@ -17,6 +17,10 @@ class Top extends Module{
     val IDU_u = Module(new IDU())
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
+
+    io.pc := IFU_u.io.pc
+    io.inst := IFU_u.io.inst
+
     IFU_u.io.rst := io.rst
     IFU_u.io.pc_next := WBU_u.io.pc_next
     IFU_u.io.pc_we := IDU_u.io.pc_we
