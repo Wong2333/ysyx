@@ -30,7 +30,7 @@ class RFS extends Module {
     val reg = Module(new RegBlackBox())
     reg.io.wdata := io.wdata
     reg.io.waddr := io.waddr
-    printf(p"RFS:${io.waddr}\n")
+    printf(p"RFS:${io.waddr} <= ${io.wdata}\n")
     reg.io.wen := io.wen
     reg.io.raddr1 := io.raddr1
     reg.io.raddr2 := io.raddr2
