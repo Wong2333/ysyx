@@ -52,7 +52,6 @@ class LSU extends Module{
         when(io.wen){
             rdata := 0.U
             write_en := true.B
-            printf("")
         }.otherwise{
             pmem_read.io.raddr := raddr
             rdata := pmem_read.io.rdata
@@ -77,7 +76,6 @@ class LSU extends Module{
         is(5.U){
             mask := 1.U << waddr(1,0)
             wdata := shifted_wdata
-            printf(p"LSU: ${shifted_wdata}\n")
         }
     }
 

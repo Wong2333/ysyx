@@ -16,7 +16,6 @@ class EXU extends Module{
     switch(io.ALU_ctl){
         is("b0001".U){
             io.out := io.src1 + io.imm
-            printf(p"EXU: ${io.imm }\n")
         }
         is("b0010".U){
             io.out := io.src1 + io.src2
