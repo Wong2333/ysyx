@@ -3,8 +3,8 @@ package npc
 import chisel3._
 import chisel3.util._
 
-class PmemReadBlackBox extends BlackBox with HasBlackBoxResource{
-    val io = IO(new Bundle{
+class PmemReadBlackBox extends ExtModule{
+    val io = FlatIO(new Bundle{
         val raddr = Input(UInt(32.W))
         val rdata = Output(UInt(32.W))
     })

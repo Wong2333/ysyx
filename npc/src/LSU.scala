@@ -12,6 +12,7 @@ class PmemWriteBlackBox extends ExtModule {
         val wmask = Input(UInt(32.W))
         val we = Input(Bool())
     })
+    addResource("/PmemWriteBlackBox.v")
 }
 class LSU extends Module{
     val io = IO(new Bundle {
