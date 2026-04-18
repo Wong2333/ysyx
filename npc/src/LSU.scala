@@ -10,7 +10,7 @@ class PmemWriteBlackBox extends ExtModule {
         val clock = Input(Clock())
         val waddr = Input(UInt(32.W))
         val wdata = Input(UInt(32.W))
-        val wmask = Input(UInt(32.W))
+        val wmask = Input(UInt(4.W))
         val we = Input(Bool())
     })
     addResource("/PmemWriteBlackBox.v")
