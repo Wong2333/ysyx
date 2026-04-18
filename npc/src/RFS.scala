@@ -27,13 +27,13 @@ class RFS extends Module {
     val raddr2 = Input(UInt(5.W))
     val rdata2 = Output(UInt(32.W))
   })
-    val reg = Module(new RegBlackBox())
-    reg.io.wdata := io.wdata
-    reg.io.waddr := io.waddr
-    reg.io.wen := io.wen
-    reg.io.raddr1 := io.raddr1
-    reg.io.raddr2 := io.raddr2
-    io.rdata1 := reg.io.rdata1
-    io.rdata2 := reg.io.rdata2
-    reg.io.clock := clock
+    val Reg_u = Module(new RegBlackBox())
+    Reg_u.io.wdata := io.wdata
+    Reg_u.io.waddr := io.waddr
+    Reg_u.io.wen := io.wen
+    Reg_u.io.raddr1 := io.raddr1
+    Reg_u.io.raddr2 := io.raddr2
+    io.rdata1 := Reg_u.io.rdata1
+    io.rdata2 := Reg_u.io.rdata2
+    Reg_u.io.clock := clock
 }
