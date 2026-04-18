@@ -14,5 +14,5 @@ class RFS extends ExtModule {
     val rdata2 = Output(UInt(32.W))
   })
   // 挂载 Verilog 文件
-  addResource("/ReadRegBlackBox.v")
+  addResource("/RegBlackBox.v")
 }

@@ -1,4 +1,4 @@
-module RFS_BlackBox(
+module RegBlackBox(
     input         clk,
     input  [31:0] wdata,
     input  [4:0]  waddr,
