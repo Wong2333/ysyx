@@ -38,6 +38,7 @@ class Top extends Module{
     LSU_u.io.src2 := IDU_u.io.src2
     LSU_u.io.ALU_out := EXU_u.io.out
 
+    RFS_u.io.clk := clock
     RFS_u.io.wdata := WBU_u.io.reg_wdata
     RFS_u.io.waddr := IDU_u.io.reg_waddr
     RFS_u.io.wen := IDU_u.io.reg_we
