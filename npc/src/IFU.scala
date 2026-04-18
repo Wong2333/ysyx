@@ -19,13 +19,13 @@ class IFU extends Module{
         val pc = Output(UInt(32.W))
         val inst = Output(UInt(32.W))
     })
-    val PC = RegInit("h80000000".U(32.W))
+    val PC = RegInit("h00000000".U(32.W))
     val pmem_read_inst = Module(new PmemReadBlackBox)
     io.pc := PC
     pmem_read_inst.io.raddr := PC
     
     when(io.rst){
-        PC := "h80000000".U
+        PC := "h00000000".U
     }.otherwise{
         when(io.pc_we){
             PC := io.pc_next
