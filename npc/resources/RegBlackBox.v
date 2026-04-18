@@ -16,7 +16,6 @@ module RegBlackBox(
     always @(posedge clock) begin
         if (wen) begin
             rf[waddr] <= wdata;
-            $display("reg %x <= %x",waddr,wdata);
         end
     end
 
