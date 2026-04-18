@@ -40,6 +40,7 @@ class LSU extends Module{
 
     val write_en = WireDefault(false.B)
     val pmem_write = Module(new PmemWriteBlackBox())
+    pmem_write.io.clock := clock
     pmem_write.io.waddr := waddr
     pmem_write.io.wdata := wdata
     pmem_write.io.wmask := mask
