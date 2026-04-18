@@ -26,7 +26,7 @@ uint32_t img[1024*1024] = {
   0x00000000
 };
 uint32_t *mem = img;
-void load_img(char* path){
+void load_img(const char* path){
     mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
     if (!mem) {
         printf("Failed to allocate memory!\n");
@@ -42,7 +42,7 @@ void load_img(char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+0x80000000,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
     fclose(fp);

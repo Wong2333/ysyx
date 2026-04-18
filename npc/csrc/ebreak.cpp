@@ -28,7 +28,6 @@ void ebreak() {
         printf("HIT GOOD TRAP\n");
         exit(0);
     }else{
-        printf("%x\n",status);
         printf("HIT BAD TRAP\n");
         exit(1);
     }
