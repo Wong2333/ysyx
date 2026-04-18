@@ -1,6 +1,5 @@
 module ReadRegBlackBox (
-    input [31:0]addr,
-    output [31:0]data
+    input [31:0]addr
 );
     export "DPI-C" task read_reg;
     task read_reg(input int addr, output int data);

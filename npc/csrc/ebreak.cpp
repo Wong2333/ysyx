@@ -1,11 +1,11 @@
 #include "svdpi.h"
-#include "Vtop__Dpi.h"
+#include "VTop__Dpi.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "Vtop.h"               // Verilator 生成的顶层模块类
+#include "VTop.h"               // Verilator 生成的顶层模块类
 
 uint32_t read_rf_reg(int addr) {
-    const char* scope_name = "TOP.top.u_RFS"; 
+    const char* scope_name = "TOP.Top.RFS_u"; 
     
     svScope scope = svGetScopeFromName(scope_name);
     
