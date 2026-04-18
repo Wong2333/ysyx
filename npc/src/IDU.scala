@@ -180,6 +180,7 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
+                printf(p"sw: ${io.src1},${io.src2}\n")
             }.elsewhen(funct3 === "b000".U){// sb
                 io.imm := immS;
                 io.src1 := io.reg_rdata1;
@@ -189,7 +190,7 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
-                printf(p"${io.src1},${io.src2}\n")
+                printf(p"sb: ${io.src1},${io.src2}\n")
             }
         }
     }
