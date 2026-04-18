@@ -189,6 +189,7 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
+                printf(p"${io.src1},${io.src2}\n")
             }
         }
     }

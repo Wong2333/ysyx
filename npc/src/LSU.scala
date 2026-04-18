@@ -52,6 +52,7 @@ class LSU extends Module{
         when(io.wen){
             rdata := 0.U
             write_en := true.B
+            printf("")
         }.otherwise{
             pmem_read.io.raddr := raddr
             rdata := pmem_read.io.rdata
