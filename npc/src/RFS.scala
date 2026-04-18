@@ -15,8 +15,8 @@ class RFS extends Module{
         val wdata = Input(UInt(32.W))
         val waddr = Input(UInt(32.W))
         val wen = Input(Bool())
-        val raddr1 = Input(UInt(32.W))
-        val raddr2 = Input(UInt(32.W))
+        val raddr1 = Input(UInt(5.W))
+        val raddr2 = Input(UInt(5.W))
 
         val rdata1 = Output(UInt(32.W))
         val rdata2 = Output(UInt(32.W))        
