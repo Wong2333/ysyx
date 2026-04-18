@@ -152,7 +152,6 @@ class IDU extends Module{
             invalid := false.B
         }
         is("b0000011".U){
-            printf(p"load\n")
             when(funct3 === "b010".U){//lw
             printf(p"lw\n")
                 io.imm := immI;
