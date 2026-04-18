@@ -6,14 +6,14 @@ import chisel3.util._
     // import "DPI-C" function void ebreak();
     // import "DPI-C" function void invalid_instruction(input int pc,input int inst);
  
-class EbreakBlackBox extends BlackBox with HasBlackBoxResource{
-    val io = IO(new Bundle{
+class EbreakBlackBox extends ExtModule{
+    val io = FlatIO(new Bundle{
         val trap = Input(Bool())
     })
     addResource("/EbreakBlackBox.v")
 }
-class InvalidInstructionBlackBox extends BlackBox with HasBlackBoxResource{
-    val io = IO(new Bundle{
+class InvalidInstructionBlackBox extends ExtModule{
+    val io = FlatIO(new Bundle{
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
         val invalid = Input(Bool())
@@ -65,16 +65,16 @@ class IDU extends Module{
     invalid_instruction.io.inst := io.inst
     invalid_instruction.io.invalid := invalid
 
-    val opcode = io.inst(6,0)
-    val rd = io.inst(11,7)
-    val funct3 = io.inst(14,12)
-    val funct7 = io.inst(31,25)
-    val immI = Cat(Fill(20,io.inst(31)),io.inst(31,20))
-    val immU = Cat(io.inst(31,12),0.U(12.W))
-    val immS = Cat(Fill(20,io.inst(31)),io.inst(31,25),io.inst)
+    val opcode = WireDefault(io.inst(6,0))
+    val rd = WireDefault(io.inst(11,7))
+    val funct3 = WireDefault(io.inst(14,12))
+    val funct7 = WireDefault(io.inst(31,25))
+    val immI = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,20)))
+    val immU = WireDefault(Cat(io.inst(31,12),0.U(12.W)))
+    val immS = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,25),io.inst))
 
-    val rs1_inst = io.inst(19,15)
-    val rs2_inst = io.inst(24,20)
+    val rs1_inst = WireDefault(io.inst(19,15))
+    val rs2_inst = WireDefault(io.inst(24,20))
 
     io.rs1 := io.inst(19,15);
     io.rs2 := io.inst(24,20);

@@ -10,7 +10,7 @@ class PmemWriteBlackBox extends ExtModule {
         val waddr = Input(UInt(32.W))
         val wdata = Input(UInt(32.W))
         val wmask = Input(UInt(32.W))
-        val we = Input(UInt(32.W))
+        val we = Input(Bool())
     })
 }
 class LSU extends Module{
@@ -24,11 +24,11 @@ class LSU extends Module{
         val mem_out = Output(UInt(32.W))
     })
 
-    val raddr = 0.U(32.W)
-    val waddr = 0.U(32.W)
-    val mask = 0.U(4.W)
-    val rdata = 0.U(32.W)
-    val wdata = 0.U(32.W)
+    val raddr = WireDefault(0.U(32.W))
+    val waddr = WireDefault(0.U(32.W))
+    val mask = WireDefault(0.U(4.W))
+    val rdata = WireDefault(0.U(32.W))
+    val wdata = WireDefault(0.U(32.W))
 
     val shifted_rdata = rdata >> (raddr(1,0) << 3)
     val shifted_wdata = io.src2 << (waddr(1,0) << 3)
@@ -36,11 +36,11 @@ class LSU extends Module{
     val pmem_read = Module(new PmemReadBlackBox())
     pmem_read.io.raddr := 0.U
 
-    val write_en = false.B
+    val write_en = WireDefault(false.B)
     val pmem_write = Module(new PmemWriteBlackBox())
     pmem_write.io.waddr := waddr
     pmem_write.io.wdata := wdata
-    pmem_write.io.wmask := wdata
+    pmem_write.io.wmask := mask
     pmem_write.io.we := write_en
 
     when(io.valid){
@@ -55,7 +55,7 @@ class LSU extends Module{
             write_en := false.B
         }
     }
-
+    io.mem_out := 0.U
     switch(io.mem_ctl){
         is(1.U){
             io.mem_out := rdata
