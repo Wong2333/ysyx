@@ -97,6 +97,7 @@ class IDU extends Module{
     switch(opcode){
         is("b0010011".U){
             when(funct3 === "b000".U){// addi
+            printf("addi\n")
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
                 io.ALU_ctl :="b0001".U;
@@ -107,6 +108,7 @@ class IDU extends Module{
             }
         }
         is("b1100111".U){
+            printf("jalr\n")
             when(funct3 === "b000".U){//jalr
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
@@ -130,6 +132,7 @@ class IDU extends Module{
             }
         }
         is("b0110011".U){// add
+        printf("add\n")
             when(funct3 === "b000".U && funct7 === "b0000000".U){
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
@@ -141,6 +144,7 @@ class IDU extends Module{
             }
         }
         is("b0110111".U){// lui
+        printf(p"lui\n")
             io.imm := immU;
             io.reg_waddr := rd;
             io.reg_we := true.B;
@@ -148,6 +152,7 @@ class IDU extends Module{
             invalid := false.B
         }
         is("b0000011".U){
+            printf(p"load\n")
             when(funct3 === "b010".U){//lw
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
