@@ -4,6 +4,7 @@ import chisel3.util._
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
+    val clock = Input(Clock())
     val wdata  = Input(UInt(32.W))
     val waddr  = Input(UInt(5.W))
     val wen    = Input(Bool())
@@ -27,4 +28,5 @@ class RFS extends Module {
   })
     val reg = Module(new RegBlackBox())
     reg.io <> io
+    reg.io.clock := clock
 }

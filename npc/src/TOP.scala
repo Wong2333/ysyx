@@ -50,10 +50,7 @@ class Top extends Module{
     WBU_u.io.mem_rdata := LSU_u.io.mem_out
     WBU_u.io.WB_sel := IDU_u.io.WB_sel
     WBU_u.io.pc_sel := IDU_u.io.pc_sel
-    val imm = Input(UInt(32.W))
-    val src1 = Input(UInt(32.W))
-    val src2 = Input(UInt(32.W))
-    val ALU_ctl = Input(UInt(4.W))
+
     EXU_u.io.imm := IDU_u.io.imm
     EXU_u.io.src1 := IDU_u.io.src1
     EXU_u.io.src2 := IDU_u.io.src2
