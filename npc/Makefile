@@ -30,7 +30,7 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-
+IMG=
 bin: 
 	make verilog
 	make $(BIN)
@@ -72,7 +72,7 @@ clean:
 
 sim: default
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME)
+	$(BUILD_DIR)/$(TOPNAME) $(IMG)
 
 -include ../Makefile
 
