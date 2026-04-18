@@ -7,6 +7,7 @@ import npc.PmemReadBlackBox
 
 class PmemWriteBlackBox extends ExtModule {
     val io = FlatIO(new Bundle {
+        val clock = Input(Clock())
         val waddr = Input(UInt(32.W))
         val wdata = Input(UInt(32.W))
         val wmask = Input(UInt(32.W))
