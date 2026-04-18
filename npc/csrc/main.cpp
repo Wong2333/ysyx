@@ -27,7 +27,7 @@ int main(int argc,char**argv) {
   // reset();
   top.clock=0;
   top.eval();
-  int n = 10;
+  int n = 100;
   while(n-- > 0) {
     nvboard_update();
     single_cycle();
