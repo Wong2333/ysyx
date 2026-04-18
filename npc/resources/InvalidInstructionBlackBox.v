@@ -4,5 +4,7 @@ module InvalidInstructionBlackBox (
     input invalid
 );
     import "DPI-C" context function int invalid_instruction(input int pc,input int inst);
-    if(invalid) invalid_instruction(pc,inst);
+    always@(*) begin
+        if(invalid) invalid_instruction(pc,inst)
+    end
 endmodule
