@@ -70,7 +70,7 @@ class IDU extends Module{
     val funct7 = WireDefault(io.inst(31,25))
     val immI = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,20)))
     val immU = WireDefault(Cat(io.inst(31,12),0.U(12.W)))
-    val immS = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,25),io.inst))
+    val immS = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,25),io.inst(11,7)))
 
     val rs1_inst = WireDefault(io.inst(19,15))
     val rs2_inst = WireDefault(io.inst(24,20))
