@@ -104,6 +104,7 @@ class IDU extends Module{
                 io.reg_we := true.B;
                 io.WB_sel := "b001".U;
                 invalid := false.B
+                printf(p"${io.imm },${io.src1},${io.reg_waddr},${io.reg_we}")
             }
         }
         is("b1100111".U){
