@@ -1,4 +1,4 @@
-module moduleName (
+module ReadRegBlackBox (
     input [31:0]addr,
     output [31:0]data
 );
