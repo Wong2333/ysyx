@@ -97,7 +97,7 @@ class IDU extends Module{
     switch(opcode){
         is("b0010011".U){
             when(funct3 === "b000".U){// addi
-            printf("addi\n")
+            
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
                 io.ALU_ctl :="b0001".U;
@@ -108,7 +108,7 @@ class IDU extends Module{
             }
         }
         is("b1100111".U){
-            printf("jalr\n")
+            
             when(funct3 === "b000".U){//jalr
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
@@ -127,14 +127,14 @@ class IDU extends Module{
                 && rs1_inst === 0.U 
                 && rd === 0.U
                 ){
-                    printf("ebreak\n")
+                    
                     invalid := false.B
                     trap := true.B
                 }
             }
         }
         is("b0110011".U){// add
-        printf("add\n")
+        
             when(funct3 === "b000".U && funct7 === "b0000000".U){
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
@@ -146,7 +146,7 @@ class IDU extends Module{
             }
         }
         is("b0110111".U){// lui
-        printf(p"lui\n")
+        
             io.imm := immU;
             io.reg_waddr := rd;
             io.reg_we := true.B;
@@ -155,7 +155,7 @@ class IDU extends Module{
         }
         is("b0000011".U){
             when(funct3 === "b010".U){//lw
-            printf(p"lw\n")
+            
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
                 io.ALU_ctl := "b0001".U;
@@ -166,7 +166,7 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 invalid := false.B
             }.elsewhen(funct3 === "b100".U){//lbu
-            printf(p"lbu\n")
+            
                 io.imm := immI;
                 io.src1 := io.reg_rdata1;
                 io.reg_waddr := rd;
@@ -180,7 +180,7 @@ class IDU extends Module{
         }
         is("b0100011".U){
             when(funct3 === "b010".U){// sw
-            printf(p"sw\n")
+            
                 io.imm := immS;
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
@@ -189,9 +189,9 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
-                printf(p"sw: ${io.src1},${io.src2}\n")
+                
             }.elsewhen(funct3 === "b000".U){// sb
-            printf(p"sb\n")
+            
                 io.imm := immS;
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
@@ -200,7 +200,7 @@ class IDU extends Module{
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
-                printf(p"sb: ${io.src1},${io.src2}\n")
+                
             }
         }
     }

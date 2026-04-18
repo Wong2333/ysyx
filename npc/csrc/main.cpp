@@ -8,7 +8,7 @@ void nvboard_bind_all_pins(TOP_NAME* top);
 static void single_cycle() {
   top.clock = !top.clock;
   top.eval();
-  printf("pc:%x inst:%x\n",top.io_pc,top.io_inst);
+  // printf("pc:%x inst:%x\n",top.io_pc,top.io_inst);
 }
 void reset(){
   top.clock = 0;
