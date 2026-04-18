@@ -16,7 +16,7 @@ class WBU extends Module{
         val pc_next = Output(UInt(32.W))
     })
     io.reg_wdata := 0.U
-    switch(io.pc_sel){
+    switch(io.WB_sel){
         is(0.U){
             io.reg_wdata:=0.U
         }
