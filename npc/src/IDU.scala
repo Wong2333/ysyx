@@ -127,6 +127,7 @@ class IDU extends Module{
                 && rs1_inst === 0.U 
                 && rd === 0.U
                 ){
+                    printf("ebreak\n")
                     invalid := false.B
                     trap := true.B
                 }
