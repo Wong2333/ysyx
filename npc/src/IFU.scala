@@ -25,7 +25,7 @@ class IFU extends Module{
     pmem_read_inst.io.raddr := PC
     
     when(io.rst){
-        PC := "h80000000".U
+        PC := "h80000000".U 
     }.otherwise{
         when(io.pc_we){
             PC := io.pc_next
