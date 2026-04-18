@@ -2,7 +2,20 @@ package npc
 import chisel3._
 import chisel3.util._
 
-class RFS extends ExtModule {
+class RegBlackBox extends ExtModule{
+  val io = FlatIO(new Bundle {
+    val wdata  = Input(UInt(32.W))
+    val waddr  = Input(UInt(5.W))
+    val wen    = Input(Bool())
+    val raddr1 = Input(UInt(5.W))
+    val rdata1 = Output(UInt(32.W))
+    val raddr2 = Input(UInt(5.W))
+    val rdata2 = Output(UInt(32.W))
+  })
+  addResource("/RegBlackBox.v")
+}
+
+class RFS extends Module {
   val io = IO(new Bundle {
     val wdata  = Input(UInt(32.W))
     val waddr  = Input(UInt(5.W))
@@ -12,6 +25,6 @@ class RFS extends ExtModule {
     val raddr2 = Input(UInt(5.W))
     val rdata2 = Output(UInt(32.W))
   })
-  // 挂载 Verilog 文件
-  addResource("/RegBlackBox.v")
+    val reg = Module(new RegBlackBox())
+    reg.io <> io
 }
