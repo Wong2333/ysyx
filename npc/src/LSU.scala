@@ -76,7 +76,7 @@ class LSU extends Module{
         }
         is(5.U){
             mask := 1.U << waddr(1,0)
-            io.mem_out := shifted_wdata
+            wdata := shifted_wdata
             printf(p"LSU: ${shifted_wdata}\n")
         }
     }
