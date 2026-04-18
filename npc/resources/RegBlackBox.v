@@ -1,5 +1,5 @@
 module RegBlackBox(
-    input         clk,
+    input         clock,
     input  [31:0] wdata,
     input  [4:0]  waddr,
     input         wen,
@@ -13,7 +13,7 @@ module RegBlackBox(
     assign rdata1 = (raddr1 == 5'b0) ? 32'b0 : rf[raddr1];
     assign rdata2 = (raddr2 == 5'b0) ? 32'b0 : rf[raddr2];
 
-    always @(posedge clk) begin
+    always @(posedge clock) begin
         if (wen) rf[waddr] <= wdata;
     end
 

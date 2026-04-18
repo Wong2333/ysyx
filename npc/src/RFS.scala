@@ -4,7 +4,6 @@ import chisel3.util._
 
 class RFS extends ExtModule {
   val io = IO(new Bundle {
-    val clk    = Input(Clock())
     val wdata  = Input(UInt(32.W))
     val waddr  = Input(UInt(5.W))
     val wen    = Input(Bool())
