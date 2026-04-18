@@ -14,7 +14,10 @@ module RegBlackBox(
     assign rdata2 = (raddr2 == 5'b0) ? 32'b0 : rf[raddr2];
 
     always @(posedge clock) begin
-        if (wen) rf[waddr] <= wdata;
+        if (wen) begin
+            rf[waddr] <= wdata;
+            $display("reg %x <= %x",waddr,wdata);
+        end
     end
 
     // DPI-C 必须和 rf 在同一个 module 作用域下！
