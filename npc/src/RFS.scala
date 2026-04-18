@@ -13,7 +13,7 @@ class ReadRegBlackBox extends ExtModule{
 class RFS extends Module{
     val io = IO(new Bundle {
         val wdata = Input(UInt(32.W))
-        val waddr = Input(UInt(32.W))
+        val waddr = Input(UInt(5.W))
         val wen = Input(Bool())
         val raddr1 = Input(UInt(5.W))
         val raddr2 = Input(UInt(5.W))

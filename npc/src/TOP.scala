@@ -19,7 +19,7 @@ class Top extends Module{
     val WBU_u = Module(new WBU())
     IFU_u.io.rst := io.rst
     IFU_u.io.pc_next := WBU_u.io.pc_next
-    IFU_u.io.inst := IDU_u.io.inst
+    IFU_u.io.pc_we := IDU_u.io.pc_we
 
     IDU_u.io.rst := io.rst
     IDU_u.io.pc := IFU_u.io.pc
