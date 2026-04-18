@@ -171,6 +171,7 @@ class IDU extends Module{
             }
         }
         is("b0100011".U){
+            printf(p"S-type\n")
             when(funct3 === "b010".U){// sw
                 io.imm := immS;
                 io.src1 := io.reg_rdata1;
