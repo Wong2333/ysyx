@@ -1,6 +1,7 @@
 package npc
 import chisel3._
 import chisel3.util._
+import chisel3.simulator.PeekPokeAPI.TestableData
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -27,6 +28,12 @@ class RFS extends Module {
     val rdata2 = Output(UInt(32.W))
   })
     val reg = Module(new RegBlackBox())
-    reg.io <> io
+    reg.io.wdata := io.wdata
+    reg.io.waddr := io.waddr
+    reg.io.wen := io.wen
+    reg.io.raddr1 := io.raddr1
+    reg.io.raddr2 := io.raddr2
+    io.rdata1 := reg.io.rdata1
+    io.rdata2 := reg.io.rdata2
     reg.io.clock := clock
 }
