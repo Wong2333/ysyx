@@ -6,7 +6,7 @@ module PCBlockBox(
     output [31:0]pc
 );
     reg [31:0] PC;
-    assign pc = PC
+    assign pc = PC;
     always@(posedge clock) begin
         if(reset)begin
             PC <= 32'h80000000;
