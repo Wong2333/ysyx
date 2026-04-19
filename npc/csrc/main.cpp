@@ -18,7 +18,7 @@ void reset(const char *path){
   if(path != NULL)
     load_img(path);
   // 1. 开始计时 (获取当前进程的 CPU 时钟)
-  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
   top.clock = 0;
   top.reset = 1;
   top.eval();
