@@ -6,14 +6,28 @@ static TOP_NAME top;
 struct timespec start, end;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
-extern void load_img(const char* path);
+void load_img(const char* path);
 
 static void single_cycle() {
   top.clock = ~top.clock; 
   top.eval();
   top.clock = ~top.clock; 
   top.eval();
+  nvboard_update();
 }
+
+void cpu_exec(int n){
+  if(n > 0){
+    for(int i = 0;i<n;i++){
+      single_cycle();
+    }
+  }else{
+    while(1){
+      single_cycle();
+    }
+  }
+}
+
 void reset(const char *path){
   if(path != NULL)
     load_img(path);
@@ -36,8 +50,7 @@ int main(int argc,char**argv) {
     reset(argv[1]);
   else reset(NULL);
   while(1) {
-    nvboard_update();
-    single_cycle();
+    
   }
   printf("end!!!\n");
   return 1;
