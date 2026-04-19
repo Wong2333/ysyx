@@ -1,4 +1,4 @@
-module PCBlockBox(
+module PCBlackBox(
     input clock,
     input reset,
     input [31:0] pc_next,
