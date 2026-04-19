@@ -19,7 +19,7 @@ class PCBlackBox extends ExtModule{
         val pc_we = Input(Bool())
         val pc = Output(UInt(32.W))
     })
-    addResource("/PCBlockBox.v")
+    addResource("/PCBlackBox.v")
 }
 
 class IFU extends Module{
