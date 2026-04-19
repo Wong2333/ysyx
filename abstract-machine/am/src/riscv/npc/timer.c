@@ -1,6 +1,6 @@
 #include <am.h>
 #include <npc.h>
-
+#include <riscv.h>
 static uint64_t boot_time;
 void __am_timer_init() {
   boot_time = inl(RTC_ADDR+4);
