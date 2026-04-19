@@ -52,12 +52,10 @@ DESIGN = top
 # 指定 RTL 文件（可以使用通配符，也可以显式列出）
 RTL_FILES = $(wildcard vsrc/*.v)
 
-# (可选) 如果你有自己的约束文件
+# (可选) 如果有自己的约束文件
 # SDC_FILE = ./constraint.sdc
 
 # (可选) 指定不同的时钟频率
 CLK_FREQ_MHZ = 500
 
-# --- 引用公共工具链 ---
-# 注意：这里需要写绝对路径或者相对于你的固定路径
 include /home/wjm/yosys-sta/Makefile.common

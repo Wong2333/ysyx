@@ -1,9 +1,51 @@
+TOPNAME = Top
+NXDC_FILES = constr/top.nxdc
+INC_PATH ?= $(NPC_HOME)/csrc/include
+
+VERILATOR = verilator
+VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
+				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
+
 BUILD_DIR = ./build
+OBJ_DIR = $(BUILD_DIR)/obj_dir
+BIN = $(BUILD_DIR)/$(TOPNAME)
+Top = $(BUILD_DIR)/$(TOPNAME).sv
+
+default: bin
+
+# constraint file
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+# project source
+VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+CSRCS += $(SRC_AUTO_BIND)
+CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
+RESOURCES = $(shell find $(abspath ./resources) -name "*.v")
+# rules for NVBoard
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+# rules for verilator
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+IMG=
+bin: 
+	make verilog
+	make $(BIN)
+$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+	@rm -rf $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_CFLAGS) \
+		--top-module $(TOPNAME) $^ \
+		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
 test:
 	mill -i test
 
-verilog:
+verilog: $(Top)
+$(Top): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
@@ -26,10 +68,23 @@ idea:
 clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: test verilog help reformat checkformat clean
+.PHONY: bin test verilog help reformat checkformat clean
 
-sim:
+sim: default
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by yourself."
+	$(BUILD_DIR)/$(TOPNAME) $(IMG)
 
 -include ../Makefile
+
+DESIGN = top
+
+# 指定 RTL 文件（可以使用通配符，也可以显式列出）
+RTL_FILES = $(wildcard build/*.sv)
+
+# (可选) 如果有自己的约束文件
+# SDC_FILE = ./constraint.sdc
+
+# (可选) 指定不同的时钟频率
+CLK_FREQ_MHZ = 500
+
+include /home/wjm/yosys-sta/Makefile.common
