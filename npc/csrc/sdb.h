@@ -12,6 +12,8 @@ bool add_wp(char *expr_str);
 bool remove_wp(uint32_t no);
 bool check_wp();
 void info_wp();
+void init_regex();
+void init_wp_pool();
 extern "C" int pmem_read(int addr);
 extern "C" void pmem_write(int addr, int data, char mask);
 uint32_t read_rf_reg(int addr);

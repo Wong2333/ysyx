@@ -7,6 +7,7 @@ struct timespec start, end;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
 void load_img(const char* path);
+extern "C" void init_sdb();
 
 static void single_cycle() {
   top.clock = ~top.clock; 
@@ -29,6 +30,7 @@ void cpu_exec(int n){
 }
 
 void reset(const char *path){
+  init_sdb();
   if(path != NULL)
     load_img(path);
   // 1. 开始计时 (获取当前进程的 CPU 时钟)
