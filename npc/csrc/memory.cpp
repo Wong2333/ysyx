@@ -63,13 +63,13 @@ extern "C" int pmem_read(int addr) {
         cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000ULL 
                 + (end.tv_nsec - start.tv_nsec) / 1000ULL;
         printf("cpu_time_us: %llu\n",cpu_time_us);
-        return cpu_time_us;
+        return (uint32_t)cpu_time_us;
     }else if(addr == RTC_ADDR + 4){
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
         // 3. 计算纳秒差值
         cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000ULL 
                 + (end.tv_nsec - start.tv_nsec) / 1000ULL;
-        return cpu_time_us >> 32;
+        return (uint32_t)(cpu_time_us >> 32);
     }
 
     return mem[raddr >> 2]; 
