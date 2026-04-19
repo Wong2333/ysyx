@@ -17,7 +17,12 @@ void reset(const char *path){
   if(path != NULL)
     load_img(path);
   top.clock = 0;
-  printf("pc init = %x\n",top.io_pc);
+  top.reset = 1;
+  top.eval();
+  top.clock = 1;
+  top.eval();
+  top.reset = 0;
+  top.clock = 0;
   top.eval();
 }
 

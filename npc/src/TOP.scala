@@ -21,11 +21,9 @@ class Top extends Module{
     io.pc := IFU_u.io.pc
     io.inst := IFU_u.io.inst
 
-    IFU_u.io.rst := io.rst
     IFU_u.io.pc_next := WBU_u.io.pc_next
     IFU_u.io.pc_we := IDU_u.io.pc_we
 
-    IDU_u.io.rst := io.rst
     IDU_u.io.pc := IFU_u.io.pc
     IDU_u.io.inst := IFU_u.io.inst
     IDU_u.io.reg_rdata1 := RFS_u.io.rdata1
