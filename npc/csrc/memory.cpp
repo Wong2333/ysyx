@@ -58,14 +58,12 @@ extern "C" int pmem_read(int addr) {
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
     if(addr == RTC_ADDR){
-        printf("RTC_ADDR\n");
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
         // 3. 计算纳秒差值
         cpu_time_ns = (end.tv_sec - start.tv_sec) * 1000000ULL 
                 + (end.tv_nsec - start.tv_nsec) / 1000ULL;
         return cpu_time_ns;
     }else if(addr == RTC_ADDR + 4){
-        printf("RTC_ADDR + 4\n");
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
         // 3. 计算纳秒差值
         cpu_time_ns = (end.tv_sec - start.tv_sec) * 1000000ULL 
