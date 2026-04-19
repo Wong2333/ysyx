@@ -29,15 +29,15 @@ class IFU extends Module{
         val pc = Output(UInt(32.W))
         val inst = Output(UInt(32.W))
     })
-    val PC = Module(new PCBlackBox())
-    PC.io.clock := clock
-    PC.io.reset := reset
-    PC.io.pc_next := io.pc_next
-    PC.io.pc_we := io.pc_we
-    io.pc := PC.io.pc
+    val PC_reg = Module(new PCBlackBox())
+    PC_reg.io.clock := clock
+    PC_reg.io.reset := reset
+    PC_reg.io.pc_next := io.pc_next
+    PC_reg.io.pc_we := io.pc_we
+    io.pc := PC_reg.io.pc
 
     val pmem_read_inst = Module(new PmemReadBlackBox)
-    pmem_read_inst.io.raddr := PC.io.pc
+    pmem_read_inst.io.raddr := PC_reg.io.pc
 
     io.inst := pmem_read_inst.io.rdata
     
