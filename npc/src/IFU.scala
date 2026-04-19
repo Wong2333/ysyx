@@ -13,7 +13,6 @@ class PmemReadBlackBox extends ExtModule{
 
 class IFU extends Module{
     val io = IO(new Bundle {
-        val rst = Input(Bool())
         val pc_next = Input(UInt(32.W))
         val pc_we = Input(Bool())
         val pc = Output(UInt(32.W))
@@ -23,16 +22,15 @@ class IFU extends Module{
     val pmem_read_inst = Module(new PmemReadBlackBox)
     io.pc := PC
     pmem_read_inst.io.raddr := PC
-    
-    when(io.rst){
-        PC := "h80000000".U 
-    }.otherwise{
-        when(io.pc_we){
-            PC := io.pc_next
-        }.otherwise{
-            printf(p"pc = ${io.pc}\n")
-            PC := PC + 4.U
-        }
-    }
+
     io.inst := pmem_read_inst.io.rdata
+    when(reset.asBool){
+        io.inst := 0.U
+    }.elsewhen(io.pc_we){
+        PC := io.pc_next
+    }.otherwise{
+        PC := PC + 4.U
+    }
+    
+
 }

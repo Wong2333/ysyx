@@ -24,7 +24,6 @@ class InvalidInstructionBlackBox extends ExtModule{
 
 class IDU extends Module{
     val io = IO(new Bundle {
-        val rst = Input(Bool())
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
         val reg_rdata1 = Input(UInt(32.W))
@@ -52,9 +51,6 @@ class IDU extends Module{
     val trap = RegInit(false.B)
     val invalid = WireDefault(false.B)
 
-    when(io.rst){
-        trap := false.B
-    }
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.trap := trap
     
@@ -94,7 +90,11 @@ class IDU extends Module{
     io.mem_wen := false.B;
     io.mem_valid := false.B;
     invalid := true.B
-    switch(opcode){
+
+    when(reset.asBool){
+        invalid := false.B
+    }.otherwise{
+        switch(opcode){
         is("b0010011".U){
             when(funct3 === "b000".U){// addi
             
@@ -202,6 +202,7 @@ class IDU extends Module{
                 invalid := false.B
                 
             }
+        }
         }
     }
 }
