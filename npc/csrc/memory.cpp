@@ -1,11 +1,16 @@
+#define _POSIX_C_SOURCE 199309L
 #include <svdpi.h>
 #include <VTop__Dpi.h>
 #include <cstdint> // 引入 uint32_t, uint8_t 等标准类型
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <time.h>
+#include <mmio.h>
 // 假设内存大小为 4MB (1M * 4Bytes)
+
+extern struct timespec start, end;
+
 
 uint32_t img[1024*1024] = {
   0x00c00593, // addi a1, zero, 12
@@ -49,18 +54,36 @@ void load_img(const char* path){
 }
 
 extern "C" int pmem_read(int addr) {
+    long long cpu_time_ns;
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
+    if(addr == RTC_ADDR){
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+        // 3. 计算纳秒差值
+        cpu_time_ns = (end.tv_sec - start.tv_sec) * 1000000000LL 
+                + (end.tv_nsec - start.tv_nsec);
+        return cpu_time_ns;
+    }else if(addr == RTC_ADDR + 4){
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+        // 3. 计算纳秒差值
+        cpu_time_ns = (end.tv_sec - start.tv_sec) * 1000000000LL 
+                + (end.tv_nsec - start.tv_nsec);
+        return cpu_time_ns >> 32;
+    }
+
     return mem[raddr >> 2]; 
 }
 
 extern "C" void pmem_write(int addr, int data, char mask) {
     uint32_t waddr = (uint32_t)addr;
     uint32_t wdata = (uint32_t)data;
-
     uint8_t wmask = (uint8_t)mask & 0xF;
     uint8_t *pmem_byte = (uint8_t *)mem;
     waddr = waddr & (~0x3);
+    if(addr == SERIAL_PORT){
+        putchar((char)data);
+        return;
+    }
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
@@ -78,3 +101,10 @@ extern "C" void pmem_write(int addr, int data, char mask) {
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
 }
+
+// void is_mmio(uint32_t addr){
+
+// }
+// void mmio_write(uint32_t addr,uint32_t data,size_t len){
+    
+// }
