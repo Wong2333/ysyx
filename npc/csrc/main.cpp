@@ -18,7 +18,7 @@ void reset(const char *path){
   if(path != NULL)
     load_img(path);
   // 1. 开始计时 (获取当前进程的 CPU 时钟)
-  // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
   top.clock = 0;
   top.reset = 1;
   top.eval();
@@ -35,9 +35,10 @@ int main(int argc,char**argv) {
   if(argc >= 2)
     reset(argv[1]);
   else reset(NULL);
-  int n = 8000;
-  while(n-- >0) {
+  while(1) {
     nvboard_update();
     single_cycle();
   }
+  printf("end!!!\n");
+  return 1;
 }
