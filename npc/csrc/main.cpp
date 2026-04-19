@@ -42,7 +42,7 @@ void reset(const char *path){
   top.clock = 0;
   top.eval();
 }
-
+void sdb_mainloop();
 int main(int argc,char**argv) {
   nvboard_bind_all_pins(&top);
   nvboard_init(); 
@@ -50,7 +50,7 @@ int main(int argc,char**argv) {
     reset(argv[1]);
   else reset(NULL);
   while(1) {
-    
+    sdb_mainloop();
   }
   printf("end!!!\n");
   return 1;
