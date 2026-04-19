@@ -29,7 +29,7 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+CXXFLAGS += $(INCFLAGS) -lreadline -DTOP_NAME="\"V$(TOPNAME)\""
 IMG=
 bin: 
 	make verilog
