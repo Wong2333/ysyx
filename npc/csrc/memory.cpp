@@ -1,7 +1,6 @@
-#define _POSIX_C_SOURCE 199309L
 #include <svdpi.h>
 #include <VTop__Dpi.h>
-#include <cstdint> // 引入 uint32_t, uint8_t 等标准类型
+#include <stdint.h> // 引入 uint32_t, uint8_t 等标准类型
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +61,6 @@ extern "C" int pmem_read(int addr) {
         // 3. 计算纳秒差值
         cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
                 + (end.tv_nsec - start.tv_nsec) / 1000;
-        // printf("cpu_time_us: %llu\n",cpu_time_us);
         return (uint32_t)cpu_time_us; 
     }else if(addr == RTC_ADDR + 4){
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
@@ -102,10 +100,7 @@ extern "C" void pmem_write(int addr, int data, char mask) {
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
 }
-
-// void is_mmio(uint32_t addr){
-
-// }
-// void mmio_write(uint32_t addr,uint32_t data,size_t len){
-    
-// }
+uint32_t read_pc_reg();
+extern "C" void printCurrentInst(){
+    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
+}
