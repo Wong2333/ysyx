@@ -12,7 +12,8 @@ OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 Top = $(BUILD_DIR)/$(TOPNAME).sv
 
-default: bin
+default: 
+	make bin
 
 # constraint file
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
@@ -73,7 +74,7 @@ clean:
 .PHONY: bin test verilog help reformat checkformat clean
 
 sim: 
-	make
+	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(IMG)
 
