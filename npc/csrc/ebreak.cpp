@@ -67,7 +67,6 @@ void isa_reg_display(){
 }
 // DPI-C 函数实现
 void ebreak() {
-    printf("eeeeeeeeeeeeeeeeeeeeee\n");
     uint32_t status = read_rf_reg(10);
     if(status == 0){
         printf("HIT GOOD TRAP\n");

@@ -122,15 +122,11 @@ class IDU extends Module{
             }
         }
         is("b1110011".U){
-            printf(p"ebreak0\n");
             when(funct3 === "b000".U){//ebreak
-            printf(p"ebreak1\n");
                 when(immI === 1.U 
                 && rs1_inst === 0.U 
                 && rd === 0.U
                 ){
-                    printf(p"ebreak2\n");
-                    
                     invalid := false.B
                     trap := true.B
                 }

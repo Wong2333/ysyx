@@ -36,11 +36,8 @@ void cpu_exec(int n){
         }
         printCurrentInst();
     }else{
-        uint32_t cnt = 0;
         while(1){
             single_cycle();
-            cnt++;
-            printf("cycle: %u\n",cnt);
             if(STATE == STOP) break;
         }
     }
