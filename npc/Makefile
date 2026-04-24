@@ -95,7 +95,13 @@ include /home/wjm/yosys-sta/Makefile.common
 
 
 $(KCONFIG_INCLUDE): .config
-	python scripts/kconfig.py Kconfig .config $(KCONFIG_INCLUDE) log.txt .config
+	python scripts/kconfig.py \
+		--kconfig-file Kconfig \
+		--config-out .config \
+		--header-out csrc/include/autoconfig.h \
+		--kconfig-list-out log.txt \
+		--configs-in .config \
+		--verilog-header build/config.svh
 .config:
 	menuconfig
 menuconfig:

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <mmio.h>
+#include <autoconfig.h>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
@@ -46,7 +47,7 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+0x80000000,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx+CONFIG_START_ADDR,1,1024,fp)) > 0){
         idx += len;
     }
     fclose(fp);

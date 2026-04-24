@@ -25,6 +25,7 @@ static void single_cycle() {
     STATE = STOP;
   }
 }
+extern uint32_t *mem;
 extern "C" void printCurrentInst();
 void cpu_exec(int n){
     STATE = RUNNING;
