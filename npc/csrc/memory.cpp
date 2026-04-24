@@ -100,10 +100,7 @@ extern "C" void pmem_write(int addr, int data, char mask) {
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
 }
-
-// void is_mmio(uint32_t addr){
-
-// }
-// void mmio_write(uint32_t addr,uint32_t data,size_t len){
-    
-// }
+uint32_t read_pc_reg();
+extern "C" void printCurrentInst(){
+    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
+}

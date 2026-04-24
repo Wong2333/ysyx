@@ -1,6 +1,7 @@
 TOPNAME = Top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
+KCONFIG_INCLUDE =autoconfig.h
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
@@ -35,10 +36,10 @@ IMG=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) $(KCONFIG_INCLUDE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $^ \
+		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
@@ -89,3 +90,11 @@ RTL_FILES = $(wildcard build/*.sv)
 CLK_FREQ_MHZ = 500
 
 include /home/wjm/yosys-sta/Makefile.common
+
+
+$(KCONFIG_INCLUDE):.config
+	python scripts/kconfig.py Kconfig .config csrc/include/$(KCONFIG_INCLUDE) log.txt .config
+.config:
+	menuconfig
+menuconfig:
+	menuconfig
