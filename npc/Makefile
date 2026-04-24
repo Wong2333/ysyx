@@ -2,6 +2,7 @@ TOPNAME = Top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
 KCONFIG_INCLUDE = csrc/include/autoconfig.h
+KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
@@ -37,7 +38,7 @@ IMG=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) $(KCONFIG_INCLUDE)
+$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
@@ -100,8 +101,15 @@ $(KCONFIG_INCLUDE): .config
 		--config-out .config \
 		--header-out csrc/include/autoconfig.h \
 		--kconfig-list-out log.txt \
+		--configs-in .config
+
+$(KCONFIG_VERILOG_INCLUDE): .config
+	python scripts/kconfig.py \
+		--kconfig-file Kconfig \
+		--config-out .config \
+		--kconfig-list-out log.txt \
 		--configs-in .config \
-		--verilog-header build/config.svh
+		--verilog-header resources/include/autoconfig.svh
 .config:
 	menuconfig
 menuconfig:
