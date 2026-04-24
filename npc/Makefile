@@ -43,8 +43,8 @@ $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
-		-I resources/include
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
+		-Iresources/include
 
 test:
 	mill -i test
