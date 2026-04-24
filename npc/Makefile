@@ -1,7 +1,7 @@
 TOPNAME = Top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
-KCONFIG_INCLUDE =autoconfig.h
+KCONFIG_INCLUDE = csrc/include/autoconfig.h
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
@@ -94,8 +94,8 @@ CLK_FREQ_MHZ = 500
 include /home/wjm/yosys-sta/Makefile.common
 
 
-$(KCONFIG_INCLUDE):.config
-	python scripts/kconfig.py Kconfig .config csrc/include/$(KCONFIG_INCLUDE) log.txt .config
+$(KCONFIG_INCLUDE): .config
+	python scripts/kconfig.py Kconfig .config $(KCONFIG_INCLUDE) log.txt .config
 .config:
 	menuconfig
 menuconfig:
