@@ -38,7 +38,7 @@ IMG=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE)
+$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
@@ -96,17 +96,21 @@ CLK_FREQ_MHZ = 500
 include /home/wjm/yosys-sta/Makefile.common
 
 
-$(KCONFIG_INCLUDE)$(KCONFIG_VERILOG_INCLUDE): .config
-	mkdir -p $(dir$(KCONFIG_INCLUDE))
-	mkdir -p $(dir$(KCONFIG_VERILOG_INCLUDE))
+$(KCONFIG_INCLUDE): .config
 	python scripts/kconfig.py \
 		--kconfig-file Kconfig \
 		--config-out .config \
-		--header-out $(KCONFIG_INCLUDE) \
-		--verilog-header $(KCONFIG_VERILOG_INCLUDE) \
+		--header-out csrc/include/autoconfig.h \
 		--kconfig-list-out log.txt \
 		--configs-in .config
-		
+
+$(KCONFIG_VERILOG_INCLUDE): .config
+	python scripts/kconfig.py \
+		--kconfig-file Kconfig \
+		--config-out .config \
+		--kconfig-list-out log.txt \
+		--configs-in .config \
+		--verilog-header resources/include/autoconfig.svh
 .config:
 	menuconfig
 menuconfig:
