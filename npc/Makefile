@@ -72,7 +72,8 @@ clean:
 
 .PHONY: bin test verilog help reformat checkformat clean
 
-sim: default
+sim: 
+	make
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(IMG)
 
