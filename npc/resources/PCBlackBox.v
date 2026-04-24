@@ -5,7 +5,7 @@ module PCBlackBox(
     input pc_we,
     output [31:0]pc
 );
-    `include "include/config.svh"
+    `include "autoconfig.svh"
     reg [31:0] PC;
     assign pc = PC;
     always@(posedge clock) begin

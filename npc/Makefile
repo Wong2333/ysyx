@@ -44,6 +44,7 @@ $(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) $(
 		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+		-I resources/include
 
 test:
 	mill -i test
@@ -95,21 +96,17 @@ CLK_FREQ_MHZ = 500
 include /home/wjm/yosys-sta/Makefile.common
 
 
-$(KCONFIG_INCLUDE): .config
+$(KCONFIG_INCLUDE)$(KCONFIG_VERILOG_INCLUDE): .config
+	mkdir -p $(dir$(KCONFIG_INCLUDE))
+	mkdir -p $(dir$(KCONFIG_VERILOG_INCLUDE))
 	python scripts/kconfig.py \
 		--kconfig-file Kconfig \
 		--config-out .config \
-		--header-out csrc/include/autoconfig.h \
+		--header-out $(KCONFIG_INCLUDE) \
+		--verilog-header $(KCONFIG_VERILOG_INCLUDE) \
 		--kconfig-list-out log.txt \
 		--configs-in .config
-
-$(KCONFIG_VERILOG_INCLUDE): .config
-	python scripts/kconfig.py \
-		--kconfig-file Kconfig \
-		--config-out .config \
-		--kconfig-list-out log.txt \
-		--configs-in .config \
-		--verilog-header resources/include/autoconfig.svh
+		
 .config:
 	menuconfig
 menuconfig:
