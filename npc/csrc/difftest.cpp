@@ -48,8 +48,10 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
 
   void *handle = dlopen(ref_so_file, RTLD_LAZY);
   if (!handle) {
-    printf("Difftest: Failed to load '%s': %s\n", ref_so_file, dlerror());
-    assert(0);
+    printf("Difftest: Cannot open '%s': %s\n", ref_so_file, dlerror());
+    printf("Difftest: DISABLED\n");
+    fflush(stdout);
+    return;
   }
 
   ref_difftest_memcpy = (ref_difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
@@ -67,7 +69,8 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_init_t ref_difftest_init = (ref_difftest_init_t)dlsym(handle, "difftest_init");
   assert(ref_difftest_init);
 
-  printf("Differential testing: ON\n");
+  printf("Differential testing: ON (%s)\n", ref_so_file);
+  fflush(stdout);
 
   /* Initialize REF simulator */
   ref_difftest_init(0);
@@ -85,6 +88,8 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
 
   difftest_on = true;
+  printf("Difftest: init done, pc = 0x%08x\n", dut_state.pc);
+  fflush(stdout);
 }
 
 extern "C" void check_difftest(uint32_t pc, uint32_t npc) {
@@ -121,6 +126,7 @@ extern "C" void check_difftest(uint32_t pc, uint32_t npc) {
 
   if (!ok) {
     printf("Difftest: FAIL at pc = 0x%08x\n", pc);
+    fflush(stdout);
     assert(0);
   }
 }

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <time.h>
 #include <nvboard.h>
 #include <VTop.h>
@@ -84,10 +85,18 @@ void init_engine(int argc,char**argv){
     else init_mem(NULL);
     init_cpu();
 #ifdef CONFIG_ENABLE_DIFFTEST
-    if (argc >= 3) {
-        init_difftest(argv[2], img_size);
-    } else {
-        printf("No ref SO provided, difftest disabled\n");
+    {
+        const char *ref_so = NULL;
+        if (argc >= 3) {
+            ref_so = argv[2];
+        }
+        if (ref_so == NULL) {
+            ref_so = getenv("NEMU_REF_SO");
+        }
+        if (ref_so == NULL) {
+            ref_so = "../nemu/build/riscv32-nemu-interpreter-so";
+        }
+        init_difftest(ref_so, img_size);
     }
 #endif
     STATE = STOP;
