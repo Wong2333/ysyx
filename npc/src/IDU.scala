@@ -102,7 +102,7 @@ class IDU extends Module{
                 io.src1 := io.reg_rdata1;
                 io.ALU_ctl :="b0001".U;
                 io.reg_waddr := rd;
-                io.reg_we := false.B;
+                io.reg_we := true.B;
                 io.WB_sel := "b001".U;
                 invalid := false.B
             }
