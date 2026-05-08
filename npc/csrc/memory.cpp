@@ -30,6 +30,7 @@ uint32_t img[1024*1024] = {
   0x00000000,
   0x00000000
 };
+uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
     mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
@@ -50,6 +51,7 @@ void load_img(const char* path){
     while((len = fread(pmem_byte+idx+CONFIG_START_ADDR,1,1024,fp)) > 0){
         idx += len;
     }
+    img_size = idx;
     fclose(fp);
 }
 

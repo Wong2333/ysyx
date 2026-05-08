@@ -2,6 +2,7 @@
 #include <nvboard.h>
 #include <VTop.h>
 // #define DEBUG
+#include <difftest.h>
 static TOP_NAME top;
 struct timespec start, end;
 bool check_wp();
@@ -26,19 +27,25 @@ static void single_cycle() {
   }
 }
 extern uint32_t *mem;
+extern uint32_t img_size;
 extern "C" void printCurrentInst();
+uint32_t read_pc_reg();
 void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
+            uint32_t current_pc = read_pc_reg();
             single_cycle();
             if(STATE == STOP) break;
+            check_difftest(current_pc, read_pc_reg());
         }
         printCurrentInst();
     }else{
         while(1){
+            uint32_t current_pc = read_pc_reg();
             single_cycle();
             if(STATE == STOP) break;
+            check_difftest(current_pc, read_pc_reg());
         }
     }
 }
@@ -76,6 +83,13 @@ void init_engine(int argc,char**argv){
         init_mem(argv[1]);
     else init_mem(NULL);
     init_cpu();
+#ifdef CONFIG_ENABLE_DIFFTEST
+    if (argc >= 3) {
+        init_difftest(argv[2], img_size);
+    } else {
+        printf("No ref SO provided, difftest disabled\n");
+    }
+#endif
     STATE = STOP;
 }
 
