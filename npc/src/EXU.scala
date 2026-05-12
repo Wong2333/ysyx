@@ -8,7 +8,7 @@ object ALU_CTL extends ChiselEnum{
     val src1AddImm = Value
     val src1AddSrc2 = Value
     val src1ShiftLeftLogicalImm = Value
-    val src1Subsrc2 = Value
+    val src1SubSrc2 = Value
     val ukn = Value("b1111".U)
 }
 
