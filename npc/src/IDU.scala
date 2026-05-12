@@ -158,6 +158,15 @@ class IDU extends Module{
             io.WB_sel := WB_CTL.Imm2Reg;
             invalid := false.B
         }
+        is("b0010111".U){//auipc
+            io.imm := inst.immU
+            io.reg_waddr := inst.rd
+            io.reg_we := true.B
+            io.src1 := io.pc
+            io.ALU_ctl := ALU_CTL.src1AddImm
+            io.WB_sel := WB_CTL.ALU2Reg
+            invalid := false.B
+        }
         is("b0000011".U){
             when(inst.funct3 === "b010".U){//lw
             
