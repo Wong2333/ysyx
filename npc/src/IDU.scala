@@ -2,70 +2,9 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import scala.runtime.BoxedUnit
-
-object InstType{
-    class R extends Bundle{
-        val opcode = UInt(7.W)
-        val rd = UInt(5.W)
-        val funct3 = UInt(3.W)
-        val rs1 = UInt(5.W)
-        val rs2 = UInt(5.W)
-        val funct7 = UInt(7.W)
-    }
-    class I extends Bundle{
-        val opcode = UInt(7.W)
-        val rd = UInt(5.W)
-        val funct3 = UInt(3.W)
-        val rs1 = UInt(5.W)
-        val imm = UInt(12.W)
-        def getImm: UInt = {
-            Cat(Fill(20,imm(11)),imm)
-        }
-    }
-    class S extends Bundle{
-        val opcode = UInt(7.W)
-        val imm1 = UInt(5.W)
-        val funct3 = UInt(3.W)
-        val rs1 = UInt(5.W)
-        val rs2 = UInt(5.W)
-        val imm2 = UInt(7.W)
-        def getImm: UInt = {
-            val high = Cat(Fill(20,imm2(6)),imm2)
-            Cat(high,imm1)
-        }
-    }
-    class B extends Bundle{
-        val opcode = UInt(7.W)
-        val imm1 = UInt(5.W)
-        val funct3 = UInt(3.W)
-        val rs1 = UInt(5.W)
-        val rs2 = UInt(5.W)
-        val imm2 = UInt(7.W)
-        def getImm: UInt = {
-            val sign = imm2(6)
-            Cat(Fill(19, sign), sign, imm1(0), imm2(5,0), imm1(4,1), 0.U(1.W))
-        }
-    }
-    class U extends Bundle{
-        val opcode = UInt(7.W)
-        val rd = UInt(5.W)
-        val imm = UInt(20.W)
-        def getImm: UInt = {
-            Cat(imm,0.U(12.W))
-        }
-    }
-    class J extends Bundle{
-        val opcode = UInt(7.W)
-        val rd = UInt(5.W)
-        val imm = UInt(20.W)
-
-        def getImm: UInt = {
-            val sign = imm(19)
-            Cat(Fill(11, sign), sign, imm(7,0), imm(8), imm(18,9), 0.U(1.W))
-        }
-    }
-}
+import npc.ALU_CTL
+import npc.WB_CTL
+import npc.PC_CTL
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
@@ -82,6 +21,7 @@ class InstDecode extends Bundle{
     def immJ = Cat(Fill(11, inst(31)), inst(31), inst(19,12), inst(20), inst(30,21), 0.U(1.W))
     
 }
+
  
 class EbreakBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
@@ -112,13 +52,13 @@ class IDU extends Module{
         val imm = Output(UInt(32.W))
         val src1 = Output(UInt(32.W))
         val src2 = Output(UInt(32.W))
-        val ALU_ctl = Output(UInt(4.W))
+        val ALU_ctl = Output(ALU_CTL())
 
-        val WB_sel = Output(UInt(3.W))
+        val WB_sel = Output(WB_CTL())
         val reg_waddr = Output(UInt(32.W))
         val reg_we = Output(Bool())
 
-        val pc_sel = Output(UInt(2.W))
+        val pc_sel = Output(PC_CTL())
         val pc_we = Output(Bool())
 
         val mem_ctl = Output(UInt(4.W))
@@ -138,23 +78,6 @@ class IDU extends Module{
     invalid_instruction.io.invalid := invalid
 
     val inst = io.inst.asTypeOf(new InstDecode)
-    // val opcode = WireDefault(io.inst(6,0))
-    // val instR = io.inst.asTypeOf(new InstType.R)
-    // val instI = io.inst.asTypeOf(new InstType.I)
-    // val instS = io.inst.asTypeOf(new InstType.S)
-    // val instB = io.inst.asTypeOf(new InstType.B)
-    // val instU = io.inst.asTypeOf(new InstType.U)
-    // val instJ = io.inst.asTypeOf(new InstType.J)    
-
-    // val rd = WireDefault(io.inst(11,7))
-    // val funct3 = WireDefault(io.inst(14,12))
-    // val funct7 = WireDefault(io.inst(31,25))
-    // val immI = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,20)))
-    // val immU = WireDefault(Cat(io.inst(31,12),0.U(12.W)))
-    // val immS = WireDefault(Cat(Fill(20,io.inst(31)),io.inst(31,25),io.inst(11,7)))
-
-    // val rs1_inst = WireDefault(io.inst(19,15))
-    // val rs2_inst = WireDefault(io.inst(24,20))
 
     io.rs1 := io.inst(19,15);
     io.rs2 := io.inst(24,20);
@@ -162,13 +85,13 @@ class IDU extends Module{
     io.imm := 0.U(32.W);
     io.src1 := 0.U(32.W);
     io.src2 := 0.U(32.W);
-    io.ALU_ctl := 0.U(4.W);
+    io.ALU_ctl := ALU_CTL.none;
 
     io.reg_waddr := 0.U(5.W);
     io.reg_we := false.B;
-    io.WB_sel := 0.U(3.W);
+    io.WB_sel := WB_CTL.none;
 
-    io.pc_sel := 0.U(2.W);
+    io.pc_sel := PC_CTL.none;
     io.pc_we := false.B;
 
     io.mem_ctl :=0.U(4.W);
@@ -182,13 +105,12 @@ class IDU extends Module{
         switch(inst.opcode){
         is("b0010011".U){
             when(inst.funct3 === "b000".U){// addi
-            
                 io.imm := inst.immI;
                 io.src1 := io.reg_rdata1;
-                io.ALU_ctl :="b0001".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
-                io.WB_sel := "b001".U;
+                io.WB_sel := WB_CTL.ALU2Reg;
                 invalid := false.B
             }
         }
@@ -196,12 +118,12 @@ class IDU extends Module{
             when(inst.funct3 === "b000".U){//jalr
                 io.imm := inst.immI;
                 io.src1 := io.reg_rdata1;
-                io.ALU_ctl := "b0001".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
                 io.pc_we := true.B;
-                io.WB_sel := "b011".U;
-                io.pc_sel := "b01".U;
+                io.WB_sel := WB_CTL.PCNext2Reg;
+                io.pc_sel := PC_CTL.ALU2PC;
                 invalid := false.B
             }
         }
@@ -221,10 +143,10 @@ class IDU extends Module{
             when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
-                io.ALU_ctl := "b0010".U;
+                io.ALU_ctl := ALU_CTL.src1AddSrc2;
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
-                io.WB_sel := 1.U(3.W);
+                io.WB_sel := WB_CTL.ALU2Reg;
                 invalid := false.B
             }
         }
@@ -233,7 +155,7 @@ class IDU extends Module{
             io.imm := inst.immU;
             io.reg_waddr := inst.rd;
             io.reg_we := true.B;
-            io.WB_sel := "b100".U;
+            io.WB_sel := WB_CTL.Imm2Reg;
             invalid := false.B
         }
         is("b0000011".U){
@@ -241,10 +163,10 @@ class IDU extends Module{
             
                 io.imm := inst.immI;
                 io.src1 := io.reg_rdata1;
-                io.ALU_ctl := "b0001".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
-                io.WB_sel := "b010".U;
+                io.WB_sel := WB_CTL.Mem2Reg;
                 io.mem_ctl := 1.U(4.W);
                 io.mem_valid := true.B;
                 invalid := false.B
@@ -254,8 +176,8 @@ class IDU extends Module{
                 io.src1 := io.reg_rdata1;
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
-                io.ALU_ctl := "b0001".U;
-                io.WB_sel := "b010".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
+                io.WB_sel := WB_CTL.Mem2Reg;
                 io.mem_ctl := "b0011".U;
                 io.mem_valid := true.B;
                 invalid := false.B
@@ -267,7 +189,7 @@ class IDU extends Module{
                 io.imm := inst.immS;
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
-                io.ALU_ctl := "b0001".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.mem_ctl := "b0100".U;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
@@ -278,7 +200,7 @@ class IDU extends Module{
                 io.imm := inst.immS;
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
-                io.ALU_ctl := "b0001".U;
+                io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.mem_ctl := "b0101".U;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
