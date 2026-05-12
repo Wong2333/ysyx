@@ -217,6 +217,16 @@ class IDU extends Module{
                 
             }
         }
+        is("b1101111".U){// jal
+            io.src1 := io.pc
+            io.imm := inst.immJ
+            io.ALU_ctl := ALU_CTL.src1AddImm
+            io.pc_we := true.B
+            io.pc_sel := PC_CTL.ALU2PC
+            io.WB_sel := WB_CTL.PCNext2Reg
+            io.reg_we := true.B
+            invalid := false.B
+        }
         }
     }
 }
