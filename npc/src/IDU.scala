@@ -158,7 +158,7 @@ class IDU extends Module{
             io.WB_sel := WB_CTL.Imm2Reg;
             invalid := false.B
         }
-        is("b0010111".U){//auipc
+        is("b0010111".U){// auipc
             io.imm := inst.immU
             io.reg_waddr := inst.rd
             io.reg_we := true.B
