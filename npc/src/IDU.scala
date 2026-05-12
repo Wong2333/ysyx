@@ -61,7 +61,7 @@ class IDU extends Module{
         val pc_sel = Output(PC_CTL())
         val pc_we = Output(Bool())
 
-        val mem_ctl = Output(UInt(4.W))
+        val mem_ctl = Output(MEM_CTL())
         val mem_wen = Output(Bool())
         val mem_valid = Output(Bool())
     })
@@ -94,7 +94,7 @@ class IDU extends Module{
     io.pc_sel := PC_CTL.none;
     io.pc_we := false.B;
 
-    io.mem_ctl :=0.U(4.W);
+    io.mem_ctl := MEM_CTL.none;
     io.mem_wen := false.B;
     io.mem_valid := false.B;
     invalid := true.B
@@ -167,7 +167,7 @@ class IDU extends Module{
                 io.reg_waddr := inst.rd;
                 io.reg_we := true.B;
                 io.WB_sel := WB_CTL.Mem2Reg;
-                io.mem_ctl := 1.U(4.W);
+                io.mem_ctl := MEM_CTL.Read4B;
                 io.mem_valid := true.B;
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b100".U){//lbu
@@ -178,7 +178,7 @@ class IDU extends Module{
                 io.reg_we := true.B;
                 io.ALU_ctl := ALU_CTL.src1AddImm;
                 io.WB_sel := WB_CTL.Mem2Reg;
-                io.mem_ctl := "b0011".U;
+                io.mem_ctl := MEM_CTL.Read1BU;
                 io.mem_valid := true.B;
                 invalid := false.B
             }
@@ -190,7 +190,7 @@ class IDU extends Module{
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
                 io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.mem_ctl := "b0100".U;
+                io.mem_ctl := MEM_CTL.Write4B;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B
@@ -201,7 +201,7 @@ class IDU extends Module{
                 io.src1 := io.reg_rdata1;
                 io.src2 := io.reg_rdata2;
                 io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.mem_ctl := "b0101".U;
+                io.mem_ctl := MEM_CTL.Write1B;
                 io.mem_valid := true.B;
                 io.mem_wen := true.B;
                 invalid := false.B

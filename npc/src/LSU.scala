@@ -4,6 +4,15 @@ import chisel3._
 import chisel3.util._
 import npc.PmemReadBlackBox
 
+object MEM_CTL extends ChiselEnum{
+    val none,
+    Read4B,
+    Read1B,
+    Read1BU,
+    Write4B,
+    Write1B = Value
+    val ukn = Value("b1111".U)
+}
 
 class PmemWriteBlackBox extends ExtModule {
     val io = FlatIO(new Bundle {
@@ -19,7 +28,7 @@ class LSU extends Module{
     val io = IO(new Bundle {
         val valid = Input(Bool())
         val wen = Input(Bool())
-        val mem_ctl = Input(UInt(4.W))
+        val mem_ctl = Input(MEM_CTL())
         val src1 = Input(UInt(32.W))
         val src2 = Input(UInt(32.W))
         val ALU_out = Input(UInt(32.W))
@@ -60,20 +69,20 @@ class LSU extends Module{
     }
     io.mem_out := 0.U
     switch(io.mem_ctl){
-        is(1.U){
+        is(MEM_CTL.Read4B){
             io.mem_out := rdata
         }
-        is(2.U){
+        is(MEM_CTL.Read1B){
             io.mem_out := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
         }
-        is(3.U){
+        is(MEM_CTL.Read1BU){
             io.mem_out := Cat(Fill(24,0.U),shifted_rdata(7, 0))
         }
-        is(4.U){
+        is(MEM_CTL.Write4B){
             mask := "b1111".U;
             wdata := io.src2;
         }
-        is(5.U){
+        is(MEM_CTL.Write1B){
             mask := 1.U << waddr(1,0)
             wdata := shifted_wdata
         }
