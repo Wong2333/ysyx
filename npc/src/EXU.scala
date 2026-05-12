@@ -7,6 +7,7 @@ object ALU_CTL extends ChiselEnum{
     val none = Value
     val src1AddImm = Value
     val src1AddSrc2 = Value
+    val src1ShiftLeftLogicalImm = Value
     val ukn = Value("b1111".U)
 }
 
@@ -26,6 +27,9 @@ class EXU extends Module{
         }
         is(ALU_CTL.src1AddSrc2){
             io.out := io.src1 + io.src2
+        }
+        is(ALU_CTL.src1ShiftLeftLogicalImm){
+            io.out := io.src1 << io.imm(4,0)
         }
     }
 }
