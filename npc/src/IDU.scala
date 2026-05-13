@@ -248,6 +248,7 @@ class IDU extends Module{
         is("b1101111".U){// jal
             io.src1 := io.pc
             io.imm := inst.immJ
+            io.reg_waddr := inst.rd
             io.ALU_ctl := ALU_CTL.src1AddImm
             io.pc_we := true.B
             io.pc_sel := PC_CTL.ALU2PC
