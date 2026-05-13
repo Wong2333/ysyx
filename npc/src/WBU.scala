@@ -31,6 +31,7 @@ class WBU extends Module{
     switch(io.WB_sel){
         is(WB_CTL.ALU2Reg){
             io.reg_wdata:=io.ALU_out
+            printf(cf"write back ALU out: ${io.ALU_out}\n")
         }
         is(WB_CTL.Mem2Reg){
             io.reg_wdata:=io.mem_rdata
