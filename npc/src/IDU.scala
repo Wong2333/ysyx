@@ -115,7 +115,7 @@ class IDU extends Module{
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U){// sltiu
-                io.imm := inst.immIU
+                io.imm := inst.immI
                 io.src1 := io.reg_rdata1
                 io.ALU_ctl := ALU_CTL.src1LessImmU
                 io.reg_waddr := inst.rd

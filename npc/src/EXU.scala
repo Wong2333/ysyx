@@ -33,5 +33,8 @@ class EXU extends Module{
         is(ALU_CTL.src1ShiftLeftLogicalImm){
             io.out := io.src1 << io.imm(4,0)
         }
+        is(ALU_CTL.src1LessImmU){
+            io.out := io.src1 < io.imm
+        }
     }
 }
