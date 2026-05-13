@@ -26,6 +26,7 @@ class EXU extends Module{
     switch(io.ALU_ctl){
         is(ALU_CTL.src1AddImm){
             io.out := io.src1 + io.imm
+            printf(cf"src1:${io.src1} imm:${io.imm}")
         }
         is(ALU_CTL.src1AddSrc2){
             io.out := io.src1 + io.src2
