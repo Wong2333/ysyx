@@ -37,7 +37,6 @@ class WBU extends Module{
         }
         is(WB_CTL.PCNext2Reg){
             io.reg_wdata:=io.pc+4.U
-            printf(cf"write back to reg, pc next: ${io.pc+4.U}\n")
         }
         is(WB_CTL.Imm2Reg){
             io.reg_wdata:=io.imm
@@ -47,7 +46,6 @@ class WBU extends Module{
     switch(io.pc_sel){
         is(PC_CTL.ALU2PC){
             io.pc_next:=io.ALU_out
-            printf(cf"write back to pc ALU out: ${io.ALU_out}\n")
         }
     }
 }
