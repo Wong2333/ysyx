@@ -198,12 +198,12 @@ class EXU extends Module{
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := MemReadData.rdata
-        printf(cf"waddr: ${in.DecodeBundle.rd} wdata: ${MemReadData.rdata}\n")
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
+        printf(cf"memwdata: ${RegReadPort.rdata1} memwaddr: $AluResult\n")
         MemPort.waddr := AluResult
         RegReadPort.raddr1 := in.DecodeBundle.rs2
         MemPort.wdata := RegReadPort.rdata1
-        printf(cf"memwdata: ${RegReadPort.rdata1} memwaddr: $AluResult\n")
+        
     }
     switch(in.EXU_CTL.Mem_Control){
         is(MemControl.lw){
