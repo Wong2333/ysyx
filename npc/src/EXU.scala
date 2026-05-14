@@ -201,7 +201,8 @@ class EXU extends Module{
         printf(cf"waddr: ${in.DecodeBundle.rd} wdata: ${MemReadData.rdata}\n")
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         MemPort.waddr := AluResult
-        MemPort.wdata := in.DecodeBundle.rs2
+        RegReadPort.raddr1 := in.DecodeBundle.rs2
+        MemPort.wdata := RegReadPort.rdata1
     }
     switch(in.EXU_CTL.Mem_Control){
         is(MemControl.lw){
