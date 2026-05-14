@@ -139,7 +139,7 @@ class EXU extends Module{
     switch(in.EXU_CTL.ALU_Control){
         is(ALUContorl.add){
             AluResult := src1 + src2
-            printf(cf"aluResult: $AluResult\n")
+            printf(cf"aluResult: $src1 + $src2\n")
         }
         is(ALUContorl.sub){
             AluResult := src1 - src2
