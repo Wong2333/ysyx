@@ -137,7 +137,7 @@ class EXU extends Module{
 
     switch(in.EXU_CTL.ALU_Control){
         is(ALUContorl.add){
-            printf(cf"src1:$src1 src2:$src2\n")
+            // printf(cf"src1:$src1 src2:$src2\n")
             AluResult := src1 + src2
         }
         is(ALUContorl.sub){
@@ -161,7 +161,7 @@ class EXU extends Module{
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
-        printf(cf"regWdata: $AluResult\n")
+        // printf(cf"regWdata: $AluResult\n")
     }
     
     switch(in.EXU_CTL.ALU_Jump){
@@ -198,6 +198,7 @@ class EXU extends Module{
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := MemReadData.rdata
+        printf(cf"waddr: ${in.DecodeBundle.rd} wdata: ${MemReadData.rdata}\n")
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         MemPort.waddr := AluResult
         MemPort.wdata := in.DecodeBundle.rs2
