@@ -168,7 +168,7 @@ class EXU extends Module{
         }
     }
 
-    val BranchCond = WireDefault(Bool())
+    val BranchCond = WireDefault(false.B)
     switch(in.EXU_CTL.Branch_Control){
         is(BranchControl.beq){
             BranchCond := in.DecodeBundle.rs1 === in.DecodeBundle.rs2
