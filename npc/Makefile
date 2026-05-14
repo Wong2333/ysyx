@@ -37,6 +37,7 @@ CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 IMG=
 DIFF_REF=
+ELF=
 bin: 
 	make verilog
 	make $(BIN)
@@ -80,7 +81,7 @@ clean:
 sim: 
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF))
+	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 -include ../Makefile
 
