@@ -185,9 +185,7 @@ class EXU extends Module{
     when(BranchCond){
         WriteBackPort.JumpOrBranch := true.B
         WriteBackPort.PCNext := AluResult
-        WriteBackPort.RegWaddr := in.DecodeBundle.rd
-        WriteBackPort.RegWrite := true.B
-        WriteBackPort.RegWdata := PCAddFour
+        WriteBackPort.RegWrite := false.B
     }
 
     MemPort := 0.U.asTypeOf(new MemPortBundle)
