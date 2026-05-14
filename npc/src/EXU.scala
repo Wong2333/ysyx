@@ -183,6 +183,7 @@ class EXU extends Module{
         }
     }
     when(BranchCond){
+        printf(cf"branch: $AluResult")
         WriteBackPort.JumpOrBranch := true.B
         WriteBackPort.PCNext := AluResult
         WriteBackPort.RegWrite := false.B
