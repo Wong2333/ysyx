@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <elf.h>
 #include <capstone/capstone.h>
+#include <autoconfig.h>
 #include "trace.h"
 
 /* ===================== Capstone (itrace) ===================== */
@@ -271,7 +272,8 @@ void trace_and_difftest(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 }
 
 /* ===================== Init ===================== */
-void init_trace(const char *trace_dir, const char *elf_file) {
+void init_trace(const char *elf_file) {
+  const char *trace_dir = CONFIG_TRACE_PATH[0] ? CONFIG_TRACE_PATH : NULL;
   printf("Trace init: dir=%s, elf=%s\n", trace_dir ? trace_dir : "NULL", elf_file ? elf_file : "NULL");
 
 #ifdef CONFIG_ENABLE_ITRACE

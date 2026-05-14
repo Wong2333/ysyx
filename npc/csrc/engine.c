@@ -90,7 +90,7 @@ void init_engine(int argc,char**argv){
     else init_mem(NULL);
     init_cpu();
     const char *elf_file = (argc >= 2) ? argv[1] : NULL;
-    init_trace(NULL, elf_file);
+    init_trace(elf_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
         const char *ref_so = NULL;
