@@ -10,6 +10,8 @@
 #include "trace.h"
 
 /* ===================== Capstone (itrace) ===================== */
+#ifdef CONFIG_ENABLE_ITRACE
+static FILE *itrace_fp = NULL;
 static void *cs_handle = NULL;
 static size_t (*cs_disasm_dl)(csh handle, const uint8_t *code,
     size_t code_size, uint64_t address, size_t count, cs_insn **insn) = NULL;
@@ -20,6 +22,7 @@ static bool disasm_ok = false;
 /* Ring buffer for last 32 instructions */
 static char iringbuf[32][128];
 static uint32_t ibuf_head = 0, ibuf_tail = 0;
+#endif /* CONFIG_ENABLE_ITRACE */
 
 /* ===================== Mtrace ===================== */
 static FILE *mtrace_fp = NULL;
@@ -47,6 +50,7 @@ static int ftrace_top = -1;
 #endif
 
 /* ===================== itrace init and disasm ===================== */
+#ifdef CONFIG_ENABLE_ITRACE
 static void init_disasm(void) {
   const char *cs_lib = "tools/capstone/repo/libcapstone.so.5";
 
@@ -106,6 +110,7 @@ void print_itrace(void) {
     h = (h + 1) % 32;
   }
 }
+#endif /* CONFIG_ENABLE_ITRACE */
 
 /* ===================== ELF parsing (ftrace) ===================== */
 #ifdef CONFIG_ENABLE_FTRACE
@@ -253,7 +258,7 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
 /* ===================== Main trace function (called from cpu_exec) ===================== */
 void trace_and_difftest(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 #ifdef CONFIG_ENABLE_ITRACE
-  static char logbuf[256];
+  if (!itrace_fp) return;
   char buf[128];
   uint8_t code[4] = {
     (uint8_t)(inst >> 0),
@@ -262,9 +267,12 @@ void trace_and_difftest(uint32_t pc, uint32_t inst, uint32_t dnpc) {
     (uint8_t)(inst >> 24)
   };
   disassemble(buf, sizeof(buf), pc, code, 4);
-  snprintf(logbuf, sizeof(logbuf), "0x%08x: %-8s %s", pc, buf, "");
-  push_itrace(logbuf);
-  puts(logbuf);
+  fprintf(itrace_fp, "0x%08x: 0x%08x\t%s\n", pc, inst, buf);
+  {
+    static char ringbuf_entry[128];
+    snprintf(ringbuf_entry, sizeof(ringbuf_entry), "0x%08x: 0x%08x\t%s", pc, inst, buf);
+    push_itrace(ringbuf_entry);
+  }
 #endif
 
   /* ftrace: always check (guarded inside record_ftrace) */
@@ -278,6 +286,16 @@ void init_trace(const char *elf_file) {
 
 #ifdef CONFIG_ENABLE_ITRACE
   init_disasm();
+  {
+    char path[4096];
+    if (trace_dir)
+      snprintf(path, sizeof(path), "%s/itrace.txt", trace_dir);
+    else
+      snprintf(path, sizeof(path), "itrace.txt");
+    itrace_fp = fopen(path, "w");
+    if (itrace_fp)
+      printf("ITrace: writing to %s\n", path);
+  }
 #endif
 
 #ifdef CONFIG_ENABLE_MTRACE
