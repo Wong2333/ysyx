@@ -2,39 +2,213 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import scala.reflect.internal.Reporter.INFO
+import chisel3.simulator.PeekPokeAPI.TestableData
 
-object ALU_CTL extends ChiselEnum{
-    val none = Value
-    val src1AddImm = Value
-    val src1AddSrc2 = Value
-    val src1ShiftLeftLogicalImm = Value
-    val src1SubSrc2 = Value
-    val src1LessImmU = Value
-    val ukn = Value("b1111".U)
+object ALUOp extends ChiselEnum{
+    val RType,
+    IType,
+    SType,
+    JType,
+    UType,
+    BType = Value
+}
+
+object ALUSrc1 extends ChiselEnum{
+    val rs1,
+    pc = Value
+}
+
+object ALUSrc2 extends ChiselEnum{
+    val rs2,
+    imm,
+    shamt,
+    FOUR = Value
+}
+
+object ALUContorl extends ChiselEnum{
+    val add,
+    sub,
+    and,
+    or,
+    lui,
+    sll,
+    srl,
+    sra,
+    slt,
+    sltu,
+    equ = Value
+}
+
+object Jump extends ChiselEnum{
+    val none,
+    jal = Value
+}
+
+object MemControl extends ChiselEnum{
+    val none,
+    lbu,
+    lhu,
+    lb,
+    lh,
+    lw,
+    
+    sw,
+    sb,
+    sh = Value
+}
+
+object BranchControl extends ChiselEnum{
+    val none,
+    beq,
+    bne,
+    blt,
+    bge,
+    bltu,
+    bgeu = Value
+}
+
+class EXUCTLBundle extends Bundle{
+    val ALU_Op = Output(ALUOp())
+    val ALU_Src1 = Output(ALUSrc1())
+    val ALU_Src2 = Output(ALUSrc2())
+    val ALU_Control = Output(ALUContorl())
+    val ALUWrite2Reg = Output(Bool())
+    val ALU_Jump = Output(Jump())
+    val Mem_Control = Output(MemControl())
+    val Branch_Control = Input(BranchControl())
 }
 
 class EXU extends Module{
-    val io = IO(new Bundle {
-        val imm = Input(UInt(32.W))
-        val src1 = Input(UInt(32.W))
-        val src2 = Input(UInt(32.W))
-        val ALU_ctl = Input(ALU_CTL())
 
-        val out = Output(UInt(32.W))
+    val RegReadPort = IO(new Bundle {
+        val raddr1 = Output(UInt(5.W))
+        val rdata1 = Input(UInt(32.W))
+        val raddr2 = Output(UInt(5.W))
+        val rdata2 = Input(UInt(32.W))
     })
-    io.out := 0.U
-    switch(io.ALU_ctl){
-        is(ALU_CTL.src1AddImm){
-            io.out := io.src1 + io.imm
+    val in = IO(new Bundle {
+        val DecodeBundle = new Bundle {
+            val imm = Input(UInt(32.W))
+            val rs1 = Input(UInt(32.W))
+            val rs2 = Input(UInt(32.W))
+            val rd = Input(UInt(32.W))
+            val pc = Input(UInt(32.W))
         }
-        is(ALU_CTL.src1AddSrc2){
-            io.out := io.src1 + io.src2
+        
+        val EXU_CTL = Flipped(new EXUCTLBundle)
+    })
+    val WriteBackPort = IO(new WriteBackPortBundle)
+
+    val MemPort = IO(new MemPortBundle)
+
+    // io.out := 0.U
+    val AluResult = WireDefault(0.U(32.W))
+    val PCAddFour = in.DecodeBundle.pc + 4.U
+
+    val src1 = WireDefault(0.U(32.W))
+    switch(in.EXU_CTL.ALU_Src1){
+        is(ALUSrc1.rs1){
+            src1 := in.DecodeBundle.rs1
         }
-        is(ALU_CTL.src1ShiftLeftLogicalImm){
-            io.out := io.src1 << io.imm(4,0)
-        }
-        is(ALU_CTL.src1LessImmU){
-            io.out := io.src1 < io.imm
+        is(ALUSrc1.pc){
+            src1 := in.DecodeBundle.pc
         }
     }
+    val src2 = WireDefault(0.U(32.W))
+    switch(in.EXU_CTL.ALU_Src2){
+        is(ALUSrc2.rs2){
+            src2 := in.DecodeBundle.rs2
+        }
+        is(ALUSrc2.imm){
+            src2 := in.DecodeBundle.imm
+        }
+        is(ALUSrc2.shamt){
+            src2 := Cat(0.U(27.W),in.DecodeBundle.imm(4,0))
+        }
+    }
+
+    switch(in.EXU_CTL.ALU_Control){
+        is(ALUContorl.add){
+            AluResult := src1 + src2
+        }
+        is(ALUContorl.sub){
+            AluResult := src1 - src2
+        }
+        is(ALUContorl.sltu){
+            AluResult := src1 < src2
+        }
+        is(ALUContorl.and){
+            AluResult := src1 & src2
+        }
+        is(ALUContorl.equ){
+            AluResult := src1 === src2
+        }
+        is(ALUContorl.lui){
+            AluResult := in.DecodeBundle.imm
+        }
+    }
+
+    when(in.EXU_CTL.ALUWrite2Reg){
+        WriteBackPort.JumpOrBranch := false.B
+        WriteBackPort.PCNext := 0.U
+        WriteBackPort.RegWaddr := in.DecodeBundle.rd
+        WriteBackPort.RegWrite := true.B
+        WriteBackPort.RegWdata := AluResult
+    }
+
+    WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
+    switch(in.EXU_CTL.ALU_Jump){
+        is(Jump.jal){
+            WriteBackPort.JumpOrBranch := true.B
+            WriteBackPort.PCNext := AluResult
+            WriteBackPort.RegWaddr := in.DecodeBundle.rd
+            WriteBackPort.RegWrite := true.B
+            WriteBackPort.RegWdata := PCAddFour
+        }
+    }
+
+    val BranchCond = WireDefault(Bool())
+    switch(in.EXU_CTL.Branch_Control){
+        is(BranchControl.beq){
+            BranchCond := in.DecodeBundle.rs1 === in.DecodeBundle.rs2
+        }
+    }
+    when(BranchCond){
+        WriteBackPort.JumpOrBranch := true.B
+        WriteBackPort.PCNext := AluResult
+        WriteBackPort.RegWaddr := in.DecodeBundle.rd
+        WriteBackPort.RegWrite := true.B
+        WriteBackPort.RegWdata := PCAddFour
+    }
+
+    MemPort := 0.U.asTypeOf(new MemPortBundle)
+    when(in.EXU_CTL.Mem_Control =/= MemControl.none){
+        MemPort.valid := true.B
+    }
+    when(in.EXU_CTL.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
+        MemControl.lhu,MemControl.lw)){
+        MemPort.raddr := AluResult
+    }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
+        MemPort.waddr := AluResult
+        MemPort.wdata := in.DecodeBundle.rs2
+    }
+    switch(in.EXU_CTL.Mem_Control){
+        is(MemControl.lw){
+            MemPort.mem_ctl := MEM_CTL.Read4B
+        }
+        is(MemControl.lbu){
+            MemPort.mem_ctl := MEM_CTL.Read1BU
+        }
+        is(MemControl.lb){
+            MemPort.mem_ctl := MEM_CTL.Read1B
+        }
+        is(MemControl.sb){
+            MemPort.mem_ctl := MEM_CTL.Write1B
+        }
+        is(MemControl.sw){
+            MemPort.mem_ctl := MEM_CTL.Write4B
+        }
+    }
+
 }

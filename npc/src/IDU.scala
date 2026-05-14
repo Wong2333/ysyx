@@ -2,9 +2,6 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import npc.ALU_CTL
-import npc.WB_CTL
-import npc.PC_CTL
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
@@ -41,30 +38,20 @@ class InvalidInstructionBlackBox extends ExtModule{
 
 
 class IDU extends Module{
-    val io = IO(new Bundle {
+    val in = IO(new Bundle {
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
-        val reg_rdata1 = Input(UInt(32.W))
-        val reg_rdata2 = Input(UInt(32.W))
+    })
 
-        val rs1 = Output(UInt(32.W))
-        val rs2 = Output(UInt(32.W))
-
-        val imm = Output(UInt(32.W))
-        val src1 = Output(UInt(32.W))
-        val src2 = Output(UInt(32.W))
-        val ALU_ctl = Output(ALU_CTL())
-
-        val WB_sel = Output(WB_CTL())
-        val reg_waddr = Output(UInt(32.W))
-        val reg_we = Output(Bool())
-
-        val pc_sel = Output(PC_CTL())
-        val pc_we = Output(Bool())
-
-        val mem_ctl = Output(MEM_CTL())
-        val mem_wen = Output(Bool())
-        val mem_valid = Output(Bool())
+    val out = IO(new Bundle {
+        val DecodeBundle = new Bundle {
+            val rs1 = Output(UInt(5.W))
+            val rs2 = Output(UInt(5.W))
+            val rd = Output(UInt(5.W))
+            val imm = Output(UInt(32.W))
+            val pc = Output(UInt(32.W))
+        }
+        val EXU_CTL = new EXUCTLBundle
     })
     val trap = RegInit(false.B)
     val invalid = WireDefault(false.B)
@@ -74,30 +61,26 @@ class IDU extends Module{
     
 
     val invalid_instruction = Module(new InvalidInstructionBlackBox())
-    invalid_instruction.io.pc := io.pc
-    invalid_instruction.io.inst := io.inst
+    invalid_instruction.io.pc := in.pc
+    invalid_instruction.io.inst := in.inst
     invalid_instruction.io.invalid := invalid
 
-    val inst = io.inst.asTypeOf(new InstDecode)
+    val inst = in.inst.asTypeOf(new InstDecode)
 
-    io.rs1 := io.inst(19,15);
-    io.rs2 := io.inst(24,20);
+    out.DecodeBundle.rs1 := inst.rs1
+    out.DecodeBundle.rs2 := inst.rs2
+    out.DecodeBundle.rd := inst.rd
+    out.DecodeBundle.pc := in.pc
+    out.DecodeBundle.imm := DontCare
 
-    io.imm := 0.U(32.W);
-    io.src1 := 0.U(32.W);
-    io.src2 := 0.U(32.W);
-    io.ALU_ctl := ALU_CTL.none;
 
-    io.reg_waddr := 0.U(5.W);
-    io.reg_we := false.B;
-    io.WB_sel := WB_CTL.none;
+    out.EXU_CTL.ALU_Src1 := DontCare
+    out.EXU_CTL.ALU_Src2 := DontCare
+    out.EXU_CTL.ALU_Jump := Jump.none
+    out.EXU_CTL.Mem_Control := MemControl.none
+    out.EXU_CTL.Branch_Control := BranchControl.none
+    out.EXU_CTL.ALUWrite2Reg := false.B
 
-    io.pc_sel := PC_CTL.none;
-    io.pc_we := false.B;
-
-    io.mem_ctl := MEM_CTL.none;
-    io.mem_wen := false.B;
-    io.mem_valid := false.B;
     invalid := true.B
 
     when(reset.asBool){
@@ -105,44 +88,33 @@ class IDU extends Module{
     }.otherwise{
         switch(inst.opcode){
         is("b0010011".U){
+            out.EXU_CTL.ALU_Op := ALUOp.IType
+            out.DecodeBundle.imm := inst.immI
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
+            out.EXU_CTL.ALUWrite2Reg := true.B
             when(inst.funct3 === "b000".U){// addi
-                io.imm := inst.immI;
-                io.src1 := io.reg_rdata1;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.WB_sel := WB_CTL.ALU2Reg;
+                out.EXU_CTL.ALU_Control := ALUContorl.add
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U){// sltiu
-                io.imm := inst.immI
-                io.src1 := io.reg_rdata1
-                io.ALU_ctl := ALU_CTL.src1LessImmU
-                io.reg_waddr := inst.rd
-                io.reg_we := true.B
-                io.WB_sel := WB_CTL.ALU2Reg
+                out.EXU_CTL.ALU_Control := ALUContorl.sltu
                 invalid := false.B
             }
             when(inst.funct3 === "b001".U && inst.immI(11,5) === "b0".U ){// slli
-                io.imm := inst.immI
-                io.src1 := io.reg_rdata1
-                io.ALU_ctl := ALU_CTL.src1ShiftLeftLogicalImm
-                io.reg_waddr := inst.rd
-                io.reg_we := true.B
-                io.WB_sel := WB_CTL.ALU2Reg
+                out.EXU_CTL.ALU_Control := ALUContorl.sll
+                out.EXU_CTL.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B
             }
         }
         is("b1100111".U){
+            out.EXU_CTL.ALU_Op := ALUOp.IType
+            out.DecodeBundle.imm := inst.immI
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
             when(inst.funct3 === "b000".U){//jalr
-                io.imm := inst.immI;
-                io.src1 := io.reg_rdata1;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.pc_we := true.B;
-                io.WB_sel := WB_CTL.PCNext2Reg;
-                io.pc_sel := PC_CTL.ALU2PC;
+                out.EXU_CTL.ALU_Jump := Jump.jal
+                out.EXU_CTL.ALU_Control := ALUContorl.add
                 invalid := false.B
             }
         }
@@ -157,105 +129,86 @@ class IDU extends Module{
                 }
             }
         }
-        is("b0110011".U){// add
-        
-            when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){
-                io.src1 := io.reg_rdata1;
-                io.src2 := io.reg_rdata2;
-                io.ALU_ctl := ALU_CTL.src1AddSrc2;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.WB_sel := WB_CTL.ALU2Reg;
+        is("b0110011".U){
+            out.EXU_CTL.ALU_Op := ALUOp.RType
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.rs2
+            out.EXU_CTL.ALUWrite2Reg := true.B
+            when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){// add
+                out.EXU_CTL.ALU_Control := ALUContorl.add
                 invalid := false.B
             }
-            when(inst.funct3 === "b000".U && inst.funct7 === "b0100000".U){
-                io.src1 := io.reg_rdata1;
-                io.src2 := io.reg_rdata2;
-                io.ALU_ctl := ALU_CTL.src1SubSrc2;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.WB_sel := WB_CTL.ALU2Reg;
+            when(inst.funct3 === "b000".U && inst.funct7 === "b0100000".U){// sub
+                out.EXU_CTL.ALU_Control := ALUContorl.sub
                 invalid := false.B
             }
         }
         is("b0110111".U){// lui
-        
-            io.imm := inst.immU;
-            io.reg_waddr := inst.rd;
-            io.reg_we := true.B;
-            io.WB_sel := WB_CTL.Imm2Reg;
+            out.EXU_CTL.ALU_Op := ALUOp.UType
+            out.DecodeBundle.imm := inst.immU
+            out.EXU_CTL.ALU_Control := ALUContorl.lui
+            out.EXU_CTL.ALUWrite2Reg := true.B
             invalid := false.B
         }
         is("b0010111".U){// auipc
-            io.imm := inst.immU
-            io.reg_waddr := inst.rd
-            io.reg_we := true.B
-            io.src1 := io.pc
-            io.ALU_ctl := ALU_CTL.src1AddImm
-            io.WB_sel := WB_CTL.ALU2Reg
+            out.EXU_CTL.ALU_Op := ALUOp.UType
+            out.DecodeBundle.imm := inst.immU
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.pc
+            out.EXU_CTL.ALU_Control := ALUContorl.add
+            out.EXU_CTL.ALUWrite2Reg := true.B
             invalid := false.B
         }
         is("b0000011".U){
-            when(inst.funct3 === "b010".U){//lw
+            out.EXU_CTL.ALU_Op := ALUOp.IType
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
+            out.DecodeBundle.imm := inst.immI
+            out.EXU_CTL.ALU_Control := ALUContorl.add
             
-                io.imm := inst.immI;
-                io.src1 := io.reg_rdata1;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.WB_sel := WB_CTL.Mem2Reg;
-                io.mem_ctl := MEM_CTL.Read4B;
-                io.mem_valid := true.B;
+            when(inst.funct3 === "b010".U){//lw
+                out.EXU_CTL.Mem_Control := MemControl.lw
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b100".U){//lbu
-            
-                io.imm := inst.immI;
-                io.src1 := io.reg_rdata1;
-                io.reg_waddr := inst.rd;
-                io.reg_we := true.B;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.WB_sel := WB_CTL.Mem2Reg;
-                io.mem_ctl := MEM_CTL.Read1BU;
-                io.mem_valid := true.B;
+                out.EXU_CTL.Mem_Control := MemControl.lbu
                 invalid := false.B
             }
         }
         is("b0100011".U){
+            out.EXU_CTL.ALU_Op := ALUOp.SType
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
+            out.DecodeBundle.imm := inst.immS
+            out.EXU_CTL.ALU_Control := ALUContorl.add
             when(inst.funct3 === "b010".U){// sw
-            
-                io.imm := inst.immS;
-                io.src1 := io.reg_rdata1;
-                io.src2 := io.reg_rdata2;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.mem_ctl := MEM_CTL.Write4B;
-                io.mem_valid := true.B;
-                io.mem_wen := true.B;
+                out.EXU_CTL.Mem_Control := MemControl.sw
                 invalid := false.B
                 
             }.elsewhen(inst.funct3 === "b000".U){// sb
-            
-                io.imm := inst.immS;
-                io.src1 := io.reg_rdata1;
-                io.src2 := io.reg_rdata2;
-                io.ALU_ctl := ALU_CTL.src1AddImm;
-                io.mem_ctl := MEM_CTL.Write1B;
-                io.mem_valid := true.B;
-                io.mem_wen := true.B;
+                out.EXU_CTL.Mem_Control := MemControl.sw
                 invalid := false.B
                 
             }
         }
         is("b1101111".U){// jal
-            io.src1 := io.pc
-            io.imm := inst.immJ
-            io.reg_waddr := inst.rd
-            io.ALU_ctl := ALU_CTL.src1AddImm
-            io.pc_we := true.B
-            io.pc_sel := PC_CTL.ALU2PC
-            io.WB_sel := WB_CTL.PCNext2Reg
-            io.reg_we := true.B
+            out.EXU_CTL.ALU_Op := ALUOp.JType
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.pc
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
+            out.DecodeBundle.imm := inst.immJ
+            out.EXU_CTL.ALU_Control := ALUContorl.add
+            out.EXU_CTL.ALU_Jump := Jump.jal
             invalid := false.B
         }
+
+        is("b1100011".U){// beq
+            out.EXU_CTL.ALU_Op := ALUOp.BType
+            out.EXU_CTL.ALU_Src1 := ALUSrc1.pc
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
+            out.DecodeBundle.imm := inst.immB
+            out.EXU_CTL.ALU_Control := ALUContorl.add
+            out.EXU_CTL.Branch_Control := BranchControl.beq
+            invalid := false.B
+        }
+
         }
     }
 }

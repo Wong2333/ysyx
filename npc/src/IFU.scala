@@ -23,23 +23,26 @@ class PCBlackBox extends ExtModule{
 }
 
 class IFU extends Module{
-    val io = IO(new Bundle {
+
+    val in = IO(new Bundle {
         val pc_next = Input(UInt(32.W))
         val pc_we = Input(Bool())
+    })
+    val out = IO(new Bundle {
         val pc = Output(UInt(32.W))
         val inst = Output(UInt(32.W))
     })
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := io.pc_next
-    PC_reg.io.pc_we := io.pc_we
-    io.pc := PC_reg.io.pc
+    PC_reg.io.pc_next := in.pc_next
+    PC_reg.io.pc_we := in.pc_we
+    out.pc := PC_reg.io.pc
 
     val pmem_read_inst = Module(new PmemReadBlackBox)
     pmem_read_inst.io.raddr := PC_reg.io.pc
 
-    io.inst := pmem_read_inst.io.rdata
+    out.inst := pmem_read_inst.io.rdata
     
 
 }
