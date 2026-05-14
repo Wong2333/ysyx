@@ -203,6 +203,7 @@ class EXU extends Module{
         MemPort.waddr := AluResult
         RegReadPort.raddr1 := in.DecodeBundle.rs2
         MemPort.wdata := RegReadPort.rdata1
+        printf(cf"memwdata: ${RegReadPort.rdata1} memwaddr: $AluResult\n")
     }
     switch(in.EXU_CTL.Mem_Control){
         is(MemControl.lw){
