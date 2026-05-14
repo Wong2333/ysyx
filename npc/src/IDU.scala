@@ -235,6 +235,15 @@ class IDU extends Module{
             }.elsewhen(inst.funct3 === "b100".U){//lbu
                 out.EXU_CTL.Mem_Control := MemControl.lbu
                 invalid := false.B
+            }.elsewhen(inst.funct3 === "b101".U){//lhu
+                out.EXU_CTL.Mem_Control := MemControl.lhu
+                invalid := false.B                
+            }.elsewhen(inst.funct3 === "b000".U){// lb
+                out.EXU_CTL.Mem_Control := MemControl.lb
+                invalid := false.B    
+            }.elsewhen(inst.funct3 === "b001".U){// lh
+                out.EXU_CTL.Mem_Control := MemControl.lh
+                invalid := false.B
             }
         }
         is("b0100011".U){

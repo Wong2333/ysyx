@@ -254,6 +254,12 @@ class EXU extends Module{
         is(MemControl.lb){
             MemPort.mem_ctl := MEM_CTL.Read1B
         }
+        is(MemControl.lh){
+            MemPort.mem_ctl := MEM_CTL.Read2B
+        }
+        is(MemControl.lhu){
+            MemPort.mem_ctl := MEM_CTL.Read2BU
+        }
         is(MemControl.sb){
             MemPort.mem_ctl := MEM_CTL.Write1B
         }

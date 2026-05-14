@@ -9,6 +9,8 @@ object MEM_CTL extends ChiselEnum{
     Read4B,
     Read1B,
     Read1BU,
+    Read2B,
+    Read2BU,
     Write4B,
     Write1B,
     Write2B = Value
@@ -74,6 +76,12 @@ class LSU extends Module{
             }
             is(MEM_CTL.Read1BU){
                 out.rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+            }
+            is(MEM_CTL.Read2B){
+                out.rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
+            }
+            is(MEM_CTL.Read2BU){
+                out.rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
             }
             is(MEM_CTL.Write4B){
                 mask := "b1111".U;
