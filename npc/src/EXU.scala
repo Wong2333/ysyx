@@ -32,6 +32,7 @@ object ALUContorl extends ChiselEnum{
     sub,
     and,
     or,
+    xor,
     lui,
     sll,srl,sra, //左移右移
     slt,sltu, //小于
@@ -145,6 +146,9 @@ class EXU extends Module{
         }
         is(ALUContorl.and){
             AluResult := src1 & src2
+        }
+        is(ALUContorl.xor){
+            AluResult := src1 ^ src2
         }
         is(ALUContorl.equ){
             AluResult := src1 === src2
