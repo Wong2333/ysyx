@@ -143,6 +143,10 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Control := ALUContorl.sub
                 invalid := false.B
             }
+            when(inst.funct3 === "b011".U && inst.funct7 === "b0000000".U){// sltu
+                out.EXU_CTL.ALU_Control := ALUContorl.sltu
+                invalid := false.B
+            }
         }
         is("b0110111".U){// lui
             out.EXU_CTL.ALU_Op := ALUOp.UType

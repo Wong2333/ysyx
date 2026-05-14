@@ -33,11 +33,8 @@ object ALUContorl extends ChiselEnum{
     and,
     or,
     lui,
-    sll,
-    srl,
-    sra,
-    slt,
-    sltu,
+    sll,srl,sra, //左移右移
+    slt,sltu, //小于
     equ = Value
 }
 
