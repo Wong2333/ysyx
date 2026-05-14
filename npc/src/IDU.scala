@@ -73,7 +73,8 @@ class IDU extends Module{
     out.DecodeBundle.pc := in.pc
     out.DecodeBundle.imm := DontCare
 
-
+    out.EXU_CTL.ALU_Op := DontCare
+    out.EXU_CTL.ALU_Control := DontCare
     out.EXU_CTL.ALU_Src1 := DontCare
     out.EXU_CTL.ALU_Src2 := DontCare
     out.EXU_CTL.ALU_Jump := Jump.none

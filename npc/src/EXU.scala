@@ -106,10 +106,13 @@ class EXU extends Module{
     val AluResult = WireDefault(0.U(32.W))
     val PCAddFour = in.DecodeBundle.pc + 4.U
 
+    RegReadPort.raddr1 := 0.U
+    RegReadPort.raddr2 := 0.U
     val src1 = WireDefault(0.U(32.W))
     switch(in.EXU_CTL.ALU_Src1){
         is(ALUSrc1.rs1){
-            src1 := in.DecodeBundle.rs1
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            src1 := RegReadPort.rdata1
         }
         is(ALUSrc1.pc){
             src1 := in.DecodeBundle.pc
@@ -118,7 +121,8 @@ class EXU extends Module{
     val src2 = WireDefault(0.U(32.W))
     switch(in.EXU_CTL.ALU_Src2){
         is(ALUSrc2.rs2){
-            src2 := in.DecodeBundle.rs2
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            src2 := RegReadPort.rdata2
         }
         is(ALUSrc2.imm){
             src2 := in.DecodeBundle.imm
