@@ -38,16 +38,16 @@ void cpu_exec(int n){
         for(int i = 0;i<n;i++){
             uint32_t current_pc = read_pc_reg();
             single_cycle();
-            if(STATE == STOP) break;
             check_difftest(current_pc, read_pc_reg());
+            if(STATE == STOP) break;
         }
         printCurrentInst();
     }else{
         while(1){
             uint32_t current_pc = read_pc_reg();
             single_cycle();
-            if(STATE == STOP) break;
             check_difftest(current_pc, read_pc_reg());
+            if(STATE == STOP) break;
         }
     }
 }
