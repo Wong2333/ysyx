@@ -147,7 +147,7 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Control := ALUContorl.xor
                 invalid := false.B
             }
-            when(inst.funct3 === "b110".U && inst.funct7 === "b0000000".U){
+            when(inst.funct3 === "b110".U && inst.funct7 === "b0000000".U){// or
                 out.EXU_CTL.ALU_Control := ALUContorl.or
                 invalid := false.B
             }
@@ -200,7 +200,9 @@ class IDU extends Module{
             }.elsewhen(inst.funct3 === "b000".U){// sb
                 out.EXU_CTL.Mem_Control := MemControl.sb
                 invalid := false.B
-                
+            }.elsewhen(inst.funct3 === "b001".U){
+                out.EXU_CTL.Mem_Control := MemControl.sh
+                invalid := false.B
             }
         }
         is("b1101111".U){// jal

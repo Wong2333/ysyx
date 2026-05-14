@@ -228,6 +228,9 @@ class EXU extends Module{
         is(MemControl.sb){
             MemPort.mem_ctl := MEM_CTL.Write1B
         }
+        is(MemControl.sh){
+            MemPort.mem_ctl := MEM_CTL.Write2B
+        }
         is(MemControl.sw){
             MemPort.mem_ctl := MEM_CTL.Write4B
         }

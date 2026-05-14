@@ -10,7 +10,8 @@ object MEM_CTL extends ChiselEnum{
     Read1B,
     Read1BU,
     Write4B,
-    Write1B = Value
+    Write1B,
+    Write2B = Value
 }
 
 class MemPortBundle extends Bundle{
@@ -82,6 +83,12 @@ class LSU extends Module{
             }
             is(MEM_CTL.Write1B){
                 mask := 1.U << in.waddr(1,0)
+                wdata := shifted_wdata
+                waddr := in.waddr & ~3.U(32.W)
+                wen := true.B
+            }
+            is(MEM_CTL.Write2B){
+                mask := 3.U << in.waddr(1,0)
                 wdata := shifted_wdata
                 waddr := in.waddr & ~3.U(32.W)
                 wen := true.B
