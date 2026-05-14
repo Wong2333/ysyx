@@ -79,7 +79,6 @@ class LSU extends Module{
                 wdata := in.wdata;
                 waddr := in.waddr & ~3.U(32.W)
                 wen := true.B
-                printf(cf"memwdata: $wdata memwaddr: $waddr wen: $wen\n")
             }
             is(MEM_CTL.Write1B){
                 mask := 1.U << in.waddr(1,0)
