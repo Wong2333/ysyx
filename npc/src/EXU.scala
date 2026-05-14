@@ -150,6 +150,9 @@ class EXU extends Module{
         is(ALUContorl.xor){
             AluResult := src1 ^ src2
         }
+        is(ALUContorl.or){
+            AluResult := src1 | src2
+        }
         is(ALUContorl.equ){
             AluResult := src1 === src2
         }
