@@ -117,6 +117,19 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B   
             }
+
+            when(inst.funct3 === "b111".U){// andi
+                out.EXU_CTL.ALU_Control := ALUContorl.and
+                invalid := false.B
+            }
+            when(inst.funct3 === "b100".U){// xori
+                out.EXU_CTL.ALU_Control := ALUContorl.xor
+                invalid := false.B
+            }
+            when(inst.funct3 === "b110".U){// ori
+                out.EXU_CTL.ALU_Control := ALUContorl.or
+                invalid := false.B
+            }
         }
         is("b1100111".U){
             out.EXU_CTL.ALU_Op := ALUOp.IType
