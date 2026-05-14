@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
 #include <time.h>
 #include <nvboard.h>
 #include <VTop.h>
@@ -80,29 +82,64 @@ void init_nvboard(){
     nvboard_init();
 }
 
-void init_engine(int argc,char**argv){
+void init_engine(int argc, char **argv) {
+    const char *img_file = NULL;
+    const char *diff_so_file = NULL;
+    const char *elf_file = NULL;
+    const char *trace_dir = NULL;
+    bool batch_mode = false;
+
+    const struct option table[] = {
+        {"batch", no_argument, NULL, 'b'},
+        {"image", required_argument, NULL, 'i'},
+        {"diff",  required_argument, NULL, 'd'},
+        {"trace", required_argument, NULL, 't'},
+        {"elf",   required_argument, NULL, 'e'},
+        {"help",  no_argument,       NULL, 'h'},
+        {0, 0, NULL, 0},
+    };
+    int o;
+    while ((o = getopt_long(argc, argv, "-bhi:d:t:e:", table, NULL)) != -1) {
+        switch (o) {
+            case 'b': batch_mode = true; break;
+            case 'i': img_file = optarg; break;
+            case 'd': diff_so_file = optarg; break;
+            case 't': trace_dir = optarg; break;
+            case 'e': elf_file = optarg; break;
+            case 1: img_file = optarg; break;
+            case 'h':
+                printf("Usage: %s [OPTION...] IMAGE\n\n", argv[0]);
+                printf("\t-b,--batch           batch mode (disable SDB)\n");
+                printf("\t-i,--image=IMAGE     program image\n");
+                printf("\t-d,--diff=REF_SO     DiffTest reference SO\n");
+                printf("\t-t,--trace=TRACE_DIR trace output directory\n");
+                printf("\t-e,--elf=ELF         ELF file for ftrace\n");
+                printf("\n");
+                exit(0);
+            default:
+                exit(1);
+        }
+    }
+
     init_nvboard();
 #ifdef CONFIG_ENABLE_SDB
-    init_sdb();
+    if (!batch_mode) {
+        init_sdb();
+    }
 #endif
-    if(argc >= 2)
-        init_mem(argv[1]);
-    else init_mem(NULL);
+    if (img_file)
+        init_mem(img_file);
+    else
+        init_mem(NULL);
     init_cpu();
-    const char *elf_file = (argc >= 2) ? argv[1] : NULL;
-    init_trace(elf_file);
+    init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
-        const char *ref_so = NULL;
-        if (argc >= 3) {
-            ref_so = argv[2];
-        }
-        if (ref_so == NULL) {
+        const char *ref_so = diff_so_file;
+        if (ref_so == NULL)
             ref_so = getenv("NEMU_REF_SO");
-        }
-        if (ref_so == NULL) {
+        if (ref_so == NULL)
             ref_so = "../nemu/build/riscv32-nemu-interpreter-so";
-        }
         init_difftest(ref_so, img_size);
     }
 #endif

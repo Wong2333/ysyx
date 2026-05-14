@@ -36,6 +36,7 @@ INCFLAGS = $(addprefix -I, $(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 IMG=
+DIFF_REF=
 bin: 
 	make verilog
 	make $(BIN)
@@ -79,7 +80,7 @@ clean:
 sim: 
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) $(IMG)
+	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF))
 
 -include ../Makefile
 
