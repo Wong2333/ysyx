@@ -156,16 +156,14 @@ class EXU extends Module{
             AluResult := in.DecodeBundle.imm
         }
     }
-
+    WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
     when(in.EXU_CTL.ALUWrite2Reg){
-        WriteBackPort.JumpOrBranch := false.B
-        WriteBackPort.PCNext := 0.U
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
+        printf(cf"regWdata: $AluResult\n")
     }
-
-    WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
+    
     switch(in.EXU_CTL.ALU_Jump){
         is(Jump.jal){
             WriteBackPort.JumpOrBranch := true.B
