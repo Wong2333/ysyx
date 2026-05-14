@@ -7,6 +7,7 @@
 #include <time.h>
 #include <mmio.h>
 #include <autoconfig.h>
+#include <trace.h>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
@@ -73,7 +74,9 @@ extern "C" int pmem_read(int addr) {
         return (uint32_t)(cpu_time_us >> 32);
     }
 
-    return mem[raddr >> 2]; 
+    uint32_t data = mem[raddr >> 2];
+    record_mtrace(READ_TRACE, raddr, 4, data);
+    return data;
 }
 
 extern "C" void pmem_write(int addr, int data, char mask) {
@@ -102,6 +105,7 @@ extern "C" void pmem_write(int addr, int data, char mask) {
         pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
+    record_mtrace(WRITE_TRACE, waddr, 4, wdata);
 }
 uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){

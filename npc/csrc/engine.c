@@ -5,6 +5,7 @@
 #include <autoconfig.h>
 // #define DEBUG
 #include <difftest.h>
+#include <trace.h>
 static TOP_NAME top;
 struct timespec start, end;
 bool check_wp();
@@ -38,7 +39,9 @@ void cpu_exec(int n){
         for(int i = 0;i<n;i++){
             uint32_t current_pc = read_pc_reg();
             single_cycle();
-            check_difftest(current_pc, read_pc_reg());
+            uint32_t next_pc = read_pc_reg();
+            trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+            check_difftest(current_pc, next_pc);
             if(STATE == STOP) break;
         }
         printCurrentInst();
@@ -46,7 +49,9 @@ void cpu_exec(int n){
         while(1){
             uint32_t current_pc = read_pc_reg();
             single_cycle();
-            check_difftest(current_pc, read_pc_reg());
+            uint32_t next_pc = read_pc_reg();
+            trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+            check_difftest(current_pc, next_pc);
             if(STATE == STOP) break;
         }
     }
@@ -84,6 +89,8 @@ void init_engine(int argc,char**argv){
         init_mem(argv[1]);
     else init_mem(NULL);
     init_cpu();
+    const char *elf_file = (argc >= 2) ? argv[1] : NULL;
+    init_trace(NULL, elf_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
         const char *ref_so = NULL;

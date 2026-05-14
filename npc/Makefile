@@ -1,6 +1,7 @@
 TOPNAME = Top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
+INC_PATH += $(NPC_HOME)/tools/capstone/repo/include
 KCONFIG_INCLUDE = csrc/include/autoconfig.h
 KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
