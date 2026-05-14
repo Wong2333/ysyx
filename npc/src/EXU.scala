@@ -178,6 +178,9 @@ class EXU extends Module{
         is(BranchControl.beq){
             BranchCond := in.DecodeBundle.rs1 === in.DecodeBundle.rs2
         }
+        is(BranchControl.bne){
+            BranchCond := in.DecodeBundle.rs1 =/= in.DecodeBundle.rs2
+        }
     }
     when(BranchCond){
         WriteBackPort.JumpOrBranch := true.B

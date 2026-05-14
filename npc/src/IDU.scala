@@ -176,7 +176,6 @@ class IDU extends Module{
             }
         }
         is("b0100011".U){
-            printf("------------------------------store\n")
             out.EXU_CTL.ALU_Op := ALUOp.SType
             out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
             out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
@@ -208,8 +207,16 @@ class IDU extends Module{
             out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
             out.DecodeBundle.imm := inst.immB
             out.EXU_CTL.ALU_Control := ALUContorl.add
-            out.EXU_CTL.Branch_Control := BranchControl.beq
-            invalid := false.B
+            switch(inst.funct3){
+                is("b000".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.beq
+                    invalid := false.B
+                }
+                is("b001".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.bne
+                    invalid := false.B
+                }
+            }
         }
 
         }
