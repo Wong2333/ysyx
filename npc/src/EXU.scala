@@ -179,11 +179,12 @@ class EXU extends Module{
             BranchCond := in.DecodeBundle.rs1 === in.DecodeBundle.rs2
         }
         is(BranchControl.bne){
+            printf("bne\n")
             BranchCond := in.DecodeBundle.rs1 =/= in.DecodeBundle.rs2
         }
     }
     when(BranchCond){
-        printf(cf"branch: $AluResult")
+        printf(cf"branch: $AluResult\n")
         WriteBackPort.JumpOrBranch := true.B
         WriteBackPort.PCNext := AluResult
         WriteBackPort.RegWrite := false.B
