@@ -144,6 +144,9 @@ class EXU extends Module{
         is(ALUContorl.sltu){
             AluResult := src1 < src2
         }
+        is(ALUContorl.slt){
+            AluResult := src1.asSInt < src2.asSInt
+        }
         is(ALUContorl.and){
             AluResult := src1 & src2
         }
