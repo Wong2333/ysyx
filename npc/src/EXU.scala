@@ -178,17 +178,15 @@ class EXU extends Module{
         is(BranchControl.beq){
             RegReadPort.raddr1 := in.DecodeBundle.rs1
             RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 === RegReadPort.rdata1
+            BranchCond := RegReadPort.rdata1 === RegReadPort.rdata2
         }
         is(BranchControl.bne){
-            printf("bne\n")
             RegReadPort.raddr1 := in.DecodeBundle.rs1
             RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 =/= RegReadPort.rdata1
+            BranchCond := RegReadPort.rdata1 =/= RegReadPort.rdata2
         }
     }
     when(BranchCond){
-        printf(cf"branch: $AluResult\n")
         WriteBackPort.JumpOrBranch := true.B
         WriteBackPort.PCNext := AluResult
         WriteBackPort.RegWrite := false.B
