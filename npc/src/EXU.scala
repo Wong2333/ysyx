@@ -166,7 +166,7 @@ class EXU extends Module{
             AluResult := src1 >> src2(4,0)
         }
         is(ALUContorl.sra){
-            AluResult := src1.asSInt >> src2(4,0)
+            AluResult := (src1.asSInt >> src2(4,0)).asUInt
         }
     }
     WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
