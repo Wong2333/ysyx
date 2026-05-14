@@ -187,7 +187,7 @@ class IDU extends Module{
                 invalid := false.B
                 
             }.elsewhen(inst.funct3 === "b000".U){// sb
-                out.EXU_CTL.Mem_Control := MemControl.sw
+                out.EXU_CTL.Mem_Control := MemControl.sb
                 invalid := false.B
                 
             }

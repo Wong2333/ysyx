@@ -27,7 +27,8 @@ object ALUSrc2 extends ChiselEnum{
 }
 
 object ALUContorl extends ChiselEnum{
-    val add,
+    val none,
+    add,
     sub,
     and,
     or,
