@@ -19,6 +19,7 @@ class MemPortBundle extends Bundle{
     val wdata = Output(UInt(32.W))
     val waddr = Output(UInt(32.W))
     val raddr = Output(UInt(32.W))
+    val rdata = Input(UInt(32.W))
 }
 
 class PmemWriteBlackBox extends ExtModule {
@@ -32,13 +33,10 @@ class PmemWriteBlackBox extends ExtModule {
     addResource("/PmemWriteBlackBox.v")
 }
 class LSU extends Module{
-    val in = IO(Flipped(new MemPortBundle))
-    val out = IO(new Bundle {
-        val mem_out = Output(UInt(32.W))
-    })
+    val io = IO(Flipped(new MemPortBundle))
+
     
     val mask = WireDefault(0.U(4.W))
-    val rdata = WireDefault(0.U(32.W))
     val waddr = WireDefault(0.U)
     val wdata = WireDefault(0.U(32.W))
     val wen = WireDefault(false.B)
@@ -48,9 +46,10 @@ class LSU extends Module{
 
     val pmem_read = Module(new PmemReadBlackBox())
     val raddr = WireDefault(0.U(32.W))
+    val rdata = WireDefault(0.U(32.W))
     pmem_read.io.raddr  := raddr 
     rdata := pmem_read.io.rdata
-    
+
     val pmem_write = Module(new PmemWriteBlackBox())
     pmem_write.io.clock := clock
     pmem_write.io.waddr := waddr
@@ -58,32 +57,32 @@ class LSU extends Module{
     pmem_write.io.wmask := mask
     pmem_write.io.we := wen
 
-    out.mem_out := 0.U
+    io.rdata := 0.U
 
-    when(in.valid){
-        raddr := in.raddr & ~3.U(32.W)
-        shifted_rdata := rdata >> (in.raddr(1,0) << 3)
-        shifted_wdata := in.wdata << (in.waddr(1,0) << 3)
-        switch(in.mem_ctl){
+    when(io.valid){
+        raddr := io.raddr & ~3.U(32.W)
+        shifted_rdata := rdata >> (io.raddr(1,0) << 3)
+        shifted_wdata := io.wdata << (io.waddr(1,0) << 3)
+        switch(io.mem_ctl){
             is(MEM_CTL.Read4B){
-                out.mem_out := rdata
+                io.rdata := rdata
             }
             is(MEM_CTL.Read1B){
-                out.mem_out := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
+                io.rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
             }
             is(MEM_CTL.Read1BU){
-                out.mem_out := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+                io.rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
             }
             is(MEM_CTL.Write4B){
                 mask := "b1111".U;
-                wdata := in.wdata;
-                waddr := in.waddr & ~3.U(32.W)
+                wdata := io.wdata;
+                waddr := io.waddr & ~3.U(32.W)
                 wen := true.B
             }
             is(MEM_CTL.Write1B){
-                mask := 1.U << in.waddr(1,0)
+                mask := 1.U << io.waddr(1,0)
                 wdata := shifted_wdata
-                waddr := in.waddr & ~3.U(32.W)
+                waddr := io.waddr & ~3.U(32.W)
                 wen := true.B
             }
         }

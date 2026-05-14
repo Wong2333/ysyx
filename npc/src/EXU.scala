@@ -193,6 +193,9 @@ class EXU extends Module{
     when(in.EXU_CTL.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
         MemControl.lhu,MemControl.lw)){
         MemPort.raddr := AluResult
+        WriteBackPort.RegWaddr := in.DecodeBundle.rd
+        WriteBackPort.RegWrite := true.B
+        WriteBackPort.RegWdata := MemPort.rdata
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         MemPort.waddr := AluResult
         MemPort.wdata := in.DecodeBundle.rs2
