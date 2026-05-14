@@ -176,6 +176,7 @@ class IDU extends Module{
             }
         }
         is("b0100011".U){
+            printf("------------------------------store\n")
             out.EXU_CTL.ALU_Op := ALUOp.SType
             out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
             out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
