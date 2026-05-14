@@ -76,7 +76,7 @@ class EXUCTLBundle extends Bundle{
     val ALUWrite2Reg = Output(Bool())
     val ALU_Jump = Output(Jump())
     val Mem_Control = Output(MemControl())
-    val Branch_Control = Input(BranchControl())
+    val Branch_Control = Output(BranchControl())
 }
 
 class EXU extends Module{
