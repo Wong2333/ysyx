@@ -270,6 +270,22 @@ class IDU extends Module{
                     out.EXU_CTL.Branch_Control := BranchControl.bne
                     invalid := false.B
                 }
+                is("b100".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.blt
+                    invalid := false.B                    
+                }
+                is("b101".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.bge
+                    invalid := false.B                    
+                }
+                is("b110".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.bltu
+                    invalid := false.B                    
+                }
+                is("b111".U){
+                    out.EXU_CTL.Branch_Control := BranchControl.bgeu
+                    invalid := false.B                    
+                }
             }
         }
 

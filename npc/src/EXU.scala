@@ -198,6 +198,26 @@ class EXU extends Module{
             RegReadPort.raddr2 := in.DecodeBundle.rs2
             BranchCond := RegReadPort.rdata1 =/= RegReadPort.rdata2
         }
+        is(BranchControl.blt){
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1.asSInt < RegReadPort.rdata2.asSInt
+        }
+        is(BranchControl.bge){
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1.asSInt >= RegReadPort.rdata2.asSInt
+        }
+        is(BranchControl.bltu){
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1 < RegReadPort.rdata2
+        }
+        is(BranchControl.bgeu){
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1 >= RegReadPort.rdata2
+        }
     }
     when(BranchCond){
         WriteBackPort.JumpOrBranch := true.B
