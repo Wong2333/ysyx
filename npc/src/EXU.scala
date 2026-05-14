@@ -176,11 +176,15 @@ class EXU extends Module{
     val BranchCond = WireDefault(false.B)
     switch(in.EXU_CTL.Branch_Control){
         is(BranchControl.beq){
-            BranchCond := in.DecodeBundle.rs1 === in.DecodeBundle.rs2
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1 === RegReadPort.rdata1
         }
         is(BranchControl.bne){
             printf("bne\n")
-            BranchCond := in.DecodeBundle.rs1 =/= in.DecodeBundle.rs2
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RegReadPort.rdata1 =/= RegReadPort.rdata1
         }
     }
     when(BranchCond){
