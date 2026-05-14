@@ -155,6 +155,9 @@ class EXU extends Module{
         is(ALUContorl.lui){
             AluResult := in.DecodeBundle.imm
         }
+        is(ALUContorl.sll){
+            AluResult := src1 << src2
+        }
     }
     WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
     when(in.EXU_CTL.ALUWrite2Reg){
