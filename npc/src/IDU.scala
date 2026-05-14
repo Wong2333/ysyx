@@ -155,6 +155,7 @@ class IDU extends Module{
             out.EXU_CTL.ALU_Op := ALUOp.UType
             out.DecodeBundle.imm := inst.immU
             out.EXU_CTL.ALU_Src1 := ALUSrc1.pc
+            out.EXU_CTL.ALU_Src2 := ALUSrc2.imm
             out.EXU_CTL.ALU_Control := ALUContorl.add
             out.EXU_CTL.ALUWrite2Reg := true.B
             invalid := false.B
