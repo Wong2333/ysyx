@@ -101,6 +101,9 @@ class EXU extends Module{
     val WriteBackPort = IO(new WriteBackPortBundle)
 
     val MemPort = IO(new MemPortBundle)
+    val MemReadData = IO(new Bundle {
+        val rdata = Input(UInt(32.W))
+    })
 
     // io.out := 0.U
     val AluResult = WireDefault(0.U(32.W))
@@ -195,7 +198,7 @@ class EXU extends Module{
         MemPort.raddr := AluResult
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
-        WriteBackPort.RegWdata := MemPort.rdata
+        WriteBackPort.RegWdata := MemReadData.rdata
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         MemPort.waddr := AluResult
         MemPort.wdata := in.DecodeBundle.rs2
