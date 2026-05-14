@@ -49,7 +49,8 @@ class LSU extends Module{
     val pmem_read = Module(new PmemReadBlackBox())
     val raddr = WireDefault(0.U(32.W))
     pmem_read.io.raddr  := raddr 
-
+    rdata := pmem_read.io.rdata
+    
     val pmem_write = Module(new PmemWriteBlackBox())
     pmem_write.io.clock := clock
     pmem_write.io.waddr := waddr
@@ -86,8 +87,6 @@ class LSU extends Module{
                 wen := true.B
             }
         }
-
-        rdata := pmem_read.io.rdata
     }
 
 
