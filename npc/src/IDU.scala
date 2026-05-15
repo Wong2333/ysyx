@@ -102,6 +102,10 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Control := ALUContorl.sltu
                 invalid := false.B
             }
+            when(inst.funct3 === "b010".U){// slti
+                out.EXU_CTL.ALU_Control := ALUContorl.slt
+                invalid := false.B
+            }
             when(inst.funct3 === "b001".U && inst.immI(11,5) === "b0".U ){// slli
                 out.EXU_CTL.ALU_Control := ALUContorl.sll
                 out.EXU_CTL.ALU_Src2 := ALUSrc2.shamt
