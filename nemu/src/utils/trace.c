@@ -240,6 +240,7 @@ void record_dtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data,const char 
 void record_etrace(word_t NO, vaddr_t epc,word_t mtvec){
     #ifdef CONFIG_ETRACE
     if (etrace_fp != NULL) { 
+        printf("record\n");
         fprintf(etrace_fp,"mcause: 0x%x   mepc: 0x%x   mtvec: 0x%x\n",NO,epc, mtvec); 
         fflush(etrace_fp); 
     } 
