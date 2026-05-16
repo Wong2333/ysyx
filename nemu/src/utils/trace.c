@@ -240,7 +240,6 @@ void record_dtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data,const char 
 void record_etrace(word_t NO, vaddr_t epc,word_t mtvec){
     #ifdef CONFIG_ETRACE
     if (etrace_fp != NULL) { 
-        printf("record\n");
         fprintf(etrace_fp,"mcause: 0x%x   mepc: 0x%x   mtvec: 0x%x\n",NO,epc, mtvec); 
         fflush(etrace_fp); 
     } 
@@ -289,6 +288,5 @@ void init_trace(const char *trace_dir,const char *elf_file){
 #endif
 #ifdef CONFIG_ETRACE
     init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
-    printf("etrace path: %s\n",trace_dir);
 #endif
 }
