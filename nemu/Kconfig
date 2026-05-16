@@ -171,6 +171,11 @@ config FTRACE
   bool "Enable function call tracer"
   default n
 
+config ETRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable exception tracer"
+  default n
+
 config DTRACE
   depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
   bool "Enable device tracer"
