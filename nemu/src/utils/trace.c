@@ -247,14 +247,14 @@ void record_etrace(word_t NO, vaddr_t epc,word_t mtvec){
 #endif
 }
 
-void init_trace_file(const char *trace_dir ,FILE**fpp){
+void init_trace_file(const char *trace_dir , const char *file_name, FILE**fpp){
     char trace_path[1024*4];
     FILE *fp = NULL;
     if(trace_dir){
         strcpy(trace_path,trace_dir);
-        strcat(trace_path,"/mtrace.txt");
+        strcat(trace_path,file_name);
     }else{
-        strcpy(trace_path,"./mtrace.txt");
+        strcpy(trace_path,file_name);
     }
     fp = fopen(trace_path, "w");
     Assert(fp, "Can not open '%s'", trace_path);
@@ -264,7 +264,7 @@ void init_trace_file(const char *trace_dir ,FILE**fpp){
 
 #ifdef CONFIG_FTRACE
 void init_ftrace(const char *trace_dir,const char *elf_file){
-    init_trace_file(trace_dir,&ftrace_fp);
+    init_trace_file(trace_dir,"./ftrace.txt",&ftrace_fp);
         // 初始化栈
     ftrace_top = -1; 
     
@@ -276,17 +276,18 @@ void init_trace(const char *trace_dir,const char *elf_file){
 
     // init mtrace
 #ifdef CONFIG_MTRACE
-    init_trace_file(trace_dir,&mtrace_fp);
+    init_trace_file(trace_dir,"./mtrace.txt",&mtrace_fp);
 #endif
 
 #ifdef CONFIG_DTRACE
-    init_trace_file(trace_dir,&dtrace_fp);
+    init_trace_file(trace_dir,"./dtrace.txt",&dtrace_fp);
 #endif
     // init ftrace
 #ifdef CONFIG_FTRACE
     init_ftrace(trace_dir,elf_file);
 #endif
 #ifdef CONFIG_ETRACE
-    init_trace_file(trace_dir,&etrace_fp);
+    init_trace_file(trace_dir,"./etrace.txt",&etrace_fp);
+    printf("etrace path: %s\n",trace_dir);
 #endif
 }
