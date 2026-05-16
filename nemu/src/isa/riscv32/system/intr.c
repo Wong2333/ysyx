@@ -15,13 +15,14 @@
 
 #include <isa.h>
 extern CPU_state cpu;
+void record_etrace(word_t NO, vaddr_t epc,word_t mtvec);
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
   cpu.mepc = epc;
   cpu.mcause = NO;
-  
+  record_etrace(NO,epc,cpu.mtvec);
   return cpu.mtvec;
 }
 
