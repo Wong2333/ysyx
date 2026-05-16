@@ -26,6 +26,42 @@ enum {
   TYPE_I, TYPE_U, TYPE_S,
   TYPE_N, TYPE_J, TYPE_R, TYPE_B// none
 };
+word_t csr_write(int index, word_t csrdata){
+  word_t res = 0;
+  if(index == 0x305){
+    res = cpu.mtvec;
+    cpu.mtvec = csrdata;
+  }
+  else if(index == 0x300){
+    res = cpu.mstatus;
+    cpu.mstatus = csrdata;
+  }
+  else if(index == 0x341){
+    res = cpu.mepc;
+    cpu.mepc = csrdata ;
+  }
+  else if(index == 0x342){
+    res = cpu.mcause;
+    cpu.mcause = csrdata;
+  }
+  return res;
+}
+word_t csr_read(int index){
+  word_t res = 0;
+  if(index == 0x305){
+    res = cpu.mtvec;
+  }
+  else if(index == 0x300){
+    res = cpu.mstatus;
+  }
+  else if(index == 0x341){
+    res = cpu.mepc;
+  }
+  else if(index == 0x342){
+    res = cpu.mcause;
+  }
+  return res;
+}
 
 #define src1R() do { *src1 = R(rs1); } while (0)
 #define src2R() do { *src2 = R(rs2); } while (0)
@@ -114,7 +150,10 @@ static int decode_exec(Decode *s) {
   INSTPAT("0100000 ????? ????? 101 ????? 01100 11", sra    , R, R(rd) = (int32_t)src1 >> (src2 & 0x1F));
   INSTPAT("0000000 ????? ????? 101 ????? 01100 11", srl    , R, R(rd) = src1 >> (src2 & 0x1F));
   INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = ((uint64_t)(uint32_t)src1 * (uint64_t)(uint32_t)src2) >> 32);
-
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = isa_raise_intr(9,s->pc));
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd) = csr_write(imm, src1););
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, src1 = src1 | (R(rd) = csr_read(imm)); csr_write(imm, src1););
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , I, s->dnpc = csr_read(0x341) + 4;);
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
