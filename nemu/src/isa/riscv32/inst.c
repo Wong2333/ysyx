@@ -30,7 +30,6 @@ word_t csr_write(int index, word_t csrdata){
   word_t res = 0;
   if(index == 0x305){
     res = cpu.mtvec;
-    printf("write mtvec: %x\n",csrdata);
     cpu.mtvec = csrdata;
   }
   else if(index == 0x300){
