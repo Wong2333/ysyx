@@ -34,7 +34,6 @@ word_t csr_write(int index, word_t csrdata){
   }
   else if(index == 0x300){
     res = cpu.mstatus;
-    printf("write mstatus: %x\n",csrdata);
     cpu.mstatus = csrdata;
   }
   else if(index == 0x341){
