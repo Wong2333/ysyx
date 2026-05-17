@@ -7,12 +7,13 @@
 #define NR_REGS 32
 #endif
 
-union Context {
-  void *pdir;
-  struct{
-      uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
+struct Context {
+  union{
+    void *pdir;
+    struct{
+        uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
+    };
   };
-
 };
 
 #ifdef __riscv_e
