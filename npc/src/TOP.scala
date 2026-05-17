@@ -18,39 +18,21 @@ class Top extends Module{
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
 
-    io.pc := IFU_u.io.pc
-    io.inst := IFU_u.io.inst
+    io.pc := IFU_u.out.pc
+    io.inst := IFU_u.out.inst
 
-    IFU_u.io.pc_next := WBU_u.io.pc_next
-    IFU_u.io.pc_we := IDU_u.io.pc_we
+    IDU_u.in.pc := IFU_u.out.pc
+    IDU_u.in.inst := IFU_u.out.inst
 
-    IDU_u.io.pc := IFU_u.io.pc
-    IDU_u.io.inst := IFU_u.io.inst
-    IDU_u.io.reg_rdata1 := RFS_u.io.rdata1
-    IDU_u.io.reg_rdata2 := RFS_u.io.rdata2
+    EXU_u.in.DecodeBundle <> IDU_u.out.DecodeBundle
+    EXU_u.in.EXU_CTL <> IDU_u.out.EXU_CTL
 
-    LSU_u.io.valid := IDU_u.io.mem_valid
-    LSU_u.io.wen := IDU_u.io.mem_wen
-    LSU_u.io.mem_ctl := IDU_u.io.mem_ctl
-    LSU_u.io.src1 := IDU_u.io.src1
-    LSU_u.io.src2 := IDU_u.io.src2
-    LSU_u.io.ALU_out := EXU_u.io.out
+    EXU_u.MemPort <> LSU_u.in
+    EXU_u.MemReadData <> LSU_u.out
+    EXU_u.WriteBackPort <> WBU_u.in
+    EXU_u.RegReadPort <> RFS_u.ReadPort
 
-    RFS_u.io.wdata := WBU_u.io.reg_wdata
-    RFS_u.io.waddr := IDU_u.io.reg_waddr
-    RFS_u.io.wen := IDU_u.io.reg_we
-    RFS_u.io.raddr1 := IDU_u.io.rs1
-    RFS_u.io.raddr2 := IDU_u.io.rs2
+    WBU_u.out.IFUBundle <> IFU_u.in
+    WBU_u.out.RFSBundle <> RFS_u.WritePort
 
-    WBU_u.io.pc := IFU_u.io.pc
-    WBU_u.io.ALU_out := EXU_u.io.out
-    WBU_u.io.imm := IDU_u.io.imm
-    WBU_u.io.mem_rdata := LSU_u.io.mem_out
-    WBU_u.io.WB_sel := IDU_u.io.WB_sel
-    WBU_u.io.pc_sel := IDU_u.io.pc_sel
-
-    EXU_u.io.imm := IDU_u.io.imm
-    EXU_u.io.src1 := IDU_u.io.src1
-    EXU_u.io.src2 := IDU_u.io.src2
-    EXU_u.io.ALU_ctl := IDU_u.io.ALU_ctl
 }

@@ -6,6 +6,8 @@
 #include <string.h>
 #include <time.h>
 #include <mmio.h>
+#include <autoconfig.h>
+#include <trace.h>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
@@ -29,6 +31,7 @@ uint32_t img[1024*1024] = {
   0x00000000,
   0x00000000
 };
+uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
     mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
@@ -46,9 +49,10 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+0x80000000,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx+CONFIG_START_ADDR,1,1024,fp)) > 0){
         idx += len;
     }
+    img_size = idx;
     fclose(fp);
 }
 
@@ -70,7 +74,9 @@ extern "C" int pmem_read(int addr) {
         return (uint32_t)(cpu_time_us >> 32);
     }
 
-    return mem[raddr >> 2]; 
+    uint32_t data = mem[raddr >> 2];
+    record_mtrace(READ_TRACE, raddr, 4, data);
+    return data;
 }
 
 extern "C" void pmem_write(int addr, int data, char mask) {
@@ -99,6 +105,7 @@ extern "C" void pmem_write(int addr, int data, char mask) {
         pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
+    record_mtrace(WRITE_TRACE, waddr, 4, wdata);
 }
 uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){

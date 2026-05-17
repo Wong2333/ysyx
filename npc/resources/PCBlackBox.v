@@ -5,11 +5,12 @@ module PCBlackBox(
     input pc_we,
     output [31:0]pc
 );
+    `include "autoconfig.svh"
     reg [31:0] PC;
     assign pc = PC;
     always@(posedge clock) begin
         if(reset)begin
-            PC <= 32'h80000000;
+            PC <= CONFIG_START_ADDR;
         end
         else begin
             if(pc_we)begin

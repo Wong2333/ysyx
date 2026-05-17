@@ -2,7 +2,8 @@
 #include <readline/history.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "sdb.h"
+#include <sdb.h>
+#include <autoconfig.h>
 
 static int is_batch_mode = false;
 
@@ -175,6 +176,9 @@ void sdb_set_batch_mode() {
 }
 
 void sdb_mainloop() {
+#ifndef CONFIG_ENABLE_SDB
+  sdb_set_batch_mode();
+#endif
   if (is_batch_mode) {
     cmd_c(NULL);
     return;

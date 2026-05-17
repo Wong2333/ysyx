@@ -1,6 +1,9 @@
 TOPNAME = Top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
+INC_PATH += $(NPC_HOME)/tools/capstone/repo/include
+KCONFIG_INCLUDE = csrc/include/autoconfig.h
+KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
@@ -11,7 +14,8 @@ OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 Top = $(BUILD_DIR)/$(TOPNAME).sv
 
-default: bin
+default: 
+	make bin
 
 # constraint file
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
@@ -30,17 +34,20 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-LDFLAGS += -lreadline
+LDFLAGS += -lreadline -ldl
 IMG=
+DIFF_REF=
+ELF=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $^ \
+		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
+		-Iresources/include
 
 test:
 	mill -i test
@@ -71,9 +78,10 @@ clean:
 
 .PHONY: bin test verilog help reformat checkformat clean
 
-sim: default
+sim: 
+	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) $(IMG)
+	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 -include ../Makefile
 
@@ -89,3 +97,24 @@ RTL_FILES = $(wildcard build/*.sv)
 CLK_FREQ_MHZ = 500
 
 include /home/wjm/yosys-sta/Makefile.common
+
+
+$(KCONFIG_INCLUDE): .config
+	python scripts/kconfig.py \
+		--kconfig-file Kconfig \
+		--config-out .config \
+		--header-out csrc/include/autoconfig.h \
+		--kconfig-list-out log.txt \
+		--configs-in .config
+
+$(KCONFIG_VERILOG_INCLUDE): .config
+	python scripts/kconfig.py \
+		--kconfig-file Kconfig \
+		--config-out .config \
+		--kconfig-list-out log.txt \
+		--configs-in .config \
+		--verilog-header resources/include/autoconfig.svh
+.config:
+	menuconfig
+menuconfig:
+	menuconfig
