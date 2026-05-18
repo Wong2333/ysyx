@@ -22,6 +22,10 @@ void halt(int code) {
 }
 
 void _trm_init() {
+  uint32_t mvendorid,marchid;
+  asm volatile("csrr %0, mvendorid":"=r"(mvendorid)::);
+  asm volatile("csrr %0, marchid":"=r"(marchid)::);
+  printf("%x_%u\n",mvendorid,marchid);
   int ret = main(mainargs);
   halt(ret);
 }
