@@ -53,18 +53,25 @@ class RFS extends Module {
     ReadPort.rdata2 := Reg_u.io.rdata2
     Reg_u.io.clock := clock
 
-    val mcycle = RegInit(0.U(32.W))
+    val mcycle = RegInit(0.U(64.W))
+
     ReadPort.CSRData := 0.U
     switch(ReadPort.CSRAddr){
-      is("hB00".U){
-        ReadPort.CSRData := mcycle
+      is("hB00".U){// mcycle
+        ReadPort.CSRData := mcycle(31,0)
+      }
+      is("hB80".U){// mcycleh
+        ReadPort.CSRData := mcycle(63,32)
       }
     }
     mcycle := mcycle + 1.U
     when(WritePort.CSRWrite){
-      switch(WritePort.CSRAddr){
+      switch(WritePort.CSRAddr){//mcycle
         is("hB00".U){
-          mcycle := WritePort.CSRData
+          mcycle(31,0) := WritePort.CSRData
+        }
+        is("hB80".U){
+          mcycle(63,32) := WritePort.CSRData
         }
       }
     }
