@@ -6,7 +6,7 @@ module RegBlackBox(
     input  [4:0]  raddr1,
     output [31:0] rdata1,
     input  [4:0]  raddr2,
-    output [31:0] rdata2,
+    output [31:0] rdata2
 );
     reg [31:0] rf [31:0];
     
