@@ -71,7 +71,7 @@ class RFS extends Module {
           mcycle := Cat(mcycle(63,32),WritePort.CSRData)
         }
         is("hB80".U){
-          mcycle(63,32) := Cat(WritePort.CSRData,mcycle(31,0))
+          mcycle := Cat(WritePort.CSRData,mcycle(31,0))
         }
       }
     }
