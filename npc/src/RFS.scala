@@ -68,7 +68,7 @@ class RFS extends Module {
         ReadPort.CSRData := "h79737978".U
       }
       is("hF12".U){// marchid
-        ReadPort.CSRData := "26030092".U
+        ReadPort.CSRData := "d26030092".U
       }
     }
     mcycle := mcycle + 1.U
