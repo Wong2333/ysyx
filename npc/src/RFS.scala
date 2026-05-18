@@ -60,7 +60,7 @@ class RFS extends Module {
         ReadPort.CSRData := mcycle
       }
     }
-
+    mcycle := mcycle + 1.U
     when(WritePort.CSRWrite){
       switch(WritePort.CSRAddr){
         is("hB00".U){
