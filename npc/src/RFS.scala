@@ -2,6 +2,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import chisel3.simulator.PeekPokeAPI.TestableData
+import scopt.Read
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -62,6 +63,12 @@ class RFS extends Module {
       }
       is("hB80".U){// mcycleh
         ReadPort.CSRData := mcycle(63,32)
+      }
+      is("hF11".U){// mvendorid
+        ReadPort.CSRData := "h79737978".U
+      }
+      is("hF12".U){// marchid
+        ReadPort.CSRData := "26030092".U
       }
     }
     mcycle := mcycle + 1.U
