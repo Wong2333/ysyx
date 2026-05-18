@@ -142,7 +142,8 @@ class EXU extends Module{
             src2 := Cat(0.U(27.W),in.DecodeBundle.imm(4,0))
         }
         is(ALUSrc2.csr){
-            src2 := RegReadPort
+            RegReadPort.CSRAddr := in.DecodeBundle.imm(11,0)
+            src2 := RegReadPort.CSRData
         }
     }
 
