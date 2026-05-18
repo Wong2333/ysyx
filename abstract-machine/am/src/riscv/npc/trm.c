@@ -28,6 +28,7 @@ void _trm_init() {
   asm volatile("csrr %0, mvendorid":"=r"(*(uint32_t *)mvendorid)::);
   asm volatile("csrr %0, marchid":"=r"(marchid)::);
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
+  putch('_');
   printf("%u\n",mvendorid,marchid);
   int ret = main(mainargs);
   halt(ret);
