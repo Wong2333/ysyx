@@ -68,10 +68,10 @@ class RFS extends Module {
     when(WritePort.CSRWrite){
       switch(WritePort.CSRAddr){//mcycle
         is("hB00".U){
-          mcycle(31,0) := WritePort.CSRData
+          mcycle := Cat(mcycle(63,32),WritePort.CSRData)
         }
         is("hB80".U){
-          mcycle(63,32) := WritePort.CSRData
+          mcycle(63,32) := Cat(WritePort.CSRData,mcycle(31,0))
         }
       }
     }
