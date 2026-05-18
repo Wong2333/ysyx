@@ -155,6 +155,14 @@ class IDU extends Module{
                     invalid := false.B
                     trap := true.B
                 }
+            }.elsewhen(inst.funct3 === "b010".U){
+                out.DecodeBundle.rd := inst.rd
+                out.DecodeBundle.rs1 := inst.rs1
+                out.DecodeBundle.imm := inst.immI
+                out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+                out.EXU_CTL.ALU_Src2 := ALUSrc2.csr
+                out.EXU_CTL.ALU_Control := ALUContorl.or
+                out.EXU_CTL.CSR_Contorl := CSRControl.csrrs
             }
         }
         is("b0110011".U){

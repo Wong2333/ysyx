@@ -23,7 +23,7 @@ object ALUSrc2 extends ChiselEnum{
     val rs2,
     imm,
     shamt,
-    FOUR = Value
+    csr = Value
 }
 
 object ALUContorl extends ChiselEnum{
@@ -67,12 +67,18 @@ object BranchControl extends ChiselEnum{
     bgeu = Value
 }
 
+object CSRControl extends ChiselEnum{
+    val none,
+    csrrs = Value
+}
+
 class EXUCTLBundle extends Bundle{
     val ALU_Op = Output(ALUOp())
     val ALU_Src1 = Output(ALUSrc1())
     val ALU_Src2 = Output(ALUSrc2())
     val ALU_Control = Output(ALUContorl())
     val ALUWrite2Reg = Output(Bool())
+    val CSR_Contorl = Output(CSRControl())
     val ALU_Jump = Output(Jump())
     val Mem_Control = Output(MemControl())
     val Branch_Control = Output(BranchControl())
@@ -85,6 +91,9 @@ class EXU extends Module{
         val rdata1 = Input(UInt(32.W))
         val raddr2 = Output(UInt(5.W))
         val rdata2 = Input(UInt(32.W))
+
+        val CSRAddr = Output(UInt(12.W))
+        val CSRData = Input(UInt(32.W))
     })
     val in = IO(new Bundle {
         val DecodeBundle = new Bundle {
@@ -132,6 +141,9 @@ class EXU extends Module{
         is(ALUSrc2.shamt){
             src2 := Cat(0.U(27.W),in.DecodeBundle.imm(4,0))
         }
+        is(ALUSrc2.csr){
+            src2 := RegReadPort
+        }
     }
 
     switch(in.EXU_CTL.ALU_Control){
@@ -177,6 +189,17 @@ class EXU extends Module{
         WriteBackPort.RegWaddr := in.DecodeBundle.rd
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
+    }
+    switch(in.EXU_CTL.CSR_Contorl){
+        is(CSRControl.csrrs){
+            RegReadPort.CSRAddr := in.DecodeBundle.imm(11,0)
+            WriteBackPort.RegWaddr := in.DecodeBundle.rd
+            WriteBackPort.RegWdata := RegReadPort.CSRData
+            WriteBackPort.RegWrite := true.B
+            WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
+            WriteBackPort.CSRData := AluResult
+            WriteBackPort.CSRWrite := true.B
+        }
     }
     
     switch(in.EXU_CTL.ALU_Jump){
