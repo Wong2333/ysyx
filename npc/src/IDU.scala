@@ -156,7 +156,7 @@ class IDU extends Module{
                     invalid := false.B
                     trap := true.B
                 }
-            }.elsewhen(inst.funct3 === "b010".U){
+            }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out.DecodeBundle.rd := inst.rd
                 out.DecodeBundle.rs1 := inst.rs1
                 out.DecodeBundle.imm := inst.immI
@@ -164,6 +164,7 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Src2 := ALUSrc2.csr
                 out.EXU_CTL.ALU_Control := ALUContorl.or
                 out.EXU_CTL.CSR_Contorl := CSRControl.csrrs
+                invalid := false.B
             }
         }
         is("b0110011".U){
