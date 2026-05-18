@@ -54,6 +54,7 @@ class RFS extends Module {
     Reg_u.io.clock := clock
 
     val mcycle = RegInit(0.U(32.W))
+    ReadPort.CSRData := 0.U
     switch(ReadPort.CSRAddr){
       is("hB00".U){
         ReadPort.CSRData := mcycle

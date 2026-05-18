@@ -81,6 +81,7 @@ class IDU extends Module{
     out.EXU_CTL.Mem_Control := MemControl.none
     out.EXU_CTL.Branch_Control := BranchControl.none
     out.EXU_CTL.ALUWrite2Reg := false.B
+    out.EXU_CTL.CSR_Contorl := CSRControl.none
 
     invalid := true.B
 

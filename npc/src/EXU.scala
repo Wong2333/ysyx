@@ -86,15 +86,7 @@ class EXUCTLBundle extends Bundle{
 
 class EXU extends Module{
 
-    val RegReadPort = IO(new Bundle {
-        val raddr1 = Output(UInt(5.W))
-        val rdata1 = Input(UInt(32.W))
-        val raddr2 = Output(UInt(5.W))
-        val rdata2 = Input(UInt(32.W))
-
-        val CSRAddr = Output(UInt(12.W))
-        val CSRData = Input(UInt(32.W))
-    })
+    val RegReadPort = IO(new ReadRegPortBundle)
     val in = IO(new Bundle {
         val DecodeBundle = new Bundle {
             val imm = Input(UInt(32.W))
@@ -191,6 +183,7 @@ class EXU extends Module{
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
     }
+    RegReadPort.CSRAddr := 0.U
     switch(in.EXU_CTL.CSR_Contorl){
         is(CSRControl.csrrs){
             RegReadPort.CSRAddr := in.DecodeBundle.imm(11,0)
