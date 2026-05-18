@@ -9,7 +9,6 @@ module RegBlackBox(
     output [31:0] rdata2,
 );
     reg [31:0] rf [31:0];
-    reg [31:0] csr [3:0]
     
     assign rdata1 = (raddr1 == 5'b0) ? 32'b0 : rf[raddr1];
     assign rdata2 = (raddr2 == 5'b0) ? 32'b0 : rf[raddr2];
