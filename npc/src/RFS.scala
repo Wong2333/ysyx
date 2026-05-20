@@ -1,8 +1,6 @@
 package npc
 import chisel3._
 import chisel3.util._
-import chisel3.simulator.PeekPokeAPI.TestableData
-import scopt.Read
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -18,14 +16,41 @@ class RegBlackBox extends ExtModule{
   addResource("/RegBlackBox.v")
 }
 
+class PCBlackBox extends ExtModule{
+    val io = FlatIO(new Bundle {
+        val clock = Input(Clock())
+        val reset = Input(Reset())
+        val pc_next = Input(UInt(32.W))
+        val pc_we = Input(Bool())
+        val pc = Output(UInt(32.W))
+    })
+    addResource("/PCBlackBox.v")
+}
+
 class WriteRegPortBundle extends Bundle{
     val wdata  = Output(UInt(32.W))
     val waddr  = Output(UInt(5.W))
     val wen    = Output(Bool())
 
-    val CSRAddr = Output(UInt(12.W))
-    val CSRData = Output(UInt(32.W))
+    val PCNext = Output(UInt(32.W))
+    val PCWrite = Output(Bool())
+}
+
+class CSRWritePortBundle extends Bundle{
+    val CSRWAddr = Output(UInt(12.W))
+    val CSRWData = Output(UInt(32.W))
     val CSRWrite = Output(Bool())
+  
+}
+class CSRReadPortBundle extends Bundle{
+    val CSRRAddr = Output(UInt(12.W))
+    val CSRRData = Input(UInt(32.W))
+
+}
+class ExceptionInfoBundle extends Bundle{
+    val isTrap = Output(Bool())
+    val PC = Output(UInt(32.W))
+    val Exception_Code = Output(UInt(32.W))
 }
 
 class ReadRegPortBundle extends Bundle{
@@ -34,16 +59,27 @@ class ReadRegPortBundle extends Bundle{
     val rdata1 = Input(UInt(32.W))
     val raddr2 = Output(UInt(5.W))
     val rdata2 = Input(UInt(32.W))
-
-    val CSRAddr = Output(UInt(12.W))
-    val CSRData = Input(UInt(32.W))
-    
+    val pc = Input(UInt(32.W))
 }
 
 class RFS extends Module {
   val WritePort = IO(Flipped(new WriteRegPortBundle))
 
   val ReadPort = IO(Flipped(new ReadRegPortBundle))
+  val CSRPort = IO(new Bundle {
+    val WritePort = Flipped(new CSRWritePortBundle)
+    val ReadPort = Flipped(new CSRReadPortBundle)
+  })
+  val ExceptionPort = IO(Flipped(new ExceptionInfoBundle))
+
+    val PC_reg = Module(new PCBlackBox())
+    PC_reg.io.clock := clock
+    PC_reg.io.reset := reset
+    PC_reg.io.pc_next := WritePort.PCNext
+    PC_reg.io.pc_we := WritePort.PCWrite
+
+    ReadPort.pc := PC_reg.io.pc
+  
     val Reg_u = Module(new RegBlackBox())
     Reg_u.io.wdata := WritePort.wdata
     Reg_u.io.waddr := WritePort.waddr
@@ -56,30 +92,66 @@ class RFS extends Module {
 
     val mcycle = RegInit(0.U(64.W))
 
-    ReadPort.CSRData := 0.U
-    switch(ReadPort.CSRAddr){
+    val mepc = Reg(UInt(32.W))
+    val mcause = Reg(UInt(32.W))
+    val mtvec = Reg(UInt(32.W))
+    val mstatus = RegInit("h1800".U(32.W))
+
+    CSRPort.ReadPort.CSRRData := 0.U
+    switch(CSRPort.ReadPort.CSRRAddr){
       is("hB00".U){// mcycle
-        ReadPort.CSRData := mcycle(31,0)
+        CSRPort.ReadPort.CSRRData := mcycle(31,0)
       }
       is("hB80".U){// mcycleh
-        ReadPort.CSRData := mcycle(63,32)
+        CSRPort.ReadPort.CSRRData := mcycle(63,32)
       }
       is("hF11".U){// mvendorid
-        ReadPort.CSRData := "h79737978".U
+        CSRPort.ReadPort.CSRRData := "h79737978".U
       }
       is("hF12".U){// marchid
-        ReadPort.CSRData := 26030092.U
+        CSRPort.ReadPort.CSRRData := 26030092.U
+      }
+      is("h305".U){
+        CSRPort.ReadPort.CSRRData := mtvec
+      }
+      is("h300".U){
+        CSRPort.ReadPort.CSRRData := mstatus
+      }
+      is("h341".U){
+        CSRPort.ReadPort.CSRRData := mepc
+      }
+      is("h342".U){
+        CSRPort.ReadPort.CSRRData := mcause
       }
     }
     mcycle := mcycle + 1.U
-    when(WritePort.CSRWrite){
-      switch(WritePort.CSRAddr){//mcycle
+    when(CSRPort.WritePort.CSRWrite){
+      switch(CSRPort.WritePort.CSRWAddr){//mcycle
         is("hB00".U){
-          mcycle := Cat(mcycle(63,32),WritePort.CSRData)
+          mcycle := Cat(mcycle(63,32),CSRPort.WritePort.CSRWData)
         }
         is("hB80".U){
-          mcycle := Cat(WritePort.CSRData,mcycle(31,0))
+          mcycle := Cat(CSRPort.WritePort.CSRWData,mcycle(31,0))
+        }
+        is("h305".U){
+          mtvec := CSRPort.WritePort.CSRWData
+        }
+        is("h300".U){
+          mstatus := CSRPort.WritePort.CSRWData
+        }
+        is("h341".U){
+          mepc := CSRPort.WritePort.CSRWData
+        }
+        is("h342".U){
+          mcause := CSRPort.WritePort.CSRWData
         }
       }
+    }
+
+    when(ExceptionPort.isTrap){
+      mepc := ExceptionPort.PC
+      mstatus := ExceptionPort.Exception_Code
+      PC_reg.io.pc_next := mtvec
+      PC_reg.io.pc_we := true.B
     }
 }

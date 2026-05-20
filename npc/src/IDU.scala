@@ -165,6 +165,11 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Control := ALUContorl.or
                 out.EXU_CTL.CSR_Contorl := CSRControl.csrrs
                 invalid := false.B
+            }.elsewhen(inst.funct3 === "b000".U && inst.rd === 0.U && 
+                    inst.rs1 === 0.U && inst.immI === 0.U){
+                out.EXU_CTL.CSR_Contorl := CSRControl.ecall
+                out.DecodeBundle.pc := in.pc
+                invalid := false.B
             }
         }
         is("b0110011".U){

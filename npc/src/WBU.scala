@@ -5,7 +5,8 @@ import chisel3.util._
 
 class WriteBackPortBundle extends Bundle{
     val PCNext = Output(UInt(32.W))
-    val JumpOrBranch = Output(Bool())
+    val PCWrite = Output(Bool())
+
     val RegWaddr = Output(UInt(5.W))
     val RegWdata = Output(UInt(32.W))
     val RegWrite = Output(Bool())
@@ -13,27 +14,32 @@ class WriteBackPortBundle extends Bundle{
     val CSRAddr = Output(UInt(12.W))
     val CSRData = Output(UInt(32.W))
     val CSRWrite = Output(Bool())
+    val isTrap = Output(Bool())
+    val PC = Output(UInt(32.W))
+    val Exception_Code = Output(UInt(32.W))
 }
 
 class WBU extends Module{
     val in = IO(Flipped(new WriteBackPortBundle))
 
     val out = IO(new Bundle {
-        val IFUBundle = Output(new Bundle {
-            val pc_next = Input(UInt(32.W))
-            val pc_we = Input(Bool())
-        })
-        val RFSBundle = Output(new WriteRegPortBundle)
-
+        val WriteRegPort = Output(new WriteRegPortBundle)
+        val CSRPort = new CSRWritePortBundle
+        val ExceptionPort = new ExceptionInfoBundle
     })
 
-    out.IFUBundle.pc_next := in.PCNext
-    out.IFUBundle.pc_we := in.JumpOrBranch
-    out.RFSBundle.waddr := in.RegWaddr
-    out.RFSBundle.wdata := in.RegWdata
-    out.RFSBundle.wen := in.RegWrite
-    out.RFSBundle.CSRAddr := in.CSRAddr
-    out.RFSBundle.CSRData := in.CSRData
-    out.RFSBundle.CSRWrite := in.CSRWrite
+    out.WriteRegPort.waddr := in.RegWaddr
+    out.WriteRegPort.wdata := in.RegWdata
+    out.WriteRegPort.wen := in.RegWrite
+    out.WriteRegPort.PCWrite := in.PCWrite
+    out.WriteRegPort.PCNext := in.PCNext
+
+    out.CSRPort.CSRWAddr := in.CSRAddr
+    out.CSRPort.CSRWData := in.CSRData
+    out.CSRPort.CSRWrite := in.CSRWrite
+
+    out.ExceptionPort.isTrap := in.isTrap
+    out.ExceptionPort.PC := in.PC
+    out.ExceptionPort.Exception_Code := in.Exception_Code
  
 }

@@ -17,11 +17,12 @@ class Top extends Module{
     val IDU_u = Module(new IDU())
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
-
-    io.pc := IFU_u.out.pc
+    
+    IFU_u.in.pc := RFS_u.ReadPort.pc
+    io.pc := RFS_u.ReadPort.pc
     io.inst := IFU_u.out.inst
 
-    IDU_u.in.pc := IFU_u.out.pc
+    IDU_u.in.pc := RFS_u.ReadPort.pc
     IDU_u.in.inst := IFU_u.out.inst
 
     EXU_u.in.DecodeBundle <> IDU_u.out.DecodeBundle
@@ -32,7 +33,7 @@ class Top extends Module{
     EXU_u.WriteBackPort <> WBU_u.in
     EXU_u.RegReadPort <> RFS_u.ReadPort
 
-    WBU_u.out.IFUBundle <> IFU_u.in
-    WBU_u.out.RFSBundle <> RFS_u.WritePort
-
+    WBU_u.out.WriteRegPort <> RFS_u.WritePort
+    WBU_u.out.CSRPort <> RFS_u.CSRPort.WritePort
+    WBU_u.out.ExceptionPort <> RFS_u.ExceptionPort
 }

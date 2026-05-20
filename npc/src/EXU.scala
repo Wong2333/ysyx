@@ -69,6 +69,7 @@ object BranchControl extends ChiselEnum{
 
 object CSRControl extends ChiselEnum{
     val none,
+    ecall,
     csrrs = Value
 }
 
@@ -87,6 +88,7 @@ class EXUCTLBundle extends Bundle{
 class EXU extends Module{
 
     val RegReadPort = IO(new ReadRegPortBundle)
+    val CSRReadPort = IO(new CSRReadPortBundle)
     val in = IO(new Bundle {
         val DecodeBundle = new Bundle {
             val imm = Input(UInt(32.W))
@@ -134,8 +136,8 @@ class EXU extends Module{
             src2 := Cat(0.U(27.W),in.DecodeBundle.imm(4,0))
         }
         is(ALUSrc2.csr){
-            RegReadPort.CSRAddr := in.DecodeBundle.imm(11,0)
-            src2 := RegReadPort.CSRData
+            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
+            src2 := CSRReadPort.CSRRData
         }
     }
 
@@ -183,12 +185,17 @@ class EXU extends Module{
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
     }
-    RegReadPort.CSRAddr := 0.U
+    CSRReadPort.CSRRAddr := 0.U
     switch(in.EXU_CTL.CSR_Contorl){
+        is(CSRControl.ecall){
+            WriteBackPort.Exception_Code := 11.U
+            WriteBackPort.PC := in.DecodeBundle.pc
+            WriteBackPort.isTrap := true.B
+        }
         is(CSRControl.csrrs){
-            RegReadPort.CSRAddr := in.DecodeBundle.imm(11,0)
+            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
-            WriteBackPort.RegWdata := RegReadPort.CSRData
+            WriteBackPort.RegWdata := CSRReadPort.CSRRData
             WriteBackPort.RegWrite := true.B
             WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.CSRData := AluResult
@@ -198,7 +205,7 @@ class EXU extends Module{
     
     switch(in.EXU_CTL.ALU_Jump){
         is(Jump.jal){
-            WriteBackPort.JumpOrBranch := true.B
+            WriteBackPort.PCWrite := true.B
             WriteBackPort.PCNext := AluResult
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
             WriteBackPort.RegWrite := true.B
@@ -240,7 +247,7 @@ class EXU extends Module{
         }
     }
     when(BranchCond){
-        WriteBackPort.JumpOrBranch := true.B
+        WriteBackPort.PCWrite := true.B
         WriteBackPort.PCNext := AluResult
         WriteBackPort.RegWrite := false.B
     }
