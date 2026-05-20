@@ -3,7 +3,7 @@
 FILE *mtrace_fp = NULL;
 FILE *dtrace_fp = NULL;
 char *TRACE_DIR = NULL;
-
+FILE *etrace_fp = NULL;
 
 bool mtrace_enable(paddr_t addr) {
   return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START_ADDR) &&
@@ -237,40 +237,34 @@ void record_dtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data,const char 
 #endif
 }
 
-#ifdef CONFIG_MTRACE
-void init_mtrace(const char *trace_dir){
+void record_etrace(word_t NO, vaddr_t epc,word_t mtvec){
+    #ifdef CONFIG_ETRACE
+    if (etrace_fp != NULL) { 
+        fprintf(etrace_fp,"mcause: 0x%x   mepc: 0x%x   mtvec: 0x%x\n",NO,epc, mtvec); 
+        fflush(etrace_fp); 
+    } 
+#endif
+}
+
+void init_trace_file(const char *trace_dir , const char *file_name, FILE**fpp){
     char trace_path[1024*4];
     FILE *fp = NULL;
     if(trace_dir){
         strcpy(trace_path,trace_dir);
-        strcat(trace_path,"/mtrace.txt");
+        strcat(trace_path,"/");
+        strcat(trace_path,file_name);
     }else{
-        strcpy(trace_path,"./mtrace.txt");
+        strcpy(trace_path,file_name);
     }
     fp = fopen(trace_path, "w");
     Assert(fp, "Can not open '%s'", trace_path);
-    mtrace_fp = fp;
-    Log("mtrace is written to %s",trace_path);
+    *fpp = fp;
 }
-#endif
+
 
 #ifdef CONFIG_FTRACE
 void init_ftrace(const char *trace_dir,const char *elf_file){
-    char trace_path[1024*4];
-    FILE *fp = NULL;
-    if(elf_file == NULL) return;
-    if(trace_dir){
-        strcpy(trace_path,trace_dir);
-        strcat(trace_path,"/ftrace.txt");
-    }else{
-        strcpy(trace_path,"./ftrace.txt");
-    }
-    funcs_count = extract_elf_functions(elf_file,&funcs);
-
-    fp = fopen(trace_path, "w");
-    Assert(fp, "Can not open %s",trace_path);
-    ftrace_fp = fp;
-
+    init_trace_file(trace_dir,"ftrace.txt",&ftrace_fp);
         // 初始化栈
     ftrace_top = -1; 
     
@@ -278,37 +272,21 @@ void init_ftrace(const char *trace_dir,const char *elf_file){
 }
 #endif
 
-#ifdef CONFIG_DTRACE
-void init_dtrace(const char *trace_dir){
-    char trace_path[1024*4];
-    FILE *fp = NULL;
-    if(trace_dir){
-        strcpy(trace_path,trace_dir);
-        strcat(trace_path,"/dtrace.txt");
-    }else{
-        strcpy(trace_path,"./dtrace.txt");
-    }
-
-    fp = fopen(trace_path, "w");
-    Assert(fp, "Can not open %s",trace_path);
-    dtrace_fp = fp;
-
-    
-    Log("dtrace is written to %s", trace_path);
-}
-#endif
-
 void init_trace(const char *trace_dir,const char *elf_file){
 
     // init mtrace
 #ifdef CONFIG_MTRACE
-    init_mtrace(trace_dir);
+    init_trace_file(trace_dir,"mtrace.txt",&mtrace_fp);
+#endif
+
+#ifdef CONFIG_DTRACE
+    init_trace_file(trace_dir,"dtrace.txt",&dtrace_fp);
 #endif
     // init ftrace
-#ifdef CONFIG_FTRACE 
+#ifdef CONFIG_FTRACE
     init_ftrace(trace_dir,elf_file);
 #endif
-#ifdef CONFIG_DTRACE 
-    init_dtrace(trace_dir);
+#ifdef CONFIG_ETRACE
+    init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
 #endif
 }
