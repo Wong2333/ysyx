@@ -88,7 +88,7 @@ class IDU extends Module{
     when(reset.asBool){
         invalid := false.B
     }.otherwise{
-        printf(cf"funct3:${inst.funct3} rd: ${inst.rd} rs1: ${inst.rs1} imm: ${inst.immI}\n")
+        printf(cf"inst: ${in.inst} funct3:${inst.funct3} rd: ${inst.rd} rs1: ${inst.rs1} imm: ${inst.immI}\n")
         switch(inst.opcode){
         is("b0010011".U){
             out.EXU_CTL.ALU_Op := ALUOp.IType
