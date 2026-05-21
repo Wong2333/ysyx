@@ -209,12 +209,13 @@ class EXU extends Module{
             WriteBackPort.CSRWrite := true.B
         }
         is(CSRControl.csrrw){
+            RegReadPort.raddr1 := in.DecodeBundle.rs1
             CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
             WriteBackPort.RegWdata := CSRReadPort.CSRRData
             WriteBackPort.RegWrite := true.B
             WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
-            WriteBackPort.CSRData := in.DecodeBundle.rs1
+            WriteBackPort.CSRData := RegReadPort.rdata1
             WriteBackPort.CSRWrite := true.B
         }
     }
