@@ -70,6 +70,8 @@ object BranchControl extends ChiselEnum{
 object CSRControl extends ChiselEnum{
     val none,
     ecall,
+    mret,
+    csrrw,
     csrrs = Value
 }
 
@@ -192,6 +194,11 @@ class EXU extends Module{
             WriteBackPort.PC := in.DecodeBundle.pc
             WriteBackPort.isTrap := true.B
         }
+        is(CSRControl.mret){
+            CSRReadPort.CSRRAddr := "h341".U
+            WriteBackPort.PCNext := CSRReadPort.CSRRData
+            WriteBackPort.PCWrite := true.B
+        }
         is(CSRControl.csrrs){
             CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
@@ -199,6 +206,15 @@ class EXU extends Module{
             WriteBackPort.RegWrite := true.B
             WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.CSRData := AluResult
+            WriteBackPort.CSRWrite := true.B
+        }
+        is(CSRControl.csrrw){
+            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
+            WriteBackPort.RegWaddr := in.DecodeBundle.rd
+            WriteBackPort.RegWdata := CSRReadPort.CSRRData
+            WriteBackPort.RegWrite := true.B
+            WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
+            WriteBackPort.CSRData := in.DecodeBundle.rs1
             WriteBackPort.CSRWrite := true.B
         }
     }

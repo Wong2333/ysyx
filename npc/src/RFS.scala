@@ -150,7 +150,7 @@ class RFS extends Module {
 
     when(ExceptionPort.isTrap){
       mepc := ExceptionPort.PC
-      mstatus := ExceptionPort.Exception_Code
+      mcause := ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec
       PC_reg.io.pc_we := true.B
     }
