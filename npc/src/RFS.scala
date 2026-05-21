@@ -134,7 +134,6 @@ class RFS extends Module {
           mcycle := Cat(CSRPort.WritePort.CSRWData,mcycle(31,0))
         }
         is("h305".U){
-          printf(cf"write mtvec: ${CSRPort.WritePort.CSRWData}\n")
           mtvec := CSRPort.WritePort.CSRWData
         }
         is("h300".U){
@@ -150,7 +149,6 @@ class RFS extends Module {
     }
 
     when(ExceptionPort.isTrap){
-      printf(cf"ecall to pc ${mtvec}")
       mepc := ExceptionPort.PC
       mcause := ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec
