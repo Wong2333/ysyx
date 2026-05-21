@@ -190,6 +190,7 @@ class EXU extends Module{
     CSRReadPort.CSRRAddr := 0.U
     switch(in.EXU_CTL.CSR_Contorl){
         is(CSRControl.ecall){
+            printf("ecall\n")
             WriteBackPort.Exception_Code := 11.U
             WriteBackPort.PC := in.DecodeBundle.pc
             WriteBackPort.isTrap := true.B
