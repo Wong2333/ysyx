@@ -149,6 +149,7 @@ class RFS extends Module {
     }
 
     when(ExceptionPort.isTrap){
+      printf(cf"ecall to pc ${ExceptionPort.PC}")
       mepc := ExceptionPort.PC
       mcause := ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec

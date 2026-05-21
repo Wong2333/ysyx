@@ -174,7 +174,6 @@ class IDU extends Module{
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
-                printf(cf"ecall\n")
                 out.EXU_CTL.CSR_Contorl := CSRControl.ecall
                 out.DecodeBundle.pc := in.pc
                 invalid := false.B
