@@ -134,6 +134,7 @@ class RFS extends Module {
           mcycle := Cat(CSRPort.WritePort.CSRWData,mcycle(31,0))
         }
         is("h305".U){
+          printf(cf"write mtvec: ${CSRPort.WritePort.CSRWData}\n")
           mtvec := CSRPort.WritePort.CSRWData
         }
         is("h300".U){
