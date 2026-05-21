@@ -177,8 +177,7 @@ class IDU extends Module{
                     inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
                     out.EXU_CTL.CSR_Contorl := CSRControl.mret
                     invalid := false.B
-            }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
-                    inst.rs1 === 0.U){ // ecall
+            }.elsewhen(in.inst === "h73".U){ // ecall
                 printf(cf"ecall\n")
                 out.EXU_CTL.CSR_Contorl := CSRControl.ecall
                 out.DecodeBundle.pc := in.pc
