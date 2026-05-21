@@ -21,8 +21,9 @@ class IFU extends Module{
     })
 
     val pmem_read_inst = Module(new PmemReadBlackBox)
-    pmem_read_inst.io.raddr := in.pc
     printf(cf"inst ${pmem_read_inst.io.rdata}\n")
+    pmem_read_inst.io.raddr := in.pc
+    // printf(cf"inst ${pmem_read_inst.io.rdata}\n")
     out.inst := pmem_read_inst.io.rdata
     
 
