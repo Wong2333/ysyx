@@ -88,7 +88,6 @@ class IDU extends Module{
     when(reset.asBool){
         invalid := false.B
     }.otherwise{
-        printf(cf"inst: ${in.inst} funct3:${inst.funct3} rd: ${inst.rd} rs1: ${inst.rs1} imm: ${inst.immI}\n")
         switch(inst.opcode){
         is("b0010011".U){
             out.EXU_CTL.ALU_Op := ALUOp.IType
@@ -149,15 +148,11 @@ class IDU extends Module{
             }
         }
         is("b1110011".U){
-            printf(cf"csr: funct3:${inst.funct3} rd: ${inst.rd} rs1: ${inst.rs1} imm: ${inst.immI}\n")
-            when(inst.funct3 === "b000".U){//ebreak
-                when(inst.immI === 1.U 
-                && inst.rs1 === 0.U 
-                && inst.rd === 0.U
-                ){
+            when(inst.funct3 === "b000".U && inst.immI === 1.U && 
+                        inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
                     trap := true.B
-                }
+                
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out.DecodeBundle.rd := inst.rd
                 out.DecodeBundle.rs1 := inst.rs1
@@ -177,7 +172,8 @@ class IDU extends Module{
                     inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
                     out.EXU_CTL.CSR_Contorl := CSRControl.mret
                     invalid := false.B
-            }.otherwise{ // ecall
+            }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
+                        inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
                 printf(cf"ecall\n")
                 out.EXU_CTL.CSR_Contorl := CSRControl.ecall
                 out.DecodeBundle.pc := in.pc
