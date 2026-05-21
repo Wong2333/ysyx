@@ -148,7 +148,7 @@ class IDU extends Module{
             }
         }
         is("b1110011".U){
-            printf(cf"csr\n")
+            printf(cf"csr: funct3:${inst.funct3} rd: ${inst.rd} rs1: ${inst.rs1} imm: ${inst.immI}\n")
             when(inst.funct3 === "b000".U){//ebreak
                 when(inst.immI === 1.U 
                 && inst.rs1 === 0.U 
