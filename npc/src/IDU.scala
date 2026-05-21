@@ -165,18 +165,19 @@ class IDU extends Module{
                 out.EXU_CTL.ALU_Control := ALUContorl.or
                 out.EXU_CTL.CSR_Contorl := CSRControl.csrrs
                 invalid := false.B
-            }.elsewhen(inst.funct3 === "b001".U){
+            }.elsewhen(inst.funct3 === "b001".U){// csrws
                 out.DecodeBundle.rd := inst.rd
                 out.DecodeBundle.rs1 := inst.rs1
                 out.DecodeBundle.imm := inst.immI
                 out.EXU_CTL.CSR_Contorl := CSRControl.csrrw
                 invalid := false.B
             }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
-                    inst.rs1 === 0.U && inst.immI === "b001100000010".U){
+                    inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
                     out.EXU_CTL.CSR_Contorl := CSRControl.mret
                     invalid := false.B
             }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
-                    inst.rs1 === 0.U && inst.immI === 0.U){
+                    inst.rs1 === 0.U && inst.immI === 0.U){ // ecall
+                printf(cf"ecall\n")
                 out.EXU_CTL.CSR_Contorl := CSRControl.ecall
                 out.DecodeBundle.pc := in.pc
                 invalid := false.B
