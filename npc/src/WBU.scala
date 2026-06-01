@@ -34,9 +34,9 @@ class WBU extends Module{
     out.WriteRegPort.PCWrite := in.PCWrite
     out.WriteRegPort.PCNext := in.PCNext
 
-    out.CSRPort.CSRWAddr := in.CSRAddr
-    out.CSRPort.CSRWData := in.CSRData
-    out.CSRPort.CSRWrite := in.CSRWrite
+    out.CSRWritePort.CSRWAddr := in.CSRAddr
+    out.CSRWritePort.CSRWData := in.CSRData
+    out.CSRWritePort.CSRWrite := in.CSRWrite
 
     out.ExceptionPort.isTrap := in.isTrap
     out.ExceptionPort.PC := in.PC
