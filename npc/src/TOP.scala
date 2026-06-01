@@ -25,8 +25,7 @@ class Top extends Module{
     IDU_u.in.pc := RFS_u.pc
     IDU_u.in.inst := IFU_u.out.inst
 
-    EXU_u.in.DecodeBundle <> IDU_u.out.DecodeBundle
-    EXU_u.in.EXU_CTL <> IDU_u.out.EXU_CTL
+    EXU_u.IDU_in <> IDU_u.out
 
     EXU_u.MemPort <> LSU_u.in
     EXU_u.MemReadData <> LSU_u.out
