@@ -68,7 +68,7 @@ class RFS extends Module {
     val CSRWritePort = Flipped(new CSRWritePortBundle)
   })
   val RFS_ReadPort = IO(new Bundle {
-    val ReadPort = Flipped(new ReadRegPortBundle)
+    val RegReadPort = Flipped(new ReadRegPortBundle)
     val CSRReadPort = Flipped(new CSRReadPortBundle)
   })
   val pc = IO(Output(UInt(32.W)))
@@ -87,10 +87,10 @@ class RFS extends Module {
     Reg_u.io.wdata := WBU_in.WriteRegPort.wdata
     Reg_u.io.waddr := WBU_in.WriteRegPort.waddr
     Reg_u.io.wen := WBU_in.WriteRegPort.wen
-    Reg_u.io.raddr1 := RFS_ReadPort.ReadPort.raddr1
-    Reg_u.io.raddr2 := RFS_ReadPort.ReadPort.raddr2
-    RFS_ReadPort.ReadPort.rdata1 := Reg_u.io.rdata1
-    RFS_ReadPort.ReadPort.rdata2 := Reg_u.io.rdata2
+    Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
+    Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
+    RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1
+    RFS_ReadPort.RegReadPort.rdata2 := Reg_u.io.rdata2
     Reg_u.io.clock := clock
 
     val mcycle = RegInit(0.U(64.W))
