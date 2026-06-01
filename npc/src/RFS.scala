@@ -64,9 +64,9 @@ class ReadRegPortBundle extends Bundle{
 
 class RFS extends Module {
   val WBU_in = IO(new Bundle {
-    val WritePort = IO(Flipped(new WriteRegPortBundle))
-    val ExceptionPort = IO(Flipped(new ExceptionInfoBundle))
-    val CSRWritePort = IO(Flipped(new CSRWritePortBundle))
+    val WritePort = Flipped(new WriteRegPortBundle)
+    val ExceptionPort = Flipped(new ExceptionInfoBundle)
+    val CSRWritePort = Flipped(new CSRWritePortBundle)
   })
   val ReadPort = IO(Flipped(new ReadRegPortBundle))
   val CSRReadPort = IO(Flipped(new CSRReadPortBundle))
