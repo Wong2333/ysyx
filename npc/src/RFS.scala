@@ -64,7 +64,7 @@ class ReadRegPortBundle extends Bundle{
 
 class RFS extends Module {
   val WBU_in = IO(new Bundle {
-    val WritePort = Flipped(new WriteRegPortBundle)
+    val WriteRegPort = Flipped(new WriteRegPortBundle)
     val ExceptionPort = Flipped(new ExceptionInfoBundle)
     val CSRWritePort = Flipped(new CSRWritePortBundle)
   })
@@ -75,15 +75,15 @@ class RFS extends Module {
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := WBU_in.WritePort.PCNext
-    PC_reg.io.pc_we := WBU_in.WritePort.PCWrite
+    PC_reg.io.pc_next := WBU_in.WriteRegPort.PCNext
+    PC_reg.io.pc_we := WBU_in.WriteRegPort.PCWrite
 
     ReadPort.pc := PC_reg.io.pc
   
     val Reg_u = Module(new RegBlackBox())
-    Reg_u.io.wdata := WBU_in.WritePort.wdata
-    Reg_u.io.waddr := WBU_in.WritePort.waddr
-    Reg_u.io.wen := WBU_in.WritePort.wen
+    Reg_u.io.wdata := WBU_in.WriteRegPort.wdata
+    Reg_u.io.waddr := WBU_in.WriteRegPort.waddr
+    Reg_u.io.wen := WBU_in.WriteRegPort.wen
     Reg_u.io.raddr1 := ReadPort.raddr1
     Reg_u.io.raddr2 := ReadPort.raddr2
     ReadPort.rdata1 := Reg_u.io.rdata1
