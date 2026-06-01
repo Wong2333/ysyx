@@ -24,7 +24,7 @@ class WBU extends Module{
 
     val out = IO(new Bundle {
         val WriteRegPort = Output(new WriteRegPortBundle)
-        val CSRPort = new CSRWritePortBundle
+        val CSRWritePort = new CSRWritePortBundle
         val ExceptionPort = new ExceptionInfoBundle
     })
 
