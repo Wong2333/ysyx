@@ -32,9 +32,7 @@ class Top extends Module{
     EXU_u.MemReadData <> LSU_u.out
     EXU_u.WriteBackPort <> WBU_u.in
     EXU_u.RegReadPort <> RFS_u.ReadPort
-    EXU_u.CSRReadPort <> RFS_u.CSRPort.ReadPort
+    EXU_u.CSRReadPort <> RFS_u.CSRReadPort
 
-    WBU_u.out.WriteRegPort <> RFS_u.WritePort
-    WBU_u.out.CSRPort <> RFS_u.CSRPort.WritePort
-    WBU_u.out.ExceptionPort <> RFS_u.ExceptionPort
+    WBU_u.out <> RFS_u.WBU_in
 }

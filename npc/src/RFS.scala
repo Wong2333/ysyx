@@ -63,27 +63,27 @@ class ReadRegPortBundle extends Bundle{
 }
 
 class RFS extends Module {
-  val WritePort = IO(Flipped(new WriteRegPortBundle))
-
-  val ReadPort = IO(Flipped(new ReadRegPortBundle))
-  val CSRPort = IO(new Bundle {
-    val WritePort = Flipped(new CSRWritePortBundle)
-    val ReadPort = Flipped(new CSRReadPortBundle)
+  val WBU_in = IO(new Bundle {
+    val WritePort = IO(Flipped(new WriteRegPortBundle))
+    val ExceptionPort = IO(Flipped(new ExceptionInfoBundle))
+    val CSRWritePort = IO(Flipped(new CSRWritePortBundle))
   })
-  val ExceptionPort = IO(Flipped(new ExceptionInfoBundle))
+  val ReadPort = IO(Flipped(new ReadRegPortBundle))
+  val CSRReadPort = Flipped(new CSRReadPortBundle)
+
 
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := WritePort.PCNext
-    PC_reg.io.pc_we := WritePort.PCWrite
+    PC_reg.io.pc_next := WBU_in.WritePort.PCNext
+    PC_reg.io.pc_we := WBU_in.WritePort.PCWrite
 
     ReadPort.pc := PC_reg.io.pc
   
     val Reg_u = Module(new RegBlackBox())
-    Reg_u.io.wdata := WritePort.wdata
-    Reg_u.io.waddr := WritePort.waddr
-    Reg_u.io.wen := WritePort.wen
+    Reg_u.io.wdata := WBU_in.WritePort.wdata
+    Reg_u.io.waddr := WBU_in.WritePort.waddr
+    Reg_u.io.wen := WBU_in.WritePort.wen
     Reg_u.io.raddr1 := ReadPort.raddr1
     Reg_u.io.raddr2 := ReadPort.raddr2
     ReadPort.rdata1 := Reg_u.io.rdata1
@@ -97,60 +97,60 @@ class RFS extends Module {
     val mtvec = Reg(UInt(32.W))
     val mstatus = RegInit("h1800".U(32.W))
 
-    CSRPort.ReadPort.CSRRData := 0.U
-    switch(CSRPort.ReadPort.CSRRAddr){
+    CSRReadPort.CSRRData := 0.U
+    switch(CSRReadPort.CSRRAddr){
       is("hB00".U){// mcycle
-        CSRPort.ReadPort.CSRRData := mcycle(31,0)
+        CSRReadPort.CSRRData := mcycle(31,0)
       }
       is("hB80".U){// mcycleh
-        CSRPort.ReadPort.CSRRData := mcycle(63,32)
+        CSRReadPort.CSRRData := mcycle(63,32)
       }
       is("hF11".U){// mvendorid
-        CSRPort.ReadPort.CSRRData := "h79737978".U
+        CSRReadPort.CSRRData := "h79737978".U
       }
       is("hF12".U){// marchid
-        CSRPort.ReadPort.CSRRData := 26030092.U
+        CSRReadPort.CSRRData := 26030092.U
       }
       is("h305".U){
-        CSRPort.ReadPort.CSRRData := mtvec
+        CSRReadPort.CSRRData := mtvec
       }
       is("h300".U){
-        CSRPort.ReadPort.CSRRData := mstatus
+        CSRReadPort.CSRRData := mstatus
       }
       is("h341".U){
-        CSRPort.ReadPort.CSRRData := mepc
+        CSRReadPort.CSRRData := mepc
       }
       is("h342".U){
-        CSRPort.ReadPort.CSRRData := mcause
+        CSRReadPort.CSRRData := mcause
       }
     }
     mcycle := mcycle + 1.U
-    when(CSRPort.WritePort.CSRWrite){
-      switch(CSRPort.WritePort.CSRWAddr){//mcycle
+    when(WBU_in.CSRWritePort.CSRWrite){
+      switch(WBU_in.CSRWritePort.CSRWAddr){//mcycle
         is("hB00".U){
-          mcycle := Cat(mcycle(63,32),CSRPort.WritePort.CSRWData)
+          mcycle := Cat(mcycle(63,32),WBU_in.CSRWritePort.CSRWData)
         }
         is("hB80".U){
-          mcycle := Cat(CSRPort.WritePort.CSRWData,mcycle(31,0))
+          mcycle := Cat(WBU_in.CSRWritePort.CSRWData,mcycle(31,0))
         }
         is("h305".U){
-          mtvec := CSRPort.WritePort.CSRWData
+          mtvec := WBU_in.CSRWritePort.CSRWData
         }
         is("h300".U){
-          mstatus := CSRPort.WritePort.CSRWData
+          mstatus := WBU_in.CSRWritePort.CSRWData
         }
         is("h341".U){
-          mepc := CSRPort.WritePort.CSRWData
+          mepc := WBU_in.CSRWritePort.CSRWData
         }
         is("h342".U){
-          mcause := CSRPort.WritePort.CSRWData
+          mcause := WBU_in.CSRWritePort.CSRWData
         }
       }
     }
 
-    when(ExceptionPort.isTrap){
-      mepc := ExceptionPort.PC
-      mcause := ExceptionPort.Exception_Code
+    when(WBU_in.ExceptionPort.isTrap){
+      mepc := WBU_in.ExceptionPort.PC
+      mcause := WBU_in.ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec
       PC_reg.io.pc_we := true.B
     }
