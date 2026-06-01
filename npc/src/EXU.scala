@@ -89,8 +89,11 @@ class EXUCTLBundle extends Bundle{
 
 class EXU extends Module{
 
-    val RegReadPort = IO(new ReadRegPortBundle)
-    val CSRReadPort = IO(new CSRReadPortBundle)
+    val RFS_ReadPort = IO(new Bundle {
+        val RegReadPort = new ReadRegPortBundle
+        val CSRReadPort = new CSRReadPortBundle
+    })
+
     val in = IO(new Bundle {
         val DecodeBundle = new Bundle {
             val imm = Input(UInt(32.W))
@@ -113,13 +116,13 @@ class EXU extends Module{
     val AluResult = WireDefault(0.U(32.W))
     val PCAddFour = in.DecodeBundle.pc + 4.U
 
-    RegReadPort.raddr1 := 0.U
-    RegReadPort.raddr2 := 0.U
+    RFS_ReadPort.RegReadPort.raddr1 := 0.U
+    RFS_ReadPort.RegReadPort.raddr2 := 0.U
     val src1 = WireDefault(0.U(32.W))
     switch(in.EXU_CTL.ALU_Src1){
         is(ALUSrc1.rs1){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            src1 := RegReadPort.rdata1
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            src1 := RFS_ReadPort.RegReadPort.rdata1
         }
         is(ALUSrc1.pc){
             src1 := in.DecodeBundle.pc
@@ -128,8 +131,8 @@ class EXU extends Module{
     val src2 = WireDefault(0.U(32.W))
     switch(in.EXU_CTL.ALU_Src2){
         is(ALUSrc2.rs2){
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            src2 := RegReadPort.rdata2
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            src2 := RFS_ReadPort.RegReadPort.rdata2
         }
         is(ALUSrc2.imm){
             src2 := in.DecodeBundle.imm
@@ -138,8 +141,8 @@ class EXU extends Module{
             src2 := Cat(0.U(27.W),in.DecodeBundle.imm(4,0))
         }
         is(ALUSrc2.csr){
-            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
-            src2 := CSRReadPort.CSRRData
+            RFS_ReadPort.CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
+            src2 := RFS_ReadPort.CSRReadPort.CSRRData
         }
     }
 
@@ -187,7 +190,7 @@ class EXU extends Module{
         WriteBackPort.RegWrite := true.B
         WriteBackPort.RegWdata := AluResult
     }
-    CSRReadPort.CSRRAddr := 0.U
+    RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
     switch(in.EXU_CTL.CSR_Contorl){
         is(CSRControl.ecall){
             WriteBackPort.Exception_Code := 11.U
@@ -195,27 +198,27 @@ class EXU extends Module{
             WriteBackPort.isTrap := true.B
         }
         is(CSRControl.mret){
-            CSRReadPort.CSRRAddr := "h341".U
-            WriteBackPort.PCNext := CSRReadPort.CSRRData
+            RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
+            WriteBackPort.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
             WriteBackPort.PCWrite := true.B
         }
         is(CSRControl.csrrs){
-            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
+            RFS_ReadPort.CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
-            WriteBackPort.RegWdata := CSRReadPort.CSRRData
+            WriteBackPort.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
             WriteBackPort.RegWrite := true.B
             WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.CSRData := AluResult
             WriteBackPort.CSRWrite := true.B
         }
         is(CSRControl.csrrw){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.CSRReadPort.CSRRAddr := in.DecodeBundle.imm(11,0)
             WriteBackPort.RegWaddr := in.DecodeBundle.rd
-            WriteBackPort.RegWdata := CSRReadPort.CSRRData
+            WriteBackPort.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
             WriteBackPort.RegWrite := true.B
             WriteBackPort.CSRAddr := in.DecodeBundle.imm(11,0)
-            WriteBackPort.CSRData := RegReadPort.rdata1
+            WriteBackPort.CSRData := RFS_ReadPort.RegReadPort.rdata1
             WriteBackPort.CSRWrite := true.B
         }
     }
@@ -233,34 +236,34 @@ class EXU extends Module{
     val BranchCond = WireDefault(false.B)
     switch(in.EXU_CTL.Branch_Control){
         is(BranchControl.beq){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 === RegReadPort.rdata2
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1 === RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bne){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 =/= RegReadPort.rdata2
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1 =/= RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.blt){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1.asSInt < RegReadPort.rdata2.asSInt
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt < RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bge){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1.asSInt >= RegReadPort.rdata2.asSInt
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt >= RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bltu){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 < RegReadPort.rdata2
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1 < RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bgeu){
-            RegReadPort.raddr1 := in.DecodeBundle.rs1
-            RegReadPort.raddr2 := in.DecodeBundle.rs2
-            BranchCond := RegReadPort.rdata1 >= RegReadPort.rdata2
+            RFS_ReadPort.RegReadPort.raddr1 := in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+            BranchCond := RFS_ReadPort.RegReadPort.rdata1 >= RFS_ReadPort.RegReadPort.rdata2
         }
     }
     when(BranchCond){
@@ -282,8 +285,8 @@ class EXU extends Module{
     }.elsewhen(in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         
         MemPort.waddr := AluResult
-        RegReadPort.raddr2 := in.DecodeBundle.rs2
-        MemPort.wdata := RegReadPort.rdata2
+        RFS_ReadPort.RegReadPort.raddr2 := in.DecodeBundle.rs2
+        MemPort.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
     switch(in.EXU_CTL.Mem_Control){
         is(MemControl.lw){

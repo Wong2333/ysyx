@@ -59,7 +59,6 @@ class ReadRegPortBundle extends Bundle{
     val rdata1 = Input(UInt(32.W))
     val raddr2 = Output(UInt(5.W))
     val rdata2 = Input(UInt(32.W))
-    val pc = Input(UInt(32.W))
 }
 
 class RFS extends Module {
@@ -68,8 +67,12 @@ class RFS extends Module {
     val ExceptionPort = Flipped(new ExceptionInfoBundle)
     val CSRWritePort = Flipped(new CSRWritePortBundle)
   })
-  val ReadPort = IO(Flipped(new ReadRegPortBundle))
-  val CSRReadPort = IO(Flipped(new CSRReadPortBundle))
+  val RFS_ReadPort = IO(new Bundle {
+    val ReadPort = Flipped(new ReadRegPortBundle)
+    val CSRReadPort = Flipped(new CSRReadPortBundle)
+  })
+  val pc = IO(Output(UInt(32.W)))
+
 
 
     val PC_reg = Module(new PCBlackBox())
@@ -78,16 +81,16 @@ class RFS extends Module {
     PC_reg.io.pc_next := WBU_in.WriteRegPort.PCNext
     PC_reg.io.pc_we := WBU_in.WriteRegPort.PCWrite
 
-    ReadPort.pc := PC_reg.io.pc
+    pc := PC_reg.io.pc
   
     val Reg_u = Module(new RegBlackBox())
     Reg_u.io.wdata := WBU_in.WriteRegPort.wdata
     Reg_u.io.waddr := WBU_in.WriteRegPort.waddr
     Reg_u.io.wen := WBU_in.WriteRegPort.wen
-    Reg_u.io.raddr1 := ReadPort.raddr1
-    Reg_u.io.raddr2 := ReadPort.raddr2
-    ReadPort.rdata1 := Reg_u.io.rdata1
-    ReadPort.rdata2 := Reg_u.io.rdata2
+    Reg_u.io.raddr1 := RFS_ReadPort.ReadPort.raddr1
+    Reg_u.io.raddr2 := RFS_ReadPort.ReadPort.raddr2
+    RFS_ReadPort.ReadPort.rdata1 := Reg_u.io.rdata1
+    RFS_ReadPort.ReadPort.rdata2 := Reg_u.io.rdata2
     Reg_u.io.clock := clock
 
     val mcycle = RegInit(0.U(64.W))
@@ -97,31 +100,31 @@ class RFS extends Module {
     val mtvec = Reg(UInt(32.W))
     val mstatus = RegInit("h1800".U(32.W))
 
-    CSRReadPort.CSRRData := 0.U
-    switch(CSRReadPort.CSRRAddr){
+    RFS_ReadPort.CSRReadPort.CSRRData := 0.U
+    switch(RFS_ReadPort.CSRReadPort.CSRRAddr){
       is("hB00".U){// mcycle
-        CSRReadPort.CSRRData := mcycle(31,0)
+        RFS_ReadPort.CSRReadPort.CSRRData := mcycle(31,0)
       }
       is("hB80".U){// mcycleh
-        CSRReadPort.CSRRData := mcycle(63,32)
+        RFS_ReadPort.CSRReadPort.CSRRData := mcycle(63,32)
       }
       is("hF11".U){// mvendorid
-        CSRReadPort.CSRRData := "h79737978".U
+        RFS_ReadPort.CSRReadPort.CSRRData := "h79737978".U
       }
       is("hF12".U){// marchid
-        CSRReadPort.CSRRData := 26030092.U
+        RFS_ReadPort.CSRReadPort.CSRRData := 26030092.U
       }
       is("h305".U){
-        CSRReadPort.CSRRData := mtvec
+        RFS_ReadPort.CSRReadPort.CSRRData := mtvec
       }
       is("h300".U){
-        CSRReadPort.CSRRData := mstatus
+        RFS_ReadPort.CSRReadPort.CSRRData := mstatus
       }
       is("h341".U){
-        CSRReadPort.CSRRData := mepc
+        RFS_ReadPort.CSRReadPort.CSRRData := mepc
       }
       is("h342".U){
-        CSRReadPort.CSRRData := mcause
+        RFS_ReadPort.CSRReadPort.CSRRData := mcause
       }
     }
     mcycle := mcycle + 1.U
