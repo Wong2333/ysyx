@@ -87,6 +87,7 @@ extern "C" void pmem_write(int addr, int data, char mask) {
     waddr = waddr & (~0x3);
     if(addr == SERIAL_PORT){
         printf("%c",(char)data);
+        fflush(stdout);
         return;
     }
     if (wmask & 0x1) {

@@ -11,37 +11,19 @@ class PmemReadBlackBox extends ExtModule{
     addResource("/PmemReadBlackBox.v")
 }
 
-class PCBlackBox extends ExtModule{
-    val io = FlatIO(new Bundle {
-        val clock = Input(Clock())
-        val reset = Input(Reset())
-        val pc_next = Input(UInt(32.W))
-        val pc_we = Input(Bool())
-        val pc = Output(UInt(32.W))
-    })
-    addResource("/PCBlackBox.v")
-}
-
 class IFU extends Module{
 
     val in = IO(new Bundle {
-        val pc_next = Input(UInt(32.W))
-        val pc_we = Input(Bool())
+        val pc = Input(UInt(32.W))
     })
     val out = IO(new Bundle {
-        val pc = Output(UInt(32.W))
         val inst = Output(UInt(32.W))
     })
-    val PC_reg = Module(new PCBlackBox())
-    PC_reg.io.clock := clock
-    PC_reg.io.reset := reset
-    PC_reg.io.pc_next := in.pc_next
-    PC_reg.io.pc_we := in.pc_we
-    out.pc := PC_reg.io.pc
 
     val pmem_read_inst = Module(new PmemReadBlackBox)
-    pmem_read_inst.io.raddr := PC_reg.io.pc
 
+    pmem_read_inst.io.raddr := in.pc
+    // printf(cf"inst ${pmem_read_inst.io.rdata}\n")
     out.inst := pmem_read_inst.io.rdata
     
 

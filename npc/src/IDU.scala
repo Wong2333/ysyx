@@ -81,6 +81,7 @@ class IDU extends Module{
     out.EXU_CTL.Mem_Control := MemControl.none
     out.EXU_CTL.Branch_Control := BranchControl.none
     out.EXU_CTL.ALUWrite2Reg := false.B
+    out.EXU_CTL.CSR_Contorl := CSRControl.none
 
     invalid := true.B
 
@@ -147,14 +148,35 @@ class IDU extends Module{
             }
         }
         is("b1110011".U){
-            when(inst.funct3 === "b000".U){//ebreak
-                when(inst.immI === 1.U 
-                && inst.rs1 === 0.U 
-                && inst.rd === 0.U
-                ){
+            when(inst.funct3 === "b000".U && inst.immI === 1.U && 
+                        inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
                     trap := true.B
-                }
+                
+            }.elsewhen(inst.funct3 === "b010".U){// csrrs
+                out.DecodeBundle.rd := inst.rd
+                out.DecodeBundle.rs1 := inst.rs1
+                out.DecodeBundle.imm := inst.immI
+                out.EXU_CTL.ALU_Src1 := ALUSrc1.rs1
+                out.EXU_CTL.ALU_Src2 := ALUSrc2.csr
+                out.EXU_CTL.ALU_Control := ALUContorl.or
+                out.EXU_CTL.CSR_Contorl := CSRControl.csrrs
+                invalid := false.B
+            }.elsewhen(inst.funct3 === "b001".U){// csrws
+                out.DecodeBundle.rd := inst.rd
+                out.DecodeBundle.rs1 := inst.rs1
+                out.DecodeBundle.imm := inst.immI
+                out.EXU_CTL.CSR_Contorl := CSRControl.csrrw
+                invalid := false.B
+            }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
+                    inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
+                    out.EXU_CTL.CSR_Contorl := CSRControl.mret
+                    invalid := false.B
+            }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
+                        inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
+                out.EXU_CTL.CSR_Contorl := CSRControl.ecall
+                out.DecodeBundle.pc := in.pc
+                invalid := false.B
             }
         }
         is("b0110011".U){
