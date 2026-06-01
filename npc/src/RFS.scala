@@ -69,7 +69,7 @@ class RFS extends Module {
     val CSRWritePort = IO(Flipped(new CSRWritePortBundle))
   })
   val ReadPort = IO(Flipped(new ReadRegPortBundle))
-  val CSRReadPort = Flipped(new CSRReadPortBundle)
+  val CSRReadPort = IO(Flipped(new CSRReadPortBundle))
 
 
     val PC_reg = Module(new PCBlackBox())
