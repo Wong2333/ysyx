@@ -55,7 +55,7 @@ class IDU extends Module{
     }))
     in.ready := true.B
     out.valid := in.fire
-
+    printf("%x\n",out.valid)
     val trap = RegInit(false.B)
     val invalid = WireDefault(false.B)
 
