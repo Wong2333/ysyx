@@ -63,11 +63,11 @@ class ReadRegPortBundle extends Bundle{
 }
 
 class RFS extends Module {
-  val WBU_in = IO(Decoupled(new Bundle {
+  val WBU_in = IO(Flipped(Decoupled(new Bundle {
     val WriteRegPort = Flipped(new WriteRegPortBundle)
     val ExceptionPort = Flipped(new ExceptionInfoBundle)
     val CSRWritePort = Flipped(new CSRWritePortBundle)
-  }))
+  })))
   val RFS_ReadPort = IO(new Bundle {
     val RegReadPort = Flipped(new ReadRegPortBundle)
     val CSRReadPort = Flipped(new CSRReadPortBundle)
