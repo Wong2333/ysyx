@@ -92,7 +92,7 @@ class IDU extends Module{
     when(reset.asBool){
         invalid := false.B
     }.otherwise{
-        // printf("cycle: %x pc: 0x%x inst: 0x%x\n",cycle,in.bits.pc,in.bits.inst)
+        printf("cycle: %x pc: 0x%x inst: 0x%x out.valid\n",cycle,in.bits.pc,in.bits.inst,out.valid)
         switch(inst.opcode){
         is("b0010011".U){
             out.bits.EXU_CTL.ALU_Op := ALUOp.IType
