@@ -35,7 +35,7 @@ class IFU extends Module{
 
     val s_wait_pc :: s_wait_mem :: s_wait_exec :: Nil = Enum(3)
     val status = RegInit(s_wait_pc)
-    printf(cf"status: ${status}\n")
+    // printf(cf"status: ${status}\n")
     switch(status){
         is(s_wait_pc){
             in.ready := true.B
