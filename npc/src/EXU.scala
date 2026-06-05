@@ -277,7 +277,7 @@ class EXU extends Module{
         WriteBackPort.bits.RegWrite := false.B
     }
 
-    MemPort := 0.U.asTypeOf(new MemPortBundle)
+    MemPort.bits := 0.U.asTypeOf(new MemPortBundle)
     when(IDU_in.bits.EXU_CTL.Mem_Control =/= MemControl.none){
         MemPort.bits.valid := true.B
     }
