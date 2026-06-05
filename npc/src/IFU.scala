@@ -31,12 +31,16 @@ class IFU extends Module{
     out.bits.pc := in.bits.pc
     out.valid := false.B
 
-    val s_wait_mem :: s_wait_exec :: Nil = Enum(2)
-    val status = RegInit(s_wait_exec)
+    val s_reset :: s_wait_mem :: s_wait_exec :: Nil = Enum(3)
+    val status = RegInit(s_reset)
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
     printf("cycle: %x status: %x pc: %x inst: %x\n",cycle,status,out.bits.pc,out.bits.inst)
+
     switch(status){
+        is(s_reset){
+            status := s_wait_exec
+        }
         is(s_wait_exec){
             in.ready := true.B
             when(in.valid){
