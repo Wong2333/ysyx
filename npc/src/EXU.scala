@@ -189,7 +189,7 @@ class EXU extends Module{
             AluResult := (src1.asSInt >> src2(4,0)).asUInt
         }
     }
-    WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
+    WriteBackPort.bits := 0.U.asTypeOf(new WriteBackPortBundle)
     when(IDU_in.bits.EXU_CTL.ALUWrite2Reg){
         WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
         WriteBackPort.bits.RegWrite := true.B
