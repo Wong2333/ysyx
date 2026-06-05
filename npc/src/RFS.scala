@@ -80,10 +80,14 @@ class RFS extends Module {
 
     WBU_in.ready := true.B
     PC_out.valid := false.B
-    val s_pc_ready :: s_exec :: Nil = Enum(2)
+    val s_pc_reset :: s_pc_ready :: s_exec :: Nil = Enum(3)
     val PC_status = RegInit(s_pc_ready)
 
     switch(PC_status){
+      is(s_pc_reset){
+        PC_out.valid := true.B
+        PC_status := s_pc_ready
+      }
       is(s_pc_ready){
         PC_out.valid := true.B
         PC_status := s_exec
