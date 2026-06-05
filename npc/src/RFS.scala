@@ -86,7 +86,9 @@ class RFS extends Module {
     
     when(PC_status === s_reset){
       PC_out.valid := true.B
-      PC_status := s_exec
+      when(WBU_in.valid){
+        PC_status := s_exec        
+      }
     }
     printf("PC_status: %x PC_out.valid: %x\n",PC_status,PC_out.valid)
 
