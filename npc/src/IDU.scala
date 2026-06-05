@@ -87,11 +87,12 @@ class IDU extends Module{
     out.bits.EXU_CTL.CSR_Contorl := CSRControl.none
 
     invalid := in.valid
-
+    val cycle = RegInit(0.U(32.W))
+    cycle := cycle + 1.U
     when(reset.asBool){
         invalid := false.B
     }.otherwise{
-        printf("pc: 0x%x inst: 0x%x\n",in.bits.pc,in.bits.inst)
+        printf("cycle: %x pc: 0x%x inst: 0x%x\n",cycle,in.bits.pc,in.bits.inst)
         switch(inst.opcode){
         is("b0010011".U){
             out.bits.EXU_CTL.ALU_Op := ALUOp.IType
