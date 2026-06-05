@@ -52,8 +52,8 @@ void cpu_exec(int n){
         while(1){
             uint32_t current_pc = read_pc_reg();
             single_cycle();
-            // cycle++;
-            // if(cycle == 10) exit(0);
+            cycle++;
+            if(cycle == 20) exit(0);
             uint32_t next_pc = read_pc_reg();
             trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
             check_difftest(current_pc, next_pc);
