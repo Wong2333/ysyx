@@ -35,7 +35,7 @@ class IFU extends Module{
     val status = RegInit(s_reset)
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
-    // printf("cycle: %x status: %x pc: %x inst: %x\n",cycle,status,out.bits.pc,out.bits.inst)
+    
 
     switch(status){
         is(s_reset){
@@ -55,6 +55,6 @@ class IFU extends Module{
             }
         }
     }
-
+printf("cycle: %x status: %x pc: %x inst: %x\n",cycle,status,out.bits.pc,out.bits.inst)
 
 }
