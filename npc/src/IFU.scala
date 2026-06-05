@@ -33,7 +33,9 @@ class IFU extends Module{
 
     val s_wait_mem :: s_wait_exec :: Nil = Enum(2)
     val status = RegInit(s_wait_exec)
-    // printf(cf"status: ${status}\n")
+    val cycle = RegInit(0.U(32.W))
+    cycle := cycle + 1.U
+    printf("cycle: %x status: %x\n",cycle,status)
     switch(status){
         is(s_wait_exec){
             in.ready := true.B
