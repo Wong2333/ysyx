@@ -79,17 +79,23 @@ class RFS extends Module {
     }))
 
     WBU_in.ready := true.B
-    PC_out.valid := WBU_in.valid
-    val s_reset :: s_exec :: Nil = Enum(2)
-    val PC_status = RegInit(s_reset)
+    PC_out.valid := false.B
+    val s_pc_ready :: s_exec :: Nil = Enum(2)
+    val PC_status = RegInit(s_pc_ready)
 
-    
-    when(PC_status === s_reset){
-      PC_out.valid := true.B
-      when(WBU_in.valid){
-        PC_status := s_exec        
+    switch(PC_status){
+      is(s_pc_ready){
+        PC_out.valid := true.B
+        PC_status := s_exec
+      }
+      is(s_exec){
+        PC_out.valid := false.B
+        when(WBU_in.fire){
+          PC_status := s_pc_ready
+        }
       }
     }
+
     printf("PC_status: %x PC_out.valid: %x\n",PC_status,PC_out.valid)
 
     val PC_reg = Module(new PCBlackBox())

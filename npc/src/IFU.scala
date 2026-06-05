@@ -25,11 +25,15 @@ class IFU extends Module{
     val pmem_read_inst = Module(new PmemReadBlackBox)
     pmem_read_inst.io.clock := clock
 
+    val pc_reg = RegInit(0.U(32.W))
+    
     in.ready := false.B
     pmem_read_inst.io.raddr := in.bits.pc
     out.bits.inst := "h12345678".U
-    out.bits.pc := in.bits.pc
+    out.bits.pc := 0.U
     out.valid := false.B
+
+
 
     val s_reset :: s_wait_exec :: s_wait_mem :: Nil = Enum(3)
     val status = RegInit(s_reset)
@@ -45,10 +49,12 @@ class IFU extends Module{
             in.ready := true.B
             when(in.valid){
                 status := s_wait_mem
+                pc_reg := in.bits.pc
             }
         }
         is(s_wait_mem){
             out.valid := true.B
+            pmem_read_inst.io.raddr := pc_reg
             out.bits.inst := pmem_read_inst.io.rdata
             when(out.fire){
                 status := s_wait_exec
