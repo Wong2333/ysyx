@@ -320,7 +320,9 @@ class EXU extends Module{
             MemPort.bits.mem_ctl := MEM_CTL.Write4B
         }
     }
-
+    val cycle =RegInit(0.U(32.W))
+    cycle := cycle + 1.U
+    printf("cycle: %x valid: %x\n",cycle,WriteBackPort.valid)
     WriteBackPort.valid := (!isLoad || MemReadData.valid)
     MemPort.valid := true.B
 }
