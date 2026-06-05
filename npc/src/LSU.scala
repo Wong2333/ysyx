@@ -49,6 +49,7 @@ class LSU extends Module{
     val shifted_wdata = WireDefault(0.U(32.W))
 
     val pmem_read = Module(new PmemReadBlackBox())
+    pmem_read.io.clock := clock
     val raddr = WireDefault(0.U(32.W))
     val rdata = WireDefault(0.U(32.W))
     pmem_read.io.raddr  := raddr 
@@ -66,7 +67,7 @@ class LSU extends Module{
     in.ready := true.B
     val load_s1 = RegNext(in.bits.valid,false.B)
     out.valid := load_s1
-    
+
     when(in.bits.valid){
         raddr := in.bits.raddr & ~3.U(32.W)
         shifted_rdata := rdata >> (in.bits.raddr(1,0) << 3)
