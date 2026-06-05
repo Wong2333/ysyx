@@ -91,7 +91,7 @@ class IDU extends Module{
     when(reset.asBool){
         invalid := false.B
     }.otherwise{
-        printf(cf"pc: ${in.bits.pc} inst: ${in.bits.inst}\n")
+        printf("pc: 0x%x inst: 0x%x\n",in.bits.pc,in.bits.inst)
         switch(inst.opcode){
         is("b0010011".U){
             out.bits.EXU_CTL.ALU_Op := ALUOp.IType
