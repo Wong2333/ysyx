@@ -321,6 +321,6 @@ class EXU extends Module{
         }
     }
 
-    WriteBackPort.valid := true.B || (isLoad && MemReadData.valid)
+    WriteBackPort.valid := (!isLoad || MemReadData.valid)
     MemPort.valid := true.B
 }
