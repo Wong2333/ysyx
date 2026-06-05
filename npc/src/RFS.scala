@@ -77,7 +77,9 @@ class RFS extends Module {
     }))
 
     WBU_in.ready := true.B
-    PC_out.valid := WBU_in.valid
+    val PC_reset = RegInit(true.B)
+    PC_reset := false.B
+    PC_out.valid := PC_reset || WBU_in.valid
 
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock

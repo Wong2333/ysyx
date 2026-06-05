@@ -86,7 +86,7 @@ class IDU extends Module{
     out.bits.EXU_CTL.ALUWrite2Reg := false.B
     out.bits.EXU_CTL.CSR_Contorl := CSRControl.none
 
-    invalid := true.B
+    invalid := in.valid
 
     when(reset.asBool){
         invalid := false.B
