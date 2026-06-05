@@ -30,7 +30,7 @@ class IFU extends Module{
     in.ready := false.B
     pmem_read_inst.io.raddr := in.bits.pc
     out.bits.inst := "h12345678".U
-    out.bits.pc := 0.U
+    out.bits.pc := pc_reg
     out.valid := false.B
 
 
