@@ -322,7 +322,7 @@ class EXU extends Module{
     }
     val cycle =RegInit(0.U(32.W))
     cycle := cycle + 1.U
-    printf("cycle: %x valid: %x\n",cycle,WriteBackPort.valid)
+    printf("cycle: %x isLoad: %x MemReadData.valid: %x valid: %x\n",cycle,isLoad,MemReadData.valid,WriteBackPort.valid)
     WriteBackPort.valid := (!isLoad || MemReadData.valid)
     MemPort.valid := true.B
 }
