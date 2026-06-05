@@ -28,8 +28,8 @@ class IFU extends Module{
     val pc_reg = RegInit(0.U(32.W))
     
     in.ready := false.B
-    pmem_read_inst.io.raddr := in.bits.pc
-    out.bits.inst := "h12345678".U
+    pmem_read_inst.io.raddr := pc_reg
+    out.bits.inst := pmem_read_inst.io.rdata
     out.bits.pc := pc_reg
     out.valid := false.B
 
@@ -48,6 +48,7 @@ class IFU extends Module{
         is(s_wait_exec){
             in.ready := true.B
             when(in.valid){
+                pmem_read_inst.io.raddr := in.bits.pc
                 status := s_wait_mem
                 pc_reg := in.bits.pc
             }
@@ -55,7 +56,6 @@ class IFU extends Module{
         is(s_wait_mem){
             out.valid := true.B
             pmem_read_inst.io.raddr := pc_reg
-            out.bits.inst := pmem_read_inst.io.rdata
             when(out.fire){
                 status := s_wait_exec
             }
