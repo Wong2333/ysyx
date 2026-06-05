@@ -21,7 +21,7 @@ class Top extends Module{
     io.pc := RFS_u.PC_out.bits.pc
     io.inst := IFU_u.out.bits.inst
 
-    IDU_u.in <> IDU_u.out
+    IDU_u.in <> IFU_u.out
 
     EXU_u.IDU_in <> IDU_u.out
 
