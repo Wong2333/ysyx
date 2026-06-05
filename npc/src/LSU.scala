@@ -35,10 +35,10 @@ class PmemWriteBlackBox extends ExtModule {
     addResource("/PmemWriteBlackBox.v")
 }
 class LSU extends Module{
-    val in = IO(Flipped(new MemPortBundle))
-    val out = IO(new Bundle {
+    val in = IO(Flipped(Decoupled(new MemPortBundle)))
+    val out = IO(Decoupled(new Bundle {
         val rdata = Output(UInt(32.W))
-    })
+    }))
     
     val mask = WireDefault(0.U(4.W))
     val waddr = WireDefault(0.U)
@@ -61,44 +61,48 @@ class LSU extends Module{
     pmem_write.io.wmask := mask
     pmem_write.io.we := wen
 
-    out.rdata := 0.U
+    out.bits.rdata := 0.U
 
-    when(in.valid){
-        raddr := in.raddr & ~3.U(32.W)
-        shifted_rdata := rdata >> (in.raddr(1,0) << 3)
-        shifted_wdata := in.wdata << (in.waddr(1,0) << 3)
-        switch(in.mem_ctl){
+    in.ready := true.B
+    val load_s1 = RegNext(in.bits.valid,false.B)
+    out.valid := load_s1
+    
+    when(in.bits.valid){
+        raddr := in.bits.raddr & ~3.U(32.W)
+        shifted_rdata := rdata >> (in.bits.raddr(1,0) << 3)
+        shifted_wdata := in.bits.wdata << (in.bits.waddr(1,0) << 3)
+        switch(in.bits.mem_ctl){
             is(MEM_CTL.Read4B){
-                out.rdata := rdata
+                out.bits.rdata := rdata
             }
             is(MEM_CTL.Read1B){
-                out.rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
+                out.bits.rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
             }
             is(MEM_CTL.Read1BU){
-                out.rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+                out.bits.rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
             }
             is(MEM_CTL.Read2B){
-                out.rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
+                out.bits.rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
             }
             is(MEM_CTL.Read2BU){
-                out.rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
+                out.bits.rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
             }
             is(MEM_CTL.Write4B){
                 mask := "b1111".U;
-                wdata := in.wdata;
-                waddr := in.waddr & ~3.U(32.W)
+                wdata := in.bits.wdata;
+                waddr := in.bits.waddr & ~3.U(32.W)
                 wen := true.B
             }
             is(MEM_CTL.Write1B){
-                mask := 1.U << in.waddr(1,0)
+                mask := 1.U << in.bits.waddr(1,0)
                 wdata := shifted_wdata
-                waddr := in.waddr & ~3.U(32.W)
+                waddr := in.bits.waddr & ~3.U(32.W)
                 wen := true.B
             }
             is(MEM_CTL.Write2B){
-                mask := 3.U << in.waddr(1,0)
+                mask := 3.U << in.bits.waddr(1,0)
                 wdata := shifted_wdata
-                waddr := in.waddr & ~3.U(32.W)
+                waddr := in.bits.waddr & ~3.U(32.W)
                 wen := true.B
             }
         }

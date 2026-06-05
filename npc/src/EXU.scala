@@ -94,7 +94,7 @@ class EXU extends Module{
         val CSRReadPort = new CSRReadPortBundle
     })
 
-    val IDU_in = IO(new Bundle {
+    val IDU_in = IO(Flipped(Decoupled(new Bundle {
         val DecodeBundle = new Bundle {
             val imm = Input(UInt(32.W))
             val rs1 = Input(UInt(32.W))
@@ -103,50 +103,55 @@ class EXU extends Module{
             val pc = Input(UInt(32.W))
         }
         
-        val EXU_CTL = Flipped(new EXUCTLBundle)
-    })
-    val WriteBackPort = IO(new WriteBackPortBundle)
+        val EXU_CTL = new EXUCTLBundle
+    })))
+    val WriteBackPort = IO(Decoupled(new WriteBackPortBundle))
 
-    val MemPort = IO(new MemPortBundle)
-    val MemReadData = IO(new Bundle {
+    val MemPort = IO(Decoupled(new MemPortBundle))
+    val MemReadData = IO(Flipped(Decoupled(new Bundle {
         val rdata = Input(UInt(32.W))
-    })
+    })))
 
     // io.out := 0.U
     val AluResult = WireDefault(0.U(32.W))
-    val PCAddFour = IDU_in.DecodeBundle.pc + 4.U
+    val PCAddFour = IDU_in.bits.DecodeBundle.pc + 4.U
+    
+    IDU_in.ready := true.B
+    MemReadData.ready := true.B
+
+    val isLoad = WireInit(false.B)
 
     RFS_ReadPort.RegReadPort.raddr1 := 0.U
     RFS_ReadPort.RegReadPort.raddr2 := 0.U
     val src1 = WireDefault(0.U(32.W))
-    switch(IDU_in.EXU_CTL.ALU_Src1){
+    switch(IDU_in.bits.EXU_CTL.ALU_Src1){
         is(ALUSrc1.rs1){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
             src1 := RFS_ReadPort.RegReadPort.rdata1
         }
         is(ALUSrc1.pc){
-            src1 := IDU_in.DecodeBundle.pc
+            src1 := IDU_in.bits.DecodeBundle.pc
         }
     }
     val src2 = WireDefault(0.U(32.W))
-    switch(IDU_in.EXU_CTL.ALU_Src2){
+    switch(IDU_in.bits.EXU_CTL.ALU_Src2){
         is(ALUSrc2.rs2){
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             src2 := RFS_ReadPort.RegReadPort.rdata2
         }
         is(ALUSrc2.imm){
-            src2 := IDU_in.DecodeBundle.imm
+            src2 := IDU_in.bits.DecodeBundle.imm
         }
         is(ALUSrc2.shamt){
-            src2 := Cat(0.U(27.W),IDU_in.DecodeBundle.imm(4,0))
+            src2 := Cat(0.U(27.W),IDU_in.bits.DecodeBundle.imm(4,0))
         }
         is(ALUSrc2.csr){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.DecodeBundle.imm(11,0)
+            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.bits.DecodeBundle.imm(11,0)
             src2 := RFS_ReadPort.CSRReadPort.CSRRData
         }
     }
 
-    switch(IDU_in.EXU_CTL.ALU_Control){
+    switch(IDU_in.bits.EXU_CTL.ALU_Control){
         is(ALUContorl.add){
             AluResult := src1 + src2
         }
@@ -172,7 +177,7 @@ class EXU extends Module{
             AluResult := src1 === src2
         }
         is(ALUContorl.lui){
-            AluResult := IDU_in.DecodeBundle.imm
+            AluResult := IDU_in.bits.DecodeBundle.imm
         }
         is(ALUContorl.sll){
             AluResult := src1 << src2(4,0)
@@ -185,134 +190,137 @@ class EXU extends Module{
         }
     }
     WriteBackPort := 0.U.asTypeOf(new WriteBackPortBundle)
-    when(IDU_in.EXU_CTL.ALUWrite2Reg){
-        WriteBackPort.RegWaddr := IDU_in.DecodeBundle.rd
-        WriteBackPort.RegWrite := true.B
-        WriteBackPort.RegWdata := AluResult
+    when(IDU_in.bits.EXU_CTL.ALUWrite2Reg){
+        WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
+        WriteBackPort.bits.RegWrite := true.B
+        WriteBackPort.bits.RegWdata := AluResult
     }
     RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
-    switch(IDU_in.EXU_CTL.CSR_Contorl){
+    switch(IDU_in.bits.EXU_CTL.CSR_Contorl){
         is(CSRControl.ecall){
-            WriteBackPort.Exception_Code := 11.U
-            WriteBackPort.PC := IDU_in.DecodeBundle.pc
-            WriteBackPort.isTrap := true.B
+            WriteBackPort.bits.Exception_Code := 11.U
+            WriteBackPort.bits.PC := IDU_in.bits.DecodeBundle.pc
+            WriteBackPort.bits.isTrap := true.B
         }
         is(CSRControl.mret){
             RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
-            WriteBackPort.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
-            WriteBackPort.PCWrite := true.B
+            WriteBackPort.bits.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
+            WriteBackPort.bits.PCWrite := true.B
         }
         is(CSRControl.csrrs){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.DecodeBundle.imm(11,0)
-            WriteBackPort.RegWaddr := IDU_in.DecodeBundle.rd
-            WriteBackPort.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-            WriteBackPort.RegWrite := true.B
-            WriteBackPort.CSRAddr := IDU_in.DecodeBundle.imm(11,0)
-            WriteBackPort.CSRData := AluResult
-            WriteBackPort.CSRWrite := true.B
+            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.bits.DecodeBundle.imm(11,0)
+            WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
+            WriteBackPort.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
+            WriteBackPort.bits.RegWrite := true.B
+            WriteBackPort.bits.CSRAddr := IDU_in.bits.DecodeBundle.imm(11,0)
+            WriteBackPort.bits.CSRData := AluResult
+            WriteBackPort.bits.CSRWrite := true.B
         }
         is(CSRControl.csrrw){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.DecodeBundle.imm(11,0)
-            WriteBackPort.RegWaddr := IDU_in.DecodeBundle.rd
-            WriteBackPort.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-            WriteBackPort.RegWrite := true.B
-            WriteBackPort.CSRAddr := IDU_in.DecodeBundle.imm(11,0)
-            WriteBackPort.CSRData := RFS_ReadPort.RegReadPort.rdata1
-            WriteBackPort.CSRWrite := true.B
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.CSRReadPort.CSRRAddr := IDU_in.bits.DecodeBundle.imm(11,0)
+            WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
+            WriteBackPort.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
+            WriteBackPort.bits.RegWrite := true.B
+            WriteBackPort.bits.CSRAddr := IDU_in.bits.DecodeBundle.imm(11,0)
+            WriteBackPort.bits.CSRData := RFS_ReadPort.RegReadPort.rdata1
+            WriteBackPort.bits.CSRWrite := true.B
         }
     }
     
-    switch(IDU_in.EXU_CTL.ALU_Jump){
+    switch(IDU_in.bits.EXU_CTL.ALU_Jump){
         is(Jump.jal){
-            WriteBackPort.PCWrite := true.B
-            WriteBackPort.PCNext := AluResult
-            WriteBackPort.RegWaddr := IDU_in.DecodeBundle.rd
-            WriteBackPort.RegWrite := true.B
-            WriteBackPort.RegWdata := PCAddFour
+            WriteBackPort.bits.PCWrite := true.B
+            WriteBackPort.bits.PCNext := AluResult
+            WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
+            WriteBackPort.bits.RegWrite := true.B
+            WriteBackPort.bits.RegWdata := PCAddFour
         }
     }
 
     val BranchCond = WireDefault(false.B)
-    switch(IDU_in.EXU_CTL.Branch_Control){
+    switch(IDU_in.bits.EXU_CTL.Branch_Control){
         is(BranchControl.beq){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 === RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bne){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 =/= RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.blt){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt < RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bge){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt >= RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bltu){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 < RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bgeu){
-            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.DecodeBundle.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
+            RFS_ReadPort.RegReadPort.raddr1 := IDU_in.bits.DecodeBundle.rs1
+            RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 >= RFS_ReadPort.RegReadPort.rdata2
         }
     }
     when(BranchCond){
-        WriteBackPort.PCWrite := true.B
-        WriteBackPort.PCNext := AluResult
-        WriteBackPort.RegWrite := false.B
+        WriteBackPort.bits.PCWrite := true.B
+        WriteBackPort.bits.PCNext := AluResult
+        WriteBackPort.bits.RegWrite := false.B
     }
 
     MemPort := 0.U.asTypeOf(new MemPortBundle)
-    when(IDU_in.EXU_CTL.Mem_Control =/= MemControl.none){
-        MemPort.valid := true.B
+    when(IDU_in.bits.EXU_CTL.Mem_Control =/= MemControl.none){
+        MemPort.bits.valid := true.B
     }
-    when(IDU_in.EXU_CTL.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
+    when(IDU_in.bits.EXU_CTL.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
         MemControl.lhu,MemControl.lw)){
-        MemPort.raddr := AluResult
-        WriteBackPort.RegWaddr := IDU_in.DecodeBundle.rd
-        WriteBackPort.RegWrite := true.B
-        WriteBackPort.RegWdata := MemReadData.rdata
-    }.elsewhen(IDU_in.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
+        MemPort.bits.raddr := AluResult
+        WriteBackPort.bits.RegWaddr := IDU_in.bits.DecodeBundle.rd
+        WriteBackPort.bits.RegWrite := true.B
+        WriteBackPort.bits.RegWdata := MemReadData.bits.rdata
+        isLoad := true.B
+    }.elsewhen(IDU_in.bits.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         
-        MemPort.waddr := AluResult
-        RFS_ReadPort.RegReadPort.raddr2 := IDU_in.DecodeBundle.rs2
-        MemPort.wdata := RFS_ReadPort.RegReadPort.rdata2
+        MemPort.bits.waddr := AluResult
+        RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
+        MemPort.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
-    switch(IDU_in.EXU_CTL.Mem_Control){
+    switch(IDU_in.bits.EXU_CTL.Mem_Control){
         is(MemControl.lw){
-            MemPort.mem_ctl := MEM_CTL.Read4B
+            MemPort.bits.mem_ctl := MEM_CTL.Read4B
         }
         is(MemControl.lbu){
-            MemPort.mem_ctl := MEM_CTL.Read1BU
+            MemPort.bits.mem_ctl := MEM_CTL.Read1BU
         }
         is(MemControl.lb){
-            MemPort.mem_ctl := MEM_CTL.Read1B
+            MemPort.bits.mem_ctl := MEM_CTL.Read1B
         }
         is(MemControl.lh){
-            MemPort.mem_ctl := MEM_CTL.Read2B
+            MemPort.bits.mem_ctl := MEM_CTL.Read2B
         }
         is(MemControl.lhu){
-            MemPort.mem_ctl := MEM_CTL.Read2BU
+            MemPort.bits.mem_ctl := MEM_CTL.Read2BU
         }
         is(MemControl.sb){
-            MemPort.mem_ctl := MEM_CTL.Write1B
+            MemPort.bits.mem_ctl := MEM_CTL.Write1B
         }
         is(MemControl.sh){
-            MemPort.mem_ctl := MEM_CTL.Write2B
+            MemPort.bits.mem_ctl := MEM_CTL.Write2B
         }
         is(MemControl.sw){
-            MemPort.mem_ctl := MEM_CTL.Write4B
+            MemPort.bits.mem_ctl := MEM_CTL.Write4B
         }
     }
 
+    WriteBackPort.valid := true.B || (isLoad && MemReadData.valid)
+    MemPort.valid := true.B
 }
