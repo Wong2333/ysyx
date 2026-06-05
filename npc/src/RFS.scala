@@ -1,6 +1,8 @@
 package npc
 import chisel3._
 import chisel3.util._
+import npc.MemControl.sw
+import scala.annotation.varargs
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -77,9 +79,17 @@ class RFS extends Module {
     }))
 
     WBU_in.ready := true.B
-    val PC_reset = RegInit(true.B)
-    PC_reset := false.B
-    PC_out.valid := PC_reset || WBU_in.valid
+    val s_reset :: s_exec :: Nil = Enum(2)
+    val PC_status = RegInit(s_reset)
+    switch(PC_status){
+      is(s_reset){
+        PC_out.valid := true.B
+        PC_status := s_exec
+      }
+      is(s_exec){
+        PC_out.valid := WBU_in.valid
+      }
+    }
 
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
