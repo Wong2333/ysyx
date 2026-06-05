@@ -100,7 +100,7 @@ class RFS extends Module {
       }
     }
 
-    printf("PC_status: %x PC_out.valid: %x\n",PC_status,PC_out.valid)
+    // printf("PC_status: %x PC_out.valid: %x\n",PC_status,PC_out.valid)
 
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
