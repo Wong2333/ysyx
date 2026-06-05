@@ -55,6 +55,6 @@ class IFU extends Module{
             }
         }
     }
-printf("cycle: %x status: %x pc: %x inst: %x\n",cycle,status,out.bits.pc,out.bits.inst)
+    printf("cycle: %x status: %x pc: %x inst: %x in.valid: %x\n",cycle,status,out.bits.pc,out.bits.inst,in.valid)
 
 }
