@@ -31,7 +31,7 @@ class IFU extends Module{
     out.bits.pc := in.bits.pc
     out.valid := false.B
 
-    val s_wait_mem :: s_wait_exec :: Nil = Enum(3)
+    val s_wait_mem :: s_wait_exec :: Nil = Enum(2)
     val status = RegInit(s_wait_exec)
     // printf(cf"status: ${status}\n")
     switch(status){
