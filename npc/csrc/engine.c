@@ -5,10 +5,12 @@
 #include <nvboard.h>
 #include <VTop.h>
 #include <autoconfig.h>
+#include <verilated_fst_c.h>
 // #define DEBUG
 #include <difftest.h>
 #include <trace.h>
 static TOP_NAME top;
+static VerilatedFstC* tfp = NULL;
 struct timespec start, end;
 bool check_wp();
 void nvboard_bind_all_pins(TOP_NAME* top);
@@ -21,11 +23,14 @@ typedef enum {
 
 ENGINE_STATE_TYPE STATE = STOP;
 
+static uint64_t sim_time = 0;
 static void single_cycle() {
   top.clock = ~top.clock;
   top.eval();
+  if (tfp) tfp->dump(sim_time++);
   top.clock = ~top.clock;
   top.eval();
+  if (tfp) tfp->dump(sim_time++);
   nvboard_update();
   if(check_wp()){
     STATE = STOP;
@@ -135,6 +140,11 @@ void init_engine(int argc, char **argv) {
     else
         init_mem(NULL);
     init_cpu();
+    // initialize FST waveform dump
+    Verilated::traceEverOn(true);
+    tfp = new VerilatedFstC;
+    top.trace(tfp, 99);  // trace 99 levels of hierarchy
+    tfp->open("waveform.fst");
     init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
