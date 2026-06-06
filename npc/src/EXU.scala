@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import scala.reflect.internal.Reporter.INFO
 import chisel3.simulator.PeekPokeAPI.TestableData
+import npc.MemControl.sw
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -118,6 +119,22 @@ class EXU extends Module{
     
     IDU_in.ready := true.B
     MemReadData.ready := true.B
+
+    // val IDU_in_valid = RegInit(false.B)
+    val s_wait_idu :: s_exec :: Nil = Enum(2)
+    val status = RegInit(s_wait_idu)
+    switch(status){
+        is(s_wait_idu){
+            when(IDU_in.fire){
+                status := s_exec
+            }
+        }
+        is(s_exec){
+            when(WriteBackPort.fire){
+                status := s_wait_idu
+            }
+        }
+    }
 
     val isLoad = WireInit(false.B)
 
@@ -322,7 +339,7 @@ class EXU extends Module{
     }
     val cycle =RegInit(0.U(32.W))
     cycle := cycle + 1.U
-    WriteBackPort.valid := IDU_in.valid && (!isLoad || MemReadData.valid)
+    WriteBackPort.valid := (IDU_in.valid && status === s_exec) && (!isLoad || MemReadData.valid)
     //printf("cycle: %x IDU_in.valid: %x isLoad: %x MemReadData.valid: %x valid: %x\n",cycle,IDU_in.valid,isLoad,MemReadData.valid,WriteBackPort.valid)
     MemPort.valid := true.B
 }
