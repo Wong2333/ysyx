@@ -90,7 +90,9 @@ class RFS extends Module {
       }
       is(s_pc_ready){
         PC_out.valid := true.B
-        PC_status := s_exec
+        when(PC_out.fire){
+          PC_status := s_exec
+        }
       }
       is(s_exec){
         PC_out.valid := false.B
