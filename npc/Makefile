@@ -7,7 +7,8 @@ KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
+				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL \
+				--trace-fst
 
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
