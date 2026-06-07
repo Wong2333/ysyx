@@ -49,6 +49,7 @@ void cpu_exec(int n){
             single_cycle();
             uint32_t next_pc = read_pc_reg();
             trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+            if(top.io_WriteBack)
             check_difftest(current_pc, next_pc);
             if(STATE == STOP) break;
         }
@@ -61,6 +62,7 @@ void cpu_exec(int n){
             // if(cycle == 20) {tfp->close(); exit(0);}
             uint32_t next_pc = read_pc_reg();
             trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+            if(top.io_WriteBack)
             check_difftest(current_pc, next_pc);
             if(STATE == STOP) break;
         }

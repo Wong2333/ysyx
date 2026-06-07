@@ -9,6 +9,7 @@ class Top extends Module{
     val io = IO(new Bundle{
         val pc = Output(UInt(32.W))
         val inst = Output(UInt(32.W))
+        val WriteBack = Output(Bool())
     })
     val IFU_u = Module(new IFU())
     val RFS_u = Module(new RFS())
@@ -33,4 +34,6 @@ class Top extends Module{
     EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
     WBU_u.out <> RFS_u.WBU_in
+
+    io.WriteBack := RFS_u.WBU_in.fire
 }
