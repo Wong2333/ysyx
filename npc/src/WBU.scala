@@ -28,7 +28,7 @@ class WBU extends Module{
         val ExceptionPort = new ExceptionInfoBundle
     }))
     out.valid := in.valid
-    in.ready := true.B
+    in.ready := out.ready
 
     out.bits.WriteRegPort.waddr := in.bits.RegWaddr
     out.bits.WriteRegPort.wdata := in.bits.RegWdata

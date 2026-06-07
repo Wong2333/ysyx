@@ -353,5 +353,5 @@ class EXU extends Module{
 
     WriteBackPort.valid := (isLoad && MemReadData.fire) || (!isLoad && IDU_in.fire)
     //printf("cycle: %x IDU_in.valid: %x isLoad: %x MemReadData.valid: %x valid: %x\n",cycle,IDU_in.valid,isLoad,MemReadData.valid,WriteBackPort.valid)
-    MemPort.valid := true.B 
+    MemPort.valid := MemPort.bits.valid
 }
