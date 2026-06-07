@@ -65,7 +65,7 @@ class LSU extends Module{
     out.bits.rdata := 0.U
 
     in.ready := true.B
-    val load_s1 = RegNext(in.bits.valid,false.B)
+    val load_s1 = RegNext(in.valid,false.B)
     out.valid := load_s1
 
     when(in.bits.valid){
