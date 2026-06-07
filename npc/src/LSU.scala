@@ -64,9 +64,29 @@ class LSU extends Module{
 
     out.bits.rdata := 0.U
 
-    in.ready := true.B
-    val load_s1 = RegNext(in.valid,false.B)
-    out.valid := load_s1
+    in.ready := false.B
+    out.valid := false.B
+    val s_idle :: s_buzy :: s_ready :: Nil = Enum(3)
+    val status = RegInit(s_idle)
+
+    switch(status){
+        is(s_idle){
+            in.ready := true.B
+            when(in.fire){
+                status := s_buzy
+            }
+        }
+        is(s_buzy){
+            in.ready := false.B
+            status := s_ready
+        }
+        is(s_ready){
+            out.valid := true.B
+            when(out.fire){
+                status := s_idle
+            }
+        }
+    }
 
     when(in.bits.valid){
         raddr := in.bits.raddr & ~3.U(32.W)
