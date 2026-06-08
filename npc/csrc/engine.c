@@ -10,7 +10,7 @@
 #include <difftest.h>
 #include <trace.h>
 static TOP_NAME top;
-static VerilatedFstC* tfp = NULL;
+VerilatedFstC* tfp = NULL;
 struct timespec start, end;
 bool check_wp();
 void nvboard_bind_all_pins(TOP_NAME* top);
@@ -46,7 +46,7 @@ static void single_cycle() {
     if (tfp) tfp->dump(sim_time++);
     nvboard_update();
     if(check_wp()){
-    STATE = STOP;
+        STATE = STOP;
     }
 }
 

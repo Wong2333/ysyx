@@ -124,6 +124,7 @@ extern "C" void check_difftest(uint32_t pc) {
   if (!ok) {
     printf("Difftest: FAIL at pc = 0x%08x\n", pc);
     fflush(stdout);
+
     assert(0);
   }
 }
