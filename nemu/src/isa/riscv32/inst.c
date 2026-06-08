@@ -74,6 +74,7 @@ word_t csr_read(int index){
   }else if(index == 0xb80){
     res = (uint32_t)(cpu.mcycle >> 32);
   }else if(index == 0xf11){
+    printf("nemu read mvendorid\n");
     res = 0x79737978;
   }else if(index == 0xf12){
     res = 0x26030092;
