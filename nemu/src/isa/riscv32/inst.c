@@ -43,6 +43,16 @@ word_t csr_write(int index, word_t csrdata){
   else if(index == 0x342){
     res = cpu.mcause;
     cpu.mcause = csrdata;
+  }else if(index == 0xb00){
+    res = (uint32_t)cpu.mcycle;
+    cpu.mcycle = (cpu.mcycle & 0xFFFFFFFF00000000ULL) | csrdata;
+  }else if(index == 0xb80){
+    res = (uint32_t)(cpu.mcycle >> 32);
+    cpu.mcycle = (cpu.mcycle & 0x00000000FFFFFFFFULL) | ((uint64_t)csrdata << 32);
+  }else if(index == 0xf11){
+    res = 0x79737978;
+  }else if(index == 0xf12){
+    res = 0x26030092;
   }
   return res;
 }
@@ -59,6 +69,14 @@ word_t csr_read(int index){
   }
   else if(index == 0x342){
     res = cpu.mcause;
+  }else if(index == 0xb00){
+    res = (uint32_t)cpu.mcycle;
+  }else if(index == 0xb80){
+    res = (uint32_t)(cpu.mcycle >> 32);
+  }else if(index == 0xf11){
+    res = 0x79737978;
+  }else if(index == 0xf12){
+    res = 0x26030092;
   }
   return res;
 }
