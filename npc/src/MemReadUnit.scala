@@ -2,10 +2,6 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import os.stat
-import javax.print.DocFlavor.READER
-
-
 
 class MemReadPort extends Bundle{
     val raddr = Input(UInt(32.W))
