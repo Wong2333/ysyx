@@ -58,7 +58,7 @@ class IDU extends Module{
     out.valid := in.valid
     //printf("%x\n",in.valid)
     val trap = RegInit(false.B)
-    val invalid = WireDefault(false.B)
+    val invalid = RegInit(false.B)
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.trap := trap
