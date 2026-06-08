@@ -87,7 +87,7 @@ class IDU extends Module{
     out.bits.exu_ctl.ALUWrite2Reg := false.B
     out.bits.exu_ctl.CSR_Contorl := CSRControl.none
 
-    invalid := in.valid
+    invalid := in.fire
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
     when(reset.asBool){
