@@ -29,13 +29,17 @@ uint32_t read_pc_reg();
 uint32_t cycle = 0;
 
 static uint64_t sim_time = 0;
+
 static void single_cycle() {
     top.clock = ~top.clock;
     uint32_t current_pc = read_pc_reg();
-    top.eval();
 
+    bool commit = top.io_WriteBack;
+    top.eval();
+        
     uint32_t next_pc = read_pc_reg();
-    if(top.io_WriteBack){
+
+    if(commit){
         trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
         check_difftest(current_pc);
     }
