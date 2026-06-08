@@ -22,8 +22,13 @@ class IFU extends Module{
     in.ready := false.B
     out.valid := false.B
 
-    pmem_read_inst.port := 0.U.asTypeOf(new MemPort)
+    
     pmem_read_inst.port.addr := pc_reg
+    pmem_read_inst.port.wen := false.B
+    pmem_read_inst.port.wdata := DontCare
+    pmem_read_inst.port.wmask := DontCare
+    pmem_read_inst.port.reqValid := false.B
+    pmem_read_inst.port.respReady := false.B
 
     out.bits.pc := pc_reg
     out.bits.inst := inst_reg
