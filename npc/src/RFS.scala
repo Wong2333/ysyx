@@ -103,6 +103,9 @@ class RFS extends Module {
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
     pc_out.bits.pc := PC_reg.io.pc
+    PC_reg.io.pc_next := DontCare
+    PC_reg.io.pc_we := false.B
+    PC_reg.io.pc_4 := false.B
 
     when(wbu_in.fire){
       PC_reg.io.pc_next := wbu_in.bits.WriteRegPort.PCNext
@@ -118,6 +121,7 @@ class RFS extends Module {
     RFS_ReadPort.RegReadPort.rdata2 := Reg_u.io.rdata2
     Reg_u.io.wdata := wbu_in.bits.WriteRegPort.wdata
     Reg_u.io.waddr := wbu_in.bits.WriteRegPort.waddr
+    Reg_u.io.wen := false.B
     Reg_u.io.clock := clock
 
     when(wbu_in.fire){
