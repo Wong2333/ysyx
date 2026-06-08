@@ -55,8 +55,8 @@ class MemUnit extends Module{
 
     val latency = 10.U
 
-    val pmem_read = new PmemReadBlackBox
-    val pmem_write = new PmemWriteBlackBox
+    val pmem_read = Module(new PmemReadBlackBox())
+    val pmem_write = Module(new PmemWriteBlackBox())
 
     pmem_write.io.waddr := DontCare
     pmem_write.io.wdata := DontCare
