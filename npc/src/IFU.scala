@@ -31,7 +31,7 @@ class IFU extends Module{
     out.bits.inst := inst_reg
 
 
-    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(3)
+    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(4)
     val status = RegInit(s_idle)
 
     switch(status){
