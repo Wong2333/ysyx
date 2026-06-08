@@ -27,6 +27,7 @@ enum {
   TYPE_N, TYPE_J, TYPE_R, TYPE_B// none
 };
 word_t csr_write(uint32_t index, word_t csrdata){
+  index = index & 0xfff;
   word_t res = 0;
   if(index == 0x305){
     res = cpu.mtvec;
@@ -57,6 +58,7 @@ word_t csr_write(uint32_t index, word_t csrdata){
   return res;
 }
 word_t csr_read(uint32_t index){
+  index = index & 0xfff;
   printf("csr index: %x\n",index);
   word_t res = 0;
   if(index == 0x305){
