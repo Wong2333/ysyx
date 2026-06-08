@@ -22,48 +22,49 @@ typedef enum {
 }ENGINE_STATE_TYPE;
 
 ENGINE_STATE_TYPE STATE = STOP;
-
-static uint64_t sim_time = 0;
-static void single_cycle() {
-  top.clock = ~top.clock;
-  top.eval();
-  if (tfp) tfp->dump(sim_time++);
-  top.clock = ~top.clock;
-  top.eval();
-  if (tfp) tfp->dump(sim_time++);
-  nvboard_update();
-  if(check_wp()){
-    STATE = STOP;
-  }
-}
 extern uint32_t *mem;
 extern uint32_t img_size;
 extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
 uint32_t cycle = 0;
+
+static uint64_t sim_time = 0;
+static void single_cycle() {
+    top.clock = ~top.clock;
+    uint32_t current_pc = read_pc_reg();
+    top.eval();
+
+    uint32_t next_pc = read_pc_reg();
+    if(top.io_WriteBack){
+        trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+        check_difftest(current_pc);
+    }
+
+    if (tfp) tfp->dump(sim_time++);
+    top.clock = ~top.clock;
+    top.eval();
+    if (tfp) tfp->dump(sim_time++);
+    nvboard_update();
+    if(check_wp()){
+    STATE = STOP;
+    }
+}
+
 void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            uint32_t current_pc = read_pc_reg();
+
             single_cycle();
-            uint32_t next_pc = read_pc_reg();
-            trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
-            if(top.io_WriteBack)
-            check_difftest(current_pc, next_pc);
+
             if(STATE == STOP) break;
         }
         printCurrentInst();
     }else{
         while(1){
-            uint32_t current_pc = read_pc_reg();
             single_cycle();
             // cycle++;
             // if(cycle == 20) {tfp->close(); exit(0);}
-            uint32_t next_pc = read_pc_reg();
-            trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
-            if(top.io_WriteBack)
-            check_difftest(current_pc, next_pc);
             if(STATE == STOP) break;
         }
     }

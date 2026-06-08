@@ -89,7 +89,7 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
   difftest_on = true;
 }
 
-extern "C" void check_difftest(uint32_t pc, uint32_t npc) {
+extern "C" void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   /* Step REF by one instruction */
