@@ -18,22 +18,22 @@ class Top extends Module{
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
     
-    IFU_u.in <> RFS_u.PC_out
-    io.pc := RFS_u.PC_out.bits.pc
+    IFU_u.in <> RFS_u.pc_out
+    io.pc := RFS_u.pc_out.bits.pc
     io.inst := IFU_u.out.bits.inst
 
     IDU_u.in <> IFU_u.out
 
-    EXU_u.IDU_in <> IDU_u.out
+    EXU_u.idu_out <> IDU_u.out
 
-    EXU_u.MemPort <> LSU_u.in
-    EXU_u.MemReadData <> LSU_u.out
+    EXU_u.lsu_in <> LSU_u.in
+    EXU_u.lsu_out <> LSU_u.out
     
-    EXU_u.WriteBackPort <> WBU_u.in
+    EXU_u.wbu_in <> WBU_u.in
 
     EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
-    WBU_u.out <> RFS_u.WBU_in
+    WBU_u.out <> RFS_u.wbu_in
 
-    io.WriteBack := RFS_u.WBU_in.fire
+    io.WriteBack := RFS_u.wbu_in.fire
 }

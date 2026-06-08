@@ -16,107 +16,105 @@ object MEM_CTL extends ChiselEnum{
     Write2B = Value
 }
 
-class MemPortBundle extends Bundle{
-    val valid = Output(Bool())
+class LSUBundle extends Bundle{
     val mem_ctl = Output(MEM_CTL())
     val wdata = Output(UInt(32.W))
-    val waddr = Output(UInt(32.W))
-    val raddr = Output(UInt(32.W))
+    val addr = Output(UInt(32.W))
 }
 
 class LSU extends Module{
-    val in = IO(Flipped(Decoupled(new MemPortBundle)))
+    val in = IO(Flipped(Decoupled(new LSUBundle)))
     val out = IO(Decoupled(new Bundle {
         val rdata = Output(UInt(32.W))
     }))
-    
-    val mask = WireDefault(0.U(4.W))
-    val waddr = WireDefault(0.U)
-    val wdata = WireDefault(0.U(32.W))
-    val wen = WireDefault(false.B)
-
-    val shifted_rdata = WireDefault(0.U(32.W))
-    val shifted_wdata = WireDefault(0.U(32.W))
-
     val pmem_unit = Module(new MemUnit())
+    
+    val lsu_in_reg = Reg(Flipped(new LSUBundle))
+    val lsu_out_reg = Reg(UInt(32.W))
 
-    val raddr = WireDefault(0.U(32.W))
     val rdata = WireDefault(0.U(32.W))
-    pmem_unit.port.addr := raddr 
-    rdata := pmem_unit.port.rdata
+    val shifted_rdata = pmem_unit.port.rdata >> (lsu_in_reg.addr(1,0) << 3)
+    val shifted_wdata = lsu_in_reg.wdata << (lsu_in_reg.addr(1,0) << 3)
+    val is_write = lsu_in_reg.mem_ctl.isOneOf(MEM_CTL.Write4B, MEM_CTL.Write2B, MEM_CTL.Write1B)
+    val wmask = WireDefault(0.U(32.W))
+    
+    pmem_unit.port.addr := lsu_in_reg.addr
+    pmem_unit.port.wdata := lsu_in_reg.wdata
+    pmem_unit.port.wmask := DontCare
+    pmem_unit.port.wen := false.B
+    pmem_unit.port.reqValid := false.B
+    pmem_unit.port.respReady := false.B
 
-    pmem_unit.port.addr := waddr
-    pmem_unit.port.wdata := wdata
-    pmem_unit.port.wmask := mask
-    pmem_unit.port.wen := wen
-
-    out.bits.rdata := 0.U
+    out.bits.rdata := DontCare
 
     in.ready := false.B
     out.valid := false.B
-    val s_idle :: s_buzy :: s_ready :: Nil = Enum(3)
+    out.bits.rdata := lsu_out_reg
+    
+    val s_idle :: s_wait_mem_free :: s_wait_mem_resp :: s_wait_fetch :: Nil = Enum(3)
     val status = RegInit(s_idle)
 
     switch(status){
         is(s_idle){
             in.ready := true.B
             when(in.fire){
-                status := s_buzy
+                status := s_wait_mem_free
+                lsu_in_reg := in.bits
             }
         }
-        is(s_buzy){
-            in.ready := false.B
-            status := s_ready
+        is(s_wait_mem_free){
+            pmem_unit.port.reqValid := true.B
+            pmem_unit.port.wmask := wmask
+            pmem_unit.port.wen := is_write
+            when(pmem_unit.port.reqReady){
+                status := s_wait_mem_resp
+            }
         }
-        is(s_ready){
+        is(s_wait_mem_resp){
+            pmem_unit.port.respReady := true.B
+            when(pmem_unit.port.respValid){
+                when(!is_write){
+                    lsu_out_reg := rdata
+                }
+                status := s_wait_fetch
+            }
+        }
+        is(s_wait_fetch){
             out.valid := true.B
             when(out.fire){
                 status := s_idle
-                printf("rdata: %x\n",out.bits.rdata)
             }
         }
     }
 
-    when(in.bits.valid){
-        raddr := in.bits.raddr & ~3.U(32.W)
-        shifted_rdata := rdata >> (in.bits.raddr(1,0) << 3)
-        shifted_wdata := in.bits.wdata << (in.bits.waddr(1,0) << 3)
+    when(pmem_unit.port.respValid && pmem_unit.port.respReady){
+
         switch(in.bits.mem_ctl){
             is(MEM_CTL.Read4B){
-                out.bits.rdata := rdata
+                rdata := pmem_unit.port.rdata
             }
             is(MEM_CTL.Read1B){
-                out.bits.rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
+                rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
             }
             is(MEM_CTL.Read1BU){
-                out.bits.rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+                rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
             }
             is(MEM_CTL.Read2B){
-                out.bits.rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
+                rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
             }
             is(MEM_CTL.Read2BU){
-                out.bits.rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
+                rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
             }
             is(MEM_CTL.Write4B){
-                mask := "b1111".U;
-                wdata := in.bits.wdata;
-                waddr := in.bits.waddr & ~3.U(32.W)
-                wen := true.B
+                wmask := "b1111".U;
             }
             is(MEM_CTL.Write1B){
-                mask := 1.U << in.bits.waddr(1,0)
-                wdata := shifted_wdata
-                waddr := in.bits.waddr & ~3.U(32.W)
-                wen := true.B
+                wmask := 1.U << lsu_in_reg.addr(1,0)
             }
             is(MEM_CTL.Write2B){
-                mask := 3.U << in.bits.waddr(1,0)
-                wdata := shifted_wdata
-                waddr := in.bits.waddr & ~3.U(32.W)
-                wen := true.B
+                wmask := 3.U << lsu_in_reg.addr(1,0)
             }
         }
     }
-
 
 }

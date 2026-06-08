@@ -65,7 +65,7 @@ class ReadRegPortBundle extends Bundle{
 }
 
 class RFS extends Module {
-  val WBU_in = IO(Flipped(Decoupled(new Bundle {
+  val wbu_in = IO(Flipped(Decoupled(new Bundle {
     val WriteRegPort = Flipped(new WriteRegPortBundle)
     val ExceptionPort = Flipped(new ExceptionInfoBundle)
     val CSRWritePort = Flipped(new CSRWritePortBundle)
@@ -74,30 +74,27 @@ class RFS extends Module {
     val RegReadPort = Flipped(new ReadRegPortBundle)
     val CSRReadPort = Flipped(new CSRReadPortBundle)
   })
-  val PC_out = IO(Decoupled(new Bundle{
+  val pc_out = IO(Decoupled(new Bundle{
       val pc = Output(UInt(32.W))
     }))
 
-    WBU_in.ready := true.B
-    PC_out.valid := false.B
-    val s_pc_reset :: s_pc_ready :: s_exec :: Nil = Enum(3)
-    val PC_status = RegInit(s_pc_reset)
+    wbu_in.ready := false.B
+    pc_out.valid := false.B
+    
+    val s_idle :: s_wait_write_back :: Nil = Enum(2)
+    val status = RegInit(s_idle)
 
-    switch(PC_status){
-      is(s_pc_reset){
-        PC_out.valid := true.B
-        PC_status := s_pc_ready
-      }
-      is(s_pc_ready){
-        PC_out.valid := true.B
-        when(PC_out.fire){
-          PC_status := s_exec
+    switch(status){
+      is(s_idle){
+        pc_out.valid := true.B
+        when(pc_out.ready){
+          status := s_wait_write_back
         }
       }
-      is(s_exec){
-        PC_out.valid := false.B
-        when(WBU_in.fire){
-          PC_status := s_pc_ready
+      is(s_wait_write_back){
+        wbu_in.ready := true.B
+        when(wbu_in.fire){
+          status := s_idle
         }
       }
     }
@@ -105,23 +102,32 @@ class RFS extends Module {
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := WBU_in.bits.WriteRegPort.PCNext
-    PC_reg.io.pc_we := WBU_in.bits.WriteRegPort.PCWrite && WBU_in.valid
-    PC_reg.io.pc_4 := !WBU_in.bits.WriteRegPort.PCWrite && WBU_in.valid
-    PC_out.bits.pc := PC_reg.io.pc
+    pc_out.bits.pc := PC_reg.io.pc
+
+    when(wbu_in.fire){
+      PC_reg.io.pc_next := wbu_in.bits.WriteRegPort.PCNext
+      PC_reg.io.pc_we := wbu_in.bits.WriteRegPort.PCWrite
+      PC_reg.io.pc_4 := !wbu_in.bits.WriteRegPort.PCWrite
+    }
+
   
     val Reg_u = Module(new RegBlackBox())
-    Reg_u.io.wdata := WBU_in.bits.WriteRegPort.wdata
-    Reg_u.io.waddr := WBU_in.bits.WriteRegPort.waddr
-    Reg_u.io.wen := WBU_in.bits.WriteRegPort.wen && WBU_in.valid
     Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
     Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
     RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1
     RFS_ReadPort.RegReadPort.rdata2 := Reg_u.io.rdata2
+    Reg_u.io.wdata := wbu_in.bits.WriteRegPort.wdata
+    Reg_u.io.waddr := wbu_in.bits.WriteRegPort.waddr
     Reg_u.io.clock := clock
 
-    val mcycle = RegInit(0.U(64.W))
+    when(wbu_in.fire){
+      Reg_u.io.wen := wbu_in.bits.WriteRegPort.wen
+    }
 
+
+
+    val mcycle = RegInit(0.U(64.W))
+    mcycle := mcycle + 1.U
     val mepc = Reg(UInt(32.W))
     val mcause = Reg(UInt(32.W))
     val mtvec = Reg(UInt(32.W))
@@ -154,33 +160,33 @@ class RFS extends Module {
         RFS_ReadPort.CSRReadPort.CSRRData := mcause
       }
     }
-    mcycle := mcycle + 1.U
-    when(WBU_in.bits.CSRWritePort.CSRWrite && WBU_in.valid){
-      switch(WBU_in.bits.CSRWritePort.CSRWAddr){//mcycle
+    
+    when(wbu_in.bits.CSRWritePort.CSRWrite && wbu_in.fire){
+      switch(wbu_in.bits.CSRWritePort.CSRWAddr){//mcycle
         is("hB00".U){
-          mcycle := Cat(mcycle(63,32),WBU_in.bits.CSRWritePort.CSRWData)
+          mcycle := Cat(mcycle(63,32),wbu_in.bits.CSRWritePort.CSRWData)
         }
         is("hB80".U){
-          mcycle := Cat(WBU_in.bits.CSRWritePort.CSRWData,mcycle(31,0))
+          mcycle := Cat(wbu_in.bits.CSRWritePort.CSRWData,mcycle(31,0))
         }
         is("h305".U){
-          mtvec := WBU_in.bits.CSRWritePort.CSRWData
+          mtvec := wbu_in.bits.CSRWritePort.CSRWData
         }
         is("h300".U){
-          mstatus := WBU_in.bits.CSRWritePort.CSRWData
+          mstatus := wbu_in.bits.CSRWritePort.CSRWData
         }
         is("h341".U){
-          mepc := WBU_in.bits.CSRWritePort.CSRWData
+          mepc := wbu_in.bits.CSRWritePort.CSRWData
         }
         is("h342".U){
-          mcause := WBU_in.bits.CSRWritePort.CSRWData
+          mcause := wbu_in.bits.CSRWritePort.CSRWData
         }
       }
     }
 
-    when(WBU_in.bits.ExceptionPort.isTrap && WBU_in.valid){
-      mepc := WBU_in.bits.ExceptionPort.PC
-      mcause := WBU_in.bits.ExceptionPort.Exception_Code
+    when(wbu_in.bits.ExceptionPort.isTrap && wbu_in.fire){
+      mepc := wbu_in.bits.ExceptionPort.PC
+      mcause := wbu_in.bits.ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec
       PC_reg.io.pc_we := true.B
     }
