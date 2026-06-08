@@ -107,7 +107,7 @@ class RFS extends Module {
     PC_reg.io.reset := reset
     PC_reg.io.pc_next := WBU_in.bits.WriteRegPort.PCNext
     PC_reg.io.pc_we := WBU_in.bits.WriteRegPort.PCWrite && WBU_in.valid
-    PC_reg.io.pc_4 := WBU_in.valid
+    PC_reg.io.pc_4 := !WBU_in.bits.WriteRegPort.PCWrite && WBU_in.valid
     PC_out.bits.pc := PC_reg.io.pc
   
     val Reg_u = Module(new RegBlackBox())
