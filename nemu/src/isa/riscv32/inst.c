@@ -59,7 +59,6 @@ word_t csr_write(uint32_t index, word_t csrdata){
 }
 word_t csr_read(uint32_t index){
   index = index & 0xfff;
-  printf("csr index: %x\n",index);
   word_t res = 0;
   if(index == 0x305){
     res = cpu.mtvec;
@@ -77,10 +76,9 @@ word_t csr_read(uint32_t index){
   }else if(index == 0xb80){
     res = (uint32_t)(cpu.mcycle >> 32);
   }else if(index == 0xf11){
-    printf("nemu read mvendorid\n");
     res = 0x79737978;
   }else if(index == 0xf12){
-    res = 0x26030092;
+    res = 26030092;
   }
   return res;
 }
