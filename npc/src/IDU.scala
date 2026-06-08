@@ -29,6 +29,7 @@ class EbreakBlackBox extends ExtModule{
 }
 class InvalidInstructionBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
+        val clock = Input(Clock())
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
         val invalid = Input(Bool())
@@ -58,13 +59,14 @@ class IDU extends Module{
     out.valid := in.valid
     //printf("%x\n",in.valid)
     val trap = RegInit(false.B)
-    val invalid = RegInit(false.B)
+    val invalid = WireDefault(false.B)
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.trap := trap
     
 
     val invalid_instruction = Module(new InvalidInstructionBlackBox())
+    invalid_instruction.io.clock := clock
     invalid_instruction.io.pc := in.bits.pc
     invalid_instruction.io.inst := in.bits.inst
     invalid_instruction.io.invalid := invalid
@@ -88,7 +90,7 @@ class IDU extends Module{
     out.bits.exu_ctl.CSR_Contorl := CSRControl.none
 
     invalid := in.fire
-    printf("invalid: %x\n",invalid)
+
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
     when(reset.asBool){
