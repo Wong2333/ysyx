@@ -84,6 +84,7 @@ class LSU extends Module{
             out.valid := true.B
             when(out.fire){
                 status := s_idle
+                printf("rdata: %x\n",out.bits.rdata)
             }
         }
     }
