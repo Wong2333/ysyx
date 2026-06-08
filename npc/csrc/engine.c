@@ -10,7 +10,7 @@
 #include <difftest.h>
 #include <trace.h>
 static TOP_NAME top;
-VerilatedFstC* tfp = NULL;
+static VerilatedFstC* tfp = NULL;
 struct timespec start, end;
 bool check_wp();
 void nvboard_bind_all_pins(TOP_NAME* top);
@@ -29,6 +29,13 @@ uint32_t read_pc_reg();
 uint32_t cycle = 0;
 
 static uint64_t sim_time = 0;
+
+
+void my_assert(bool cond){
+    if(cond) return;
+    tfp->close();
+    assert(0);
+}
 
 static void single_cycle() {
     top.clock = ~top.clock;
