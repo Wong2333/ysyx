@@ -76,8 +76,8 @@ void ebreak() {
         exit(1);
     }
 }
-
+void my_assert(bool cond);
 void invalid_instruction(int pc,int inst){
     printf("invalid_instruction: 0x%x at 0x%x\n",(uint32_t)inst,(uint32_t)pc);
-    exit(1);
+    my_assert(0);
 }
