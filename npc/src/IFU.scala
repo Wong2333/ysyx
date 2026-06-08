@@ -3,14 +3,6 @@ package npc
 import chisel3._
 import chisel3.util._
 
-class PmemReadBlackBox extends ExtModule{
-    val io = FlatIO(new Bundle{
-        val clock = Input(Clock())
-        val raddr = Input(UInt(32.W))
-        val rdata = Output(UInt(32.W))
-    })
-    addResource("/PmemReadBlackBox.v")
-}
 
 class IFU extends Module{
 
@@ -22,42 +14,51 @@ class IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    val pmem_read_inst = Module(new PmemReadBlackBox)
-    pmem_read_inst.io.clock := clock
+    val pmem_read_inst = Module(new MemUnit())
 
     val pc_reg = RegInit(0.U(32.W))
+    val inst_reg = RegInit(0.U(32.W))
     
     in.ready := false.B
-    pmem_read_inst.io.raddr := pc_reg
-    out.bits.inst := pmem_read_inst.io.rdata
-    out.bits.pc := pc_reg
     out.valid := false.B
 
+    pmem_read_inst.port.addr := pc_reg
+    pmem_read_inst.port.wen := false.B
+    pmem_read_inst.port.reqValid := false.B
+    pmem_read_inst.port.respReady := false.B
+
+    out.bits.pc := pc_reg
+    out.bits.inst := inst_reg
 
 
-    val s_reset :: s_wait_exec :: s_wait_mem :: Nil = Enum(3)
-    val status = RegInit(s_reset)
-    val cycle = RegInit(0.U(32.W))
-    cycle := cycle + 1.U
-    
+    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(3)
+    val status = RegInit(s_idle)
 
     switch(status){
-        is(s_reset){
-            status := s_wait_exec
-        }
-        is(s_wait_exec){
+        is(s_idle){
             in.ready := true.B
-            when(in.valid){
-                pmem_read_inst.io.raddr := in.bits.pc
-                status := s_wait_mem
+            when(in.fire){
                 pc_reg := in.bits.pc
+                status := s_wait_mem_free
             }
         }
-        is(s_wait_mem){
+        is(s_wait_mem_free){
+            pmem_read_inst.port.reqValid := true.B
+            when(pmem_read_inst.port.reqReady){
+                status := s_wait_mem_data
+            }
+        }
+        is(s_wait_mem_data){
+            pmem_read_inst.port.respReady := true.B
+            when(pmem_read_inst.port.respValid){
+                inst_reg := pmem_read_inst.port.rdata
+                status := s_wait_fetch
+            }
+        }
+        is(s_wait_fetch){
             out.valid := true.B
-            pmem_read_inst.io.raddr := pc_reg
-            when(out.fire){
-                status := s_wait_exec
+            when(out.ready){
+                status := s_idle
             }
         }
     }

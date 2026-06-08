@@ -123,6 +123,7 @@ class EXU extends Module{
     // val IDU_in_valid = RegInit(false.B)
 
     val isLoad = WireInit(false.B)
+    val isStore = WireInit(false.B)
 
     RFS_ReadPort.RegReadPort.raddr1 := 0.U
     RFS_ReadPort.RegReadPort.raddr2 := 0.U
@@ -292,7 +293,7 @@ class EXU extends Module{
         WriteBackPort.bits.RegWdata := MemReadData.bits.rdata
         isLoad := true.B
     }.elsewhen(IDU_in.bits.EXU_CTL.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
-        
+        isStore := true.B
         MemPort.bits.waddr := AluResult
         RFS_ReadPort.RegReadPort.raddr2 := IDU_in.bits.DecodeBundle.rs2
         MemPort.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
@@ -331,18 +332,13 @@ class EXU extends Module{
     switch(status){
         is(s_wait_idu){
             when(IDU_in.fire){
-                when(isLoad){
+                when(isLoad || isStore){
                     status := s_wait_mem
                 }.otherwise{
                     status := s_wait_idu
                 }
             }
         }
-        // is(s_exec){
-        //     when(WriteBackPort.fire){
-        //         status := s_wait_idu
-        //     }
-        // }
         is(s_wait_mem){
             when(MemReadData.fire){
                 status := s_wait_idu
@@ -350,8 +346,8 @@ class EXU extends Module{
         }
     }
 
-
-    WriteBackPort.valid := (isLoad && MemReadData.fire) || (!isLoad && IDU_in.fire)
+    val isMem = isLoad | isStore
+    WriteBackPort.valid := (isMem && MemReadData.fire) || (!isMem && IDU_in.fire)
     //printf("cycle: %x IDU_in.valid: %x isLoad: %x MemReadData.valid: %x valid: %x\n",cycle,IDU_in.valid,isLoad,MemReadData.valid,WriteBackPort.valid)
     MemPort.valid := MemPort.bits.valid
 }

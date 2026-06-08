@@ -24,16 +24,6 @@ class MemPortBundle extends Bundle{
     val raddr = Output(UInt(32.W))
 }
 
-class PmemWriteBlackBox extends ExtModule {
-    val io = FlatIO(new Bundle {
-        val clock = Input(Clock())
-        val waddr = Input(UInt(32.W))
-        val wdata = Input(UInt(32.W))
-        val wmask = Input(UInt(4.W))
-        val we = Input(Bool())
-    })
-    addResource("/PmemWriteBlackBox.v")
-}
 class LSU extends Module{
     val in = IO(Flipped(Decoupled(new MemPortBundle)))
     val out = IO(Decoupled(new Bundle {
@@ -48,19 +38,17 @@ class LSU extends Module{
     val shifted_rdata = WireDefault(0.U(32.W))
     val shifted_wdata = WireDefault(0.U(32.W))
 
-    val pmem_read = Module(new PmemReadBlackBox())
-    pmem_read.io.clock := clock
+    val pmem_unit = Module(new MemUnit())
+
     val raddr = WireDefault(0.U(32.W))
     val rdata = WireDefault(0.U(32.W))
-    pmem_read.io.raddr  := raddr 
-    rdata := pmem_read.io.rdata
+    pmem_unit.port.addr := raddr 
+    rdata := pmem_unit.port.rdata
 
-    val pmem_write = Module(new PmemWriteBlackBox())
-    pmem_write.io.clock := clock
-    pmem_write.io.waddr := waddr
-    pmem_write.io.wdata := wdata
-    pmem_write.io.wmask := mask
-    pmem_write.io.we := wen
+    pmem_unit.port.addr := waddr
+    pmem_unit.port.wdata := wdata
+    pmem_unit.port.wmask := mask
+    pmem_unit.port.wen := wen
 
     out.bits.rdata := 0.U
 
