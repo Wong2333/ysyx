@@ -41,7 +41,7 @@ class LSU extends Module{
     dontTouch(rdata)
     
     pmem_unit.port.addr := lsu_in_reg.addr
-    pmem_unit.port.wdata := lsu_in_reg.wdata
+    pmem_unit.port.wdata := shifted_wdata
     pmem_unit.port.wmask := DontCare
     pmem_unit.port.wen := false.B
     pmem_unit.port.reqValid := false.B
@@ -108,12 +108,15 @@ class LSU extends Module{
         }
         is(MEM_CTL.Write4B){
             wmask := "b1111".U;
+            // pmem_unit.port.wdata := lsu_in_reg.wdata
         }
         is(MEM_CTL.Write1B){
             wmask := 1.U << lsu_in_reg.addr(1,0)
+            // pmem_unit.port.wdata := shifted_wdata
         }
         is(MEM_CTL.Write2B){
             wmask := 3.U << lsu_in_reg.addr(1,0)
+            // pmem_unit.port.wdata := shifted_wdata
         }
     }
     
