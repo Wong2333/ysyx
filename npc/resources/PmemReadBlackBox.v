@@ -3,12 +3,8 @@ module PmemReadBlackBox (
     input valid,
     output reg[31:0] rdata
 );
-    import "DPI-C" context function int pmem_read(input int raddr);
-    always @(*) begin
-        rdata = 0;
-        if(valid) begin
-            rdata = pmem_read(raddr);
-        end
-    end
+    import "DPI-C" context function int pmem_read(input int raddr,input int valid);
+
+    rdata = pmem_read(raddr,valid);
 
 endmodule

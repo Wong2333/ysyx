@@ -56,7 +56,8 @@ void load_img(const char* path){
     fclose(fp);
 }
 
-extern "C" int pmem_read(int addr) {
+extern "C" int pmem_read(int addr, int valid) {
+    if(valid == 0) return -1;
     unsigned long long cpu_time_us;
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
@@ -80,7 +81,8 @@ extern "C" int pmem_read(int addr) {
     return data;
 }
 
-extern "C" void pmem_write(int addr, int data, char mask) {
+extern "C" void pmem_write(int addr, int data, char mask, int valid) {
+    if(valid == 0) return;
     uint32_t waddr = (uint32_t)addr;
     uint32_t wdata = (uint32_t)data;
     uint8_t wmask = (uint8_t)mask & 0xF;
