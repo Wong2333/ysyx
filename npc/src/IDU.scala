@@ -29,7 +29,6 @@ class EbreakBlackBox extends ExtModule{
 }
 class InvalidInstructionBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
-        val clock = Input(Clock())
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
         val invalid = Input(Bool())
@@ -39,6 +38,8 @@ class InvalidInstructionBlackBox extends ExtModule{
 
 class DecodeBundle extends Bundle{
     val decode = new Bundle {
+        val inst = Output(UInt(32.W))
+        val invalid = Output(Bool())
         val rs1 = Output(UInt(5.W))
         val rs2 = Output(UInt(5.W))
         val rd = Output(UInt(5.W))
@@ -55,21 +56,18 @@ class IDU extends Module{
     })))
 
     val out = IO(Decoupled(new DecodeBundle))
+
     in.ready := out.ready
     out.valid := in.valid
-    //printf("%x\n",in.valid)
+    out.bits.decode.inst := in.bits.inst
+
     val trap = RegInit(false.B)
-    val invalid = WireDefault(false.B)
+    val invalid = WireDefault(true.B)
+    out.bits.decode.invalid := invalid
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.trap := trap
     
-
-    val invalid_instruction = Module(new InvalidInstructionBlackBox())
-    invalid_instruction.io.clock := clock
-    invalid_instruction.io.pc := in.bits.pc
-    invalid_instruction.io.inst := in.bits.inst
-    invalid_instruction.io.invalid := invalid
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
 
@@ -89,14 +87,8 @@ class IDU extends Module{
     out.bits.exu_ctl.ALUWrite2Reg := false.B
     out.bits.exu_ctl.CSR_Contorl := CSRControl.none
 
-    invalid := in.fire
 
-    val cycle = RegInit(0.U(32.W))
-    cycle := cycle + 1.U
-    when(reset.asBool){
-        invalid := false.B
-    }.otherwise{
-        switch(inst.opcode){
+    switch(inst.opcode){
         is("b0010011".U){
             out.bits.exu_ctl.ALU_Op := ALUOp.IType
             out.bits.decode.imm := inst.immI
@@ -342,6 +334,5 @@ class IDU extends Module{
             }
         }
 
-        }
     }
 }

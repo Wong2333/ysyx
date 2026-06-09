@@ -103,6 +103,9 @@ class EXU extends Module{
         val rdata = Input(UInt(32.W))
     })))
 
+    val idu_out_reg = Reg(new DecodeBundle)
+    val lsu_out_reg = Reg(UInt(32.W))
+
     // io.out := 0.U
     val AluResult = WireDefault(0.U(32.W))
     val PCAddFour = idu_out.bits.decode.pc + 4.U
@@ -112,14 +115,18 @@ class EXU extends Module{
     lsu_in.valid := false.B
     wbu_in.valid := false.B
 
+    val invalid_instruction = Module(new InvalidInstructionBlackBox())
+    invalid_instruction.io.pc := idu_out_reg.decode.pc
+    invalid_instruction.io.inst := idu_out_reg.decode.inst
+    invalid_instruction.io.invalid := false.B
+
     // val idu_out_valid = RegInit(false.B)
 
     val s_idle :: s_wait_lsu_free :: s_wait_lsu_valid :: s_write_back :: Nil = Enum(4)
     val status = RegInit(s_idle)
     val is_mem = idu_out.bits.exu_ctl.Mem_Control =/= MemControl.none
 
-    val idu_out_reg = Reg(new DecodeBundle)
-    val lsu_out_reg = Reg(UInt(32.W))
+
 
     switch(status){
         is(s_idle){
@@ -135,6 +142,7 @@ class EXU extends Module{
         }
         is(s_wait_lsu_free){
             lsu_in.valid := true.B
+            invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(lsu_in.ready){
                 status := s_wait_lsu_valid
             }
@@ -147,6 +155,7 @@ class EXU extends Module{
         }
         is(s_write_back){
             wbu_in.valid := true.B
+            invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(wbu_in.ready){
                 status := s_idle
             }
