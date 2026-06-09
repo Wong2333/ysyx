@@ -63,7 +63,7 @@ class MemUnit extends Module{
     pmem_write.io.wmask := DontCare
     pmem_write.io.valid := false.B
 
-    pmem_read.io.raddr := DontCare
+    pmem_read.io.raddr := addr_reg
     pmem_read.io.valid := false.B
 
     port.rdata := "hFFFFFFFF".U
