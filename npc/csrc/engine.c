@@ -2,15 +2,20 @@
 #include <string.h>
 #include <getopt.h>
 #include <time.h>
+#include <cassert>
 #include <nvboard.h>
 #include <VTop.h>
 #include <autoconfig.h>
+#ifdef CONFIG_ENABLE_FST_TRACE
 #include <verilated_fst_c.h>
+#endif
 // #define DEBUG
 #include <difftest.h>
 #include <trace.h>
 static TOP_NAME top;
+#ifdef CONFIG_ENABLE_FST_TRACE
 static VerilatedFstC* tfp = NULL;
+#endif
 struct timespec start, end;
 bool check_wp();
 void nvboard_bind_all_pins(TOP_NAME* top);
@@ -28,12 +33,17 @@ extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
 uint32_t cycle = 0;
 
+#ifdef CONFIG_ENABLE_FST_TRACE
 static uint64_t sim_time = 0;
-
+#endif
 
 void my_assert(bool cond){
+#ifdef CONFIG_ENABLE_FST_TRACE
     if(cond) return;
     tfp->close();
+#else
+    if(cond) return;
+#endif
     assert(0);
 }
 
@@ -51,10 +61,14 @@ static void single_cycle() {
         check_difftest(current_pc);
     }
 
+#ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);
+#endif
     top.clock = ~top.clock;
     top.eval();
+#ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);
+#endif
     nvboard_update();
     if(check_wp()){
         STATE = STOP;
@@ -154,11 +168,13 @@ void init_engine(int argc, char **argv) {
     else
         init_mem(NULL);
     init_cpu();
+#ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
     top.trace(tfp, 99);  // trace 99 levels of hierarchy
     tfp->open("waveform.fst");
+#endif
     init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
