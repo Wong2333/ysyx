@@ -90,7 +90,7 @@ class LSU extends Module{
 
     when(pmem_unit.port.respValid && pmem_unit.port.respReady){
 
-        switch(in.bits.mem_ctl){
+        switch(lsu_in_reg.mem_ctl){
             is(MEM_CTL.Read4B){
                 rdata := pmem_unit.port.rdata
             }
