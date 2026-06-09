@@ -2,7 +2,8 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import npc.ALUContorl.add
+import scala.util.Random
+
 
 class PmemReadBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
@@ -41,7 +42,7 @@ class MemUnit extends Module{
 
     val port = IO(new MemPort)
 
-    val cnt = RegInit(0.U(5.W))
+    val cnt = RegInit(0.U(4.W))
 
     val addr_reg = Reg(UInt(32.W))
     val wdata_reg = Reg(UInt(32.W))
@@ -49,7 +50,8 @@ class MemUnit extends Module{
     val wen_reg = Reg(Bool())
     val rdata_reg = Reg(UInt(32.W))
 
-    val latency = 10.U
+    val LFSR  = random.LFSR(4)
+    val latency = RegInit(LFSR)
 
     val pmem_read = Module(new PmemReadBlackBox())
     val pmem_write = Module(new PmemWriteBlackBox())
@@ -78,6 +80,7 @@ class MemUnit extends Module{
                 wmask_reg := port.wmask
                 wen_reg := port.wen
                 status := s_busy
+                latency := LFSR
             }
         }
         is(s_busy){
