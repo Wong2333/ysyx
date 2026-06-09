@@ -123,8 +123,6 @@ class EXU extends Module{
     val status = RegInit(s_idle)
     val is_mem = idu_out.bits.exu_ctl.Mem_Control =/= MemControl.none
 
-
-
     switch(status){
         is(s_idle){
             idu_out.ready := true.B
@@ -317,9 +315,7 @@ class EXU extends Module{
     }
 
     lsu_in.bits := 0.U.asTypeOf(new LSUBundle)
-    when(idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none){
-        lsu_in.valid := true.B
-    }
+
     when(idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
         MemControl.lhu,MemControl.lw)){
         lsu_in.bits.addr := AluResult
