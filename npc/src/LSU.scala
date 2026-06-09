@@ -88,7 +88,7 @@ class LSU extends Module{
         }
     }
 
-    when(pmem_unit.port.respValid && pmem_unit.port.respReady){
+    when(pmem_unit.port.reqValid && pmem_unit.port.reqReady){
 
         switch(lsu_in_reg.mem_ctl){
             is(MEM_CTL.Read4B){
