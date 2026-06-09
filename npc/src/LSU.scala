@@ -88,34 +88,33 @@ class LSU extends Module{
         }
     }
 
-    when(pmem_unit.port.reqValid && pmem_unit.port.reqReady){
 
-        switch(lsu_in_reg.mem_ctl){
-            is(MEM_CTL.Read4B){
-                rdata := pmem_unit.port.rdata
-            }
-            is(MEM_CTL.Read1B){
-                rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
-            }
-            is(MEM_CTL.Read1BU){
-                rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
-            }
-            is(MEM_CTL.Read2B){
-                rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
-            }
-            is(MEM_CTL.Read2BU){
-                rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
-            }
-            is(MEM_CTL.Write4B){
-                wmask := "b1111".U;
-            }
-            is(MEM_CTL.Write1B){
-                wmask := 1.U << lsu_in_reg.addr(1,0)
-            }
-            is(MEM_CTL.Write2B){
-                wmask := 3.U << lsu_in_reg.addr(1,0)
-            }
+    switch(lsu_in_reg.mem_ctl){
+        is(MEM_CTL.Read4B){
+            rdata := pmem_unit.port.rdata
+        }
+        is(MEM_CTL.Read1B){
+            rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
+        }
+        is(MEM_CTL.Read1BU){
+            rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+        }
+        is(MEM_CTL.Read2B){
+            rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
+        }
+        is(MEM_CTL.Read2BU){
+            rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
+        }
+        is(MEM_CTL.Write4B){
+            wmask := "b1111".U;
+        }
+        is(MEM_CTL.Write1B){
+            wmask := 1.U << lsu_in_reg.addr(1,0)
+        }
+        is(MEM_CTL.Write2B){
+            wmask := 3.U << lsu_in_reg.addr(1,0)
         }
     }
+    
 
 }
