@@ -41,8 +41,6 @@ class MemUnit extends Module{
 
     val port = IO(new MemPort)
 
-    val s_idle :: s_busy :: s_valid :: Nil = Enum(3)
-
     val status = RegInit(s_idle)
 
     val cnt = RegInit(0.U(5.W))
@@ -70,6 +68,8 @@ class MemUnit extends Module{
     port.reqReady := false.B
     port.respValid := false.B
 
+    val s_idle :: s_busy :: s_valid :: Nil = Enum(3)
+    
     switch(status){
         is(s_idle){
             port.reqReady := true.B

@@ -2,9 +2,6 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import scala.reflect.internal.Reporter.INFO
-import chisel3.simulator.PeekPokeAPI.TestableData
-import npc.MemControl.sw
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -151,6 +148,7 @@ class EXU extends Module{
             lsu_out.ready := true.B
             when(lsu_out.valid){
                 lsu_out_reg := lsu_out.bits.rdata
+                status := s_write_back
             }
         }
         is(s_write_back){
