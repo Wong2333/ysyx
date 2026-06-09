@@ -38,6 +38,7 @@ class LSU extends Module{
     val is_write = lsu_in_reg.mem_ctl.isOneOf(MEM_CTL.Write4B, MEM_CTL.Write2B, MEM_CTL.Write1B)
     val wmask = WireDefault(0.U(4.W))
     dontTouch(wmask)
+    dontTouch(rdata)
     
     pmem_unit.port.addr := lsu_in_reg.addr
     pmem_unit.port.wdata := lsu_in_reg.wdata
