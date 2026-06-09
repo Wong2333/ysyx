@@ -105,6 +105,7 @@ class EXU extends Module{
 
     // io.out := 0.U
     val AluResult = WireDefault(0.U(32.W))
+    dontTouch(AluResult)
     val PCAddFour = idu_out.bits.decode.pc + 4.U
     
     idu_out.ready := false.B
