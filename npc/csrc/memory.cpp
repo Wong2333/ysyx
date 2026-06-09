@@ -76,7 +76,7 @@ extern "C" int pmem_read(int addr, int valid) {
     }
 
     uint32_t data = mem[raddr >> 2];
-    printf("read memory data: %x addr: %x\n",data,raddr);
+
     record_mtrace(READ_TRACE, raddr, 4, data);
     return data;
 }
@@ -109,7 +109,6 @@ extern "C" void pmem_write(int addr, int data, char mask, int valid) {
         pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
-    printf("write memory data: %x addr: %x mask: %x\n",data,addr,mask);
     record_mtrace(WRITE_TRACE, waddr, 4, wdata);
 }
 uint32_t read_pc_reg();
