@@ -119,6 +119,4 @@ class LSU extends Module{
             // pmem_unit.port.wdata := shifted_wdata
         }
     }
-    
-
 }
