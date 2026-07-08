@@ -268,7 +268,7 @@ void init_ftrace(const char *trace_dir,const char *elf_file){
         // 初始化栈
     ftrace_top = -1; 
     
-    Log("ftrace is written to %s (Found %d functions)", trace_path, funcs_count);
+    Log("ftrace is written to %s (Found %d functions)", trace_dir, funcs_count);
 }
 #endif
 
