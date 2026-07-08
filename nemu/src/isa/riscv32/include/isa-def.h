@@ -25,6 +25,9 @@ typedef struct {
   word_t mcause;
   word_t mtvec ;
   word_t mstatus;
+  uint64_t mcycle;
+  word_t mvendorid;
+  word_t marchid;
 } MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
 
 // decode

@@ -26,7 +26,8 @@ enum {
   TYPE_I, TYPE_U, TYPE_S,
   TYPE_N, TYPE_J, TYPE_R, TYPE_B// none
 };
-word_t csr_write(int index, word_t csrdata){
+word_t csr_write(uint32_t index, word_t csrdata){
+  index = index & 0xfff;
   word_t res = 0;
   if(index == 0x305){
     res = cpu.mtvec;
@@ -43,10 +44,21 @@ word_t csr_write(int index, word_t csrdata){
   else if(index == 0x342){
     res = cpu.mcause;
     cpu.mcause = csrdata;
+  }else if(index == 0xb00){
+    res = (uint32_t)cpu.mcycle;
+    cpu.mcycle = (cpu.mcycle & 0xFFFFFFFF00000000ULL) | csrdata;
+  }else if(index == 0xb80){
+    res = (uint32_t)(cpu.mcycle >> 32);
+    cpu.mcycle = (cpu.mcycle & 0x00000000FFFFFFFFULL) | ((uint64_t)csrdata << 32);
+  }else if(index == 0xf11){
+    res = 0x79737978;
+  }else if(index == 0xf12){
+    res = 0x26030092;
   }
   return res;
 }
-word_t csr_read(int index){
+word_t csr_read(uint32_t index){
+  index = index & 0xfff;
   word_t res = 0;
   if(index == 0x305){
     res = cpu.mtvec;
@@ -59,6 +71,14 @@ word_t csr_read(int index){
   }
   else if(index == 0x342){
     res = cpu.mcause;
+  }else if(index == 0xb00){
+    res = (uint32_t)cpu.mcycle;
+  }else if(index == 0xb80){
+    res = (uint32_t)(cpu.mcycle >> 32);
+  }else if(index == 0xf11){
+    res = 0x79737978;
+  }else if(index == 0xf12){
+    res = 26030092;
   }
   return res;
 }

@@ -20,26 +20,28 @@ class WriteBackPortBundle extends Bundle{
 }
 
 class WBU extends Module{
-    val in = IO(Flipped(new WriteBackPortBundle))
+    val in = IO(Flipped(Decoupled(new WriteBackPortBundle)))
 
-    val out = IO(new Bundle {
+    val out = IO(Decoupled(new Bundle {
         val WriteRegPort = Output(new WriteRegPortBundle)
         val CSRWritePort = new CSRWritePortBundle
         val ExceptionPort = new ExceptionInfoBundle
-    })
+    }))
+    out.valid := in.valid
+    in.ready := out.ready
 
-    out.WriteRegPort.waddr := in.RegWaddr
-    out.WriteRegPort.wdata := in.RegWdata
-    out.WriteRegPort.wen := in.RegWrite
-    out.WriteRegPort.PCWrite := in.PCWrite
-    out.WriteRegPort.PCNext := in.PCNext
+    out.bits.WriteRegPort.waddr := in.bits.RegWaddr
+    out.bits.WriteRegPort.wdata := in.bits.RegWdata
+    out.bits.WriteRegPort.wen := in.bits.RegWrite
+    out.bits.WriteRegPort.PCWrite := in.bits.PCWrite
+    out.bits.WriteRegPort.PCNext := in.bits.PCNext
 
-    out.CSRWritePort.CSRWAddr := in.CSRAddr
-    out.CSRWritePort.CSRWData := in.CSRData
-    out.CSRWritePort.CSRWrite := in.CSRWrite
+    out.bits.CSRWritePort.CSRWAddr := in.bits.CSRAddr
+    out.bits.CSRWritePort.CSRWData := in.bits.CSRData
+    out.bits.CSRWritePort.CSRWrite := in.bits.CSRWrite
 
-    out.ExceptionPort.isTrap := in.isTrap
-    out.ExceptionPort.PC := in.PC
-    out.ExceptionPort.Exception_Code := in.Exception_Code
+    out.bits.ExceptionPort.isTrap := in.bits.isTrap
+    out.bits.ExceptionPort.PC := in.bits.PC
+    out.bits.ExceptionPort.Exception_Code := in.bits.Exception_Code
  
 }

@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 void init_difftest(const char *ref_so_file, long img_size);
-void check_difftest(uint32_t pc, uint32_t npc);
+void check_difftest(uint32_t pc);
 bool difftest_enabled();
 
 #ifdef __cplusplus

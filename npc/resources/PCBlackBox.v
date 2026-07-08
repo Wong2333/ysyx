@@ -3,6 +3,7 @@ module PCBlackBox(
     input reset,
     input [31:0] pc_next,
     input pc_we,
+    input pc_4,
     output [31:0]pc
 );
     `include "autoconfig.svh"
@@ -16,7 +17,7 @@ module PCBlackBox(
             if(pc_we)begin
                 PC <= pc_next;
             end
-            else begin
+            else if(pc_4)begin
                 PC <= PC + 4;
             end
         end

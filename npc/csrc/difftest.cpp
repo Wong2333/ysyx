@@ -89,7 +89,9 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
   difftest_on = true;
 }
 
-extern "C" void check_difftest(uint32_t pc, uint32_t npc) {
+void my_assert(bool cond);
+
+extern "C" void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   /* Step REF by one instruction */
@@ -124,7 +126,8 @@ extern "C" void check_difftest(uint32_t pc, uint32_t npc) {
   if (!ok) {
     printf("Difftest: FAIL at pc = 0x%08x\n", pc);
     fflush(stdout);
-    assert(0);
+
+    my_assert(0);
   }
 }
 
