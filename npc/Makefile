@@ -80,6 +80,7 @@ idea:
 
 clean:
 	-rm -rf $(BUILD_DIR)
+	-rm -rf out
 
 .PHONY: bin test verilog help reformat checkformat clean
 
