@@ -205,58 +205,59 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
   uint32_t opcode = inst & 0x7f;
   uint32_t next_pc = pc + 4;
 
-  if (opcode == 0x6f) { /* jal */
+  if (opcode == 0x6f || opcode == 0x67) { /* jal 或 jalr */
     int rd = (inst >> 7) & 0x1f;
-    if (rd == 1) { /* call */
+
+    if (rd == 1) { 
+      // 函数调用
       int idx = get_func_idx(dnpc);
-      /* check tail call */
-      if (ftrace_top >= 0 && dnpc == ftrace_stack[ftrace_top].ret_addr) {
+      
+      if (ftrace_top < FTRACE_STACK_DEPTH - 1) {
+        ftrace_top++;
         ftrace_stack[ftrace_top].func_idx = idx;
-      } else {
-        if (ftrace_top < FTRACE_STACK_DEPTH - 1) {
-          ftrace_top++;
-          ftrace_stack[ftrace_top].func_idx = idx;
-          ftrace_stack[ftrace_top].ret_addr = next_pc;
-        }
+        ftrace_stack[ftrace_top].ret_addr = next_pc;
       }
+
       const char *name = (idx >= 0) ? funcs[idx].name : "???";
       fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n",
               ftrace_top * 2, "", pc, name, dnpc);
-    }
-  } else if (opcode == 0x67) { /* jalr */
-    int rd = (inst >> 7) & 0x1f;
-    int rs1 = (inst >> 15) & 0x1f;
-    if (rd == 1) { /* call */
-      int idx = get_func_idx(dnpc);
-      if (ftrace_top >= 0 && dnpc == ftrace_stack[ftrace_top].ret_addr) {
-        ftrace_stack[ftrace_top].func_idx = idx;
-      } else {
-        if (ftrace_top < FTRACE_STACK_DEPTH - 1) {
-          ftrace_top++;
-          ftrace_stack[ftrace_top].func_idx = idx;
-          ftrace_stack[ftrace_top].ret_addr = next_pc;
-        }
-      }
-      const char *name = (idx >= 0) ? funcs[idx].name : "???";
-      fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n",
-              ftrace_top * 2, "", pc, name, dnpc);
-    } else if ((rd == 0 && (rs1 == 1 || rs1 == 5))) { /* ret */
-      const char *name = "???";
-      int idx = -1;
+              
+    } else if (rd == 0) { 
       if (ftrace_top >= 0) {
-        idx = ftrace_stack[ftrace_top].func_idx;
-        name = (idx >= 0) ? funcs[idx].name : "???";
-        ftrace_top--;
+        // 函数返回
+        if (dnpc == ftrace_stack[ftrace_top].ret_addr) {
+          int idx = ftrace_stack[ftrace_top].func_idx;
+          const char *name = (idx >= 0) ? funcs[idx].name : "???";
+          
+          fprintf(ftrace_fp, "%*s0x%08x: ret  [%s]\n",
+                  ftrace_top * 2, "", pc, name);
+          ftrace_top--; 
+        } 
+        // 尾调用
+        else {
+          int idx = get_func_idx(dnpc);
+          if (idx >= 0 && dnpc == funcs[idx].start_addr) {
+            // 增加栈深度，但继承上一层的返回地址
+            if (ftrace_top < FTRACE_STACK_DEPTH - 1) {
+              uint32_t current_ret_addr = ftrace_stack[ftrace_top].ret_addr;
+              ftrace_top++;
+              ftrace_stack[ftrace_top].func_idx = idx;
+              ftrace_stack[ftrace_top].ret_addr = current_ret_addr;
+            }
+
+            const char *name = funcs[idx].name;
+            fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n",
+                    ftrace_top * 2, "", pc, name, dnpc);
+          }
+        }
       }
-      fprintf(ftrace_fp, "%*s0x%08x: ret  [%s]\n",
-              (ftrace_top + 1) * 2, "", pc, name);
     }
   }
 #endif
 }
 
 /* ===================== Main trace function (called from cpu_exec) ===================== */
-void trace_and_difftest(uint32_t pc, uint32_t inst, uint32_t dnpc) {
+void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 #ifdef CONFIG_ENABLE_ITRACE
   if (!itrace_fp) return;
   char buf[128];

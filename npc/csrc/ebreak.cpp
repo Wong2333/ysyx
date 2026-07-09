@@ -2,7 +2,7 @@
 #include "VTop__Dpi.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "VTop.h"               // Verilator 生成的顶层模块类
+#include "VTop.h"
 
 uint32_t read_rf_reg(int addr) {
     const char* scope_name = "TOP.Top.RFS_u.Reg_u"; 
@@ -15,7 +15,7 @@ uint32_t read_rf_reg(int addr) {
     }
     svSetScope(scope);
 
-    // 3. 调用 Verilog 导出的 task
+    //verilog 导出的 task
     int data = 0;
     read_reg(addr, &data); 
     return (uint32_t)data;
@@ -32,7 +32,7 @@ uint32_t read_pc_reg() {
     }
     svSetScope(scope);
 
-    // 3. 调用 Verilog 导出的 task
+    //verilog 导出的 task
     int data = 0;
     read_pc(&data); 
     return (uint32_t)data;
