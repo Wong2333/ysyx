@@ -196,8 +196,14 @@ void record_ftrace(uint32_t pc, uint32_t next_pc, uint32_t target_pc, int rd, in
             else {
                 int idx = get_func_idx(target_pc);
                 if (idx != -1 && target_pc == funcs[idx].start_addr) {
-                    ftrace_stack[ftrace_top].func_idx = idx; // 仅替换栈顶的函数下标
-                    
+                    // 尾调用。
+                    if (ftrace_top < FTRACE_STACK_MAX_DEPTH - 1) {
+                        uint32_t current_ret_addr = ftrace_stack[ftrace_top].ret_addr;
+                        ftrace_top++;
+                        ftrace_stack[ftrace_top].func_idx = idx;
+                        ftrace_stack[ftrace_top].ret_addr = current_ret_addr; // 继承返回地址
+                    }
+
                     const char *name = funcs[idx].name;
                     fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n", 
                             ftrace_top * 2, "", pc, name, target_pc);
