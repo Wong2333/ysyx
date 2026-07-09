@@ -33,8 +33,9 @@ typedef struct {
     uint32_t size;       
 } ElfFunction;
 ElfFunction *funcs = NULL;
+int funcs_count = 0;
 
-int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
+int extract_elf_functions(const char *filename) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
         perror("Failed to open ELF file");
@@ -101,45 +102,46 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     fseek(fp, symtab_shdr->sh_offset, SEEK_SET);
     len = fread(syms, symtab_shdr->sh_entsize, sym_count, fp);
     if(len <=0 ) return -1;
-
-    int func_count = 0;
+    
     for (int i = 0; i < sym_count; i++) {
         // 判断是否为函数 (STT_FUNC) 且 有实际地址 (st_value != 0)
         if (ELF32_ST_TYPE(syms[i].st_info) == STT_FUNC && syms[i].st_value != 0) {
-            func_count++;
+            funcs_count++;
         }
     }
 
-    *out_funcs = malloc(func_count * sizeof(ElfFunction));
-    if (!*out_funcs) { free(syms); free(strtab); free(shdrs); fclose(fp); return -1; }
+    funcs = malloc(funcs_count * sizeof(ElfFunction));
+    if (!funcs) { free(syms); free(strtab); free(shdrs); fclose(fp); return -1; }
 
     int idx = 0;
     for (int i = 0; i < sym_count; i++) {
         if (ELF32_ST_TYPE(syms[i].st_info) == STT_FUNC && syms[i].st_value != 0) {
-            (*out_funcs)[idx].start_addr = syms[i].st_value;
-            (*out_funcs)[idx].size = syms[i].st_size;
-            (*out_funcs)[idx].end_addr = syms[i].st_value + syms[i].st_size;
+            funcs[idx].start_addr = syms[i].st_value;
+            funcs[idx].size = syms[i].st_size;
+            funcs[idx].end_addr = syms[i].st_value + syms[i].st_size;
             
             // 从字符串表提取名字，注意防止越界
             const char *name_ptr = strtab + syms[i].st_name;
-            strncpy((*out_funcs)[idx].name, name_ptr, 63);
-            (*out_funcs)[idx].name[63] = '\0';
+            strncpy(funcs[idx].name, name_ptr, 63);
+            funcs[idx].name[63] = '\0';
             
             idx++;
         }
     }
-
+    // for(int i = 0;i<funcs_count;i++){
+    //     printf("%s\n",funcs[i].name);
+    // }
     free(syms);
     free(strtab);
     free(shdrs);
     fclose(fp);
 
-    return func_count;
+    return funcs_count;
 }
 
 FILE *ftrace_fp = NULL;
 
-int funcs_count = 0;
+
 #define FTRACE_STACK_MAX_DEPTH 1024
 
 typedef struct {
@@ -250,7 +252,8 @@ void init_ftrace(const char *trace_dir,const char *elf_file){
     init_trace_file(trace_dir,"ftrace.txt",&ftrace_fp);
         // 初始化栈
     ftrace_top = -1; 
-    
+
+    extract_elf_functions(elf_file);
     Log("ftrace is written to %s (Found %d functions)", trace_dir, funcs_count);
 }
 #endif
