@@ -164,48 +164,46 @@ int get_func_idx(uint32_t pc) {
 }
 
 
-void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
+void record_ftrace(uint32_t pc, uint32_t next_pc, uint32_t target_pc, int rd, int rs1) {
 #ifdef CONFIG_FTRACE
     if (!ftrace_fp) return;
 
-    // 1. 识别函数调用
     if (rd == 1) {
         int idx = get_func_idx(target_pc);
-        uint32_t next_pc = pc + 4; 
 
-        // 检测是否为尾调用
-        if (ftrace_top >= 0 && target_pc == ftrace_stack[ftrace_top].ret_addr) {
-            // 尾调用：不增加栈深度，只替换栈顶的下标
+        // 压栈，记录函数下标和返回地址
+        if (ftrace_top < FTRACE_STACK_MAX_DEPTH - 1) {
+            ftrace_top++;
             ftrace_stack[ftrace_top].func_idx = idx;
-        } else {
-            // 普通嵌套调用
-            if (ftrace_top < FTRACE_STACK_MAX_DEPTH - 1) {
-                ftrace_top++;
-                ftrace_stack[ftrace_top].func_idx = idx;
-                ftrace_stack[ftrace_top].ret_addr = next_pc;
-            }
+            ftrace_stack[ftrace_top].ret_addr = next_pc;
         }
 
-        // 打印 call (通过下标去取名字，只在真正需要打印时才去访问内存)
+        // 打印 call
         const char *name = (idx != -1) ? funcs[idx].name : "???";
         fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n", 
                 ftrace_top * 2, "", pc, name, target_pc);
     }
-    // 2. 识别函数返回 (rd == 0 且 rs1 == 1 或 5)
-    else if (rd == 0 && (rs1 == 1 || rs1 == 5)) {
-        const char *name = "???";
-        int idx = -1;
-        
-        // 弹栈，拿到下标
+    else if (rd == 0) {
         if (ftrace_top >= 0) {
-            idx = ftrace_stack[ftrace_top].func_idx;
-            name = (idx != -1) ? funcs[idx].name : "???";
-            ftrace_top--;
+            if (target_pc == ftrace_stack[ftrace_top].ret_addr) {
+                int idx = ftrace_stack[ftrace_top].func_idx;
+                const char *name = (idx != -1) ? funcs[idx].name : "???";
+                
+                fprintf(ftrace_fp, "%*s0x%08x: ret  [%s]\n", 
+                        (ftrace_top + 1) * 2, "", pc, name);
+                ftrace_top--; // 弹栈
+            } 
+            else {
+                int idx = get_func_idx(target_pc);
+                if (idx != -1 && target_pc == funcs[idx].start_addr) {
+                    ftrace_stack[ftrace_top].func_idx = idx; // 仅替换栈顶的函数下标
+                    
+                    const char *name = funcs[idx].name;
+                    fprintf(ftrace_fp, "%*s0x%08x: call [%s@0x%08x]\n", 
+                            ftrace_top * 2, "", pc, name, target_pc);
+                }
+            }
         }
-
-        // 打印 ret
-        fprintf(ftrace_fp, "%*s0x%08x: ret  [%s]\n", 
-                (ftrace_top + 1) * 2, "", pc, name);
     }
 #endif
 }
