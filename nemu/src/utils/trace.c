@@ -25,21 +25,15 @@ void record_mtrace(RECORD_MODE mode,paddr_t addr,int len,word_t data){
 
 #include <elf.h>
 
-// 定义用于保存函数信息的结构体
+// 保存函数信息
 typedef struct {
-    char name[64];       // 函数名 (截断防溢出)
-    uint32_t start_addr; // 函数起始地址
-    uint32_t end_addr;   // 函数结束地址
-    uint32_t size;       // 函数大小(字节数)
+    char name[64];       
+    uint32_t start_addr; 
+    uint32_t end_addr;   
+    uint32_t size;       
 } ElfFunction;
 ElfFunction *funcs = NULL;
-/**
- * @brief 从32位ELF文件中提取所有函数及其地址范围
- * 
- * @param filename ELF文件路径
- * @param out_funcs 输出参数，返回动态分配的函数数组指针
- * @return int 提取到的函数数量，出错返回 -1
- */
+
 int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
@@ -47,7 +41,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         return -1;
     }
 
-    // 1. 读取并验证 ELF 头
     Elf32_Ehdr ehdr;
     if (fread(&ehdr, sizeof(Elf32_Ehdr), 1, fp) != 1) {
         perror("Failed to read ELF header");
@@ -55,21 +48,19 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         return -1;
     }
 
-    // 检查 ELF 魔数
     if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) {
         fprintf(stderr, "Error: Not a valid ELF file\n");
         fclose(fp);
         return -1;
     }
 
-    // 检查是否为 32 位 (如果是64位需要换用 Elf64_Ehdr 等结构体)
     if (ehdr.e_ident[EI_CLASS] != ELFCLASS32) {
         fprintf(stderr, "Error: Not a 32-bit ELF file\n");
         fclose(fp);
         return -1;
     }
 
-    // 2. 读取节区头表
+    //读取节区头表
     Elf32_Shdr *shdrs = malloc(ehdr.e_shnum * sizeof(Elf32_Shdr));
     if (!shdrs) { fclose(fp); return -1; }
     
@@ -79,7 +70,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         free(shdrs); fclose(fp); return -1;
     }
 
-    // 3. 查找符号表 和 字符串表
     Elf32_Shdr *symtab_shdr = NULL;
     Elf32_Shdr *strtab_shdr = NULL;
 
@@ -97,7 +87,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         free(shdrs); fclose(fp); return -1;
     }
 
-    // 4. 读取字符串表到内存
     char *strtab = malloc(strtab_shdr->sh_size);
     if (!strtab) { free(shdrs); fclose(fp); return -1; }
     
@@ -105,7 +94,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     size_t len = fread(strtab, 1, strtab_shdr->sh_size, fp);
     if(len <=0 ) return -1;
 
-    // 5. 读取符号表到内存
     int sym_count = symtab_shdr->sh_size / symtab_shdr->sh_entsize;
     Elf32_Sym *syms = malloc(symtab_shdr->sh_size);
     if (!syms) { free(strtab); free(shdrs); fclose(fp); return -1; }
@@ -114,7 +102,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
     len = fread(syms, symtab_shdr->sh_entsize, sym_count, fp);
     if(len <=0 ) return -1;
 
-    // 6. 遍历符号，统计函数数量
     int func_count = 0;
     for (int i = 0; i < sym_count; i++) {
         // 判断是否为函数 (STT_FUNC) 且 有实际地址 (st_value != 0)
@@ -123,7 +110,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         }
     }
 
-    // 7. 分配内存并提取函数信息
     *out_funcs = malloc(func_count * sizeof(ElfFunction));
     if (!*out_funcs) { free(syms); free(strtab); free(shdrs); fclose(fp); return -1; }
 
@@ -143,7 +129,6 @@ int extract_elf_functions(const char *filename, ElfFunction **out_funcs) {
         }
     }
 
-    // 清理资源
     free(syms);
     free(strtab);
     free(shdrs);
@@ -165,27 +150,25 @@ typedef struct {
 FtraceFrame ftrace_stack[FTRACE_STACK_MAX_DEPTH];
 int ftrace_top = -1;
 
-// --- 新增：根据 PC 获取函数在 funcs 数组中的下标 ---
+//根据 PC 获取函数在 funcs 数组中的下标
 int get_func_idx(uint32_t pc) {
     if (!funcs || funcs_count == 0) return -1;
     for (int i = 0; i < funcs_count; i++) {
         if (pc >= funcs[i].start_addr && pc < funcs[i].end_addr) {
-            return i; // 返回下标
+            return i;
         }
     }
-    return -1; // 没找到
+    return -1;
 }
 
-/**
- * @brief 在执行 jal/jalr 时调用，记录 ftrace
- */
+
 void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
 #ifdef CONFIG_FTRACE
     if (!ftrace_fp) return;
 
-    // 1. 识别函数调用 (rd == 1 即 ra)
+    // 1. 识别函数调用
     if (rd == 1) {
-        int idx = get_func_idx(target_pc); // 拿下标，极快
+        int idx = get_func_idx(target_pc);
         uint32_t next_pc = pc + 4; 
 
         // 检测是否为尾调用
@@ -193,7 +176,7 @@ void record_ftrace(uint32_t pc, uint32_t target_pc, int rd, int rs1) {
             // 尾调用：不增加栈深度，只替换栈顶的下标
             ftrace_stack[ftrace_top].func_idx = idx;
         } else {
-            // 普通嵌套调用：压栈 (仅仅赋值一个 int，极快)
+            // 普通嵌套调用
             if (ftrace_top < FTRACE_STACK_MAX_DEPTH - 1) {
                 ftrace_top++;
                 ftrace_stack[ftrace_top].func_idx = idx;
