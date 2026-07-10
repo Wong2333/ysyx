@@ -9,7 +9,7 @@
 #include <autoconfig.h>
 #include "trace.h"
 
-/* ===================== Capstone (itrace) ===================== */
+
 #ifdef CONFIG_ENABLE_ITRACE
 static FILE *itrace_fp = NULL;
 static void *cs_handle = NULL;
@@ -24,10 +24,9 @@ static char iringbuf[32][128];
 static uint32_t ibuf_head = 0, ibuf_tail = 0;
 #endif /* CONFIG_ENABLE_ITRACE */
 
-/* ===================== Mtrace ===================== */
+
 static FILE *mtrace_fp = NULL;
 
-/* ===================== Ftrace ===================== */
 #ifdef CONFIG_ENABLE_FTRACE
 static FILE *ftrace_fp = NULL;
 
@@ -49,7 +48,6 @@ static FtraceFrame ftrace_stack[FTRACE_STACK_DEPTH];
 static int ftrace_top = -1;
 #endif
 
-/* ===================== itrace init and disasm ===================== */
 #ifdef CONFIG_ENABLE_ITRACE
 static void init_disasm(void) {
   const char *cs_lib = "tools/capstone/repo/libcapstone.so.5";
@@ -112,7 +110,6 @@ void print_itrace(void) {
 }
 #endif /* CONFIG_ENABLE_ITRACE */
 
-/* ===================== ELF parsing (ftrace) ===================== */
 #ifdef CONFIG_ENABLE_FTRACE
 static int extract_elf_functions(const char *filename) {
   FILE *fp = fopen(filename, "rb");
@@ -187,7 +184,6 @@ static int get_func_idx(uint32_t pc) {
 }
 #endif
 
-/* ===================== record functions ===================== */
 void record_mtrace(RECORD_MODE mode, uint32_t addr, int len, uint32_t data) {
 #ifdef CONFIG_ENABLE_MTRACE
   if (!mtrace_fp) return;
@@ -256,7 +252,6 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
 #endif
 }
 
-/* ===================== Main trace function (called from cpu_exec) ===================== */
 void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 #ifdef CONFIG_ENABLE_ITRACE
   if (!itrace_fp) return;
@@ -280,7 +275,6 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
   record_ftrace(pc, dnpc, inst);
 }
 
-/* ===================== Init ===================== */
 void init_trace(const char *trace_dir, const char *elf_file) {
   if (!trace_dir)
     trace_dir = CONFIG_TRACE_PATH[0] ? CONFIG_TRACE_PATH : NULL;

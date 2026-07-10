@@ -1,8 +1,6 @@
 package npc
 
 import chisel3._
-import firtoolresolver.shaded.org.fusesource.jansi.internal.Kernel32.MOUSE_EVENT_RECORD
-import scala.reflect.internal.Mode
 
 class Top extends Module{
 
