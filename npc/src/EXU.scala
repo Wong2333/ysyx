@@ -191,7 +191,7 @@ class EXU extends Module{
 
     switch(idu_out_reg.exu_ctl.ALU_Control){
         is(ALUContorl.add){
-            AluResult := src1 - src2
+            AluResult := src1 + src2
         }
         is(ALUContorl.sub){
             AluResult := src1 - src2
