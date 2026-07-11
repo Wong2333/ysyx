@@ -97,11 +97,6 @@ void my_assert(bool cond);
 extern "C" void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
-  ref_difftest_exec(1);
-
-  riscv32_CPU_state ref_state;
-  ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
-
   riscv32_CPU_state dut_state;
   for (int i = 0; i < 32; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
@@ -113,6 +108,11 @@ extern "C" void check_difftest(uint32_t pc) {
     is_skip_ref = false;
     return;
   }
+  ref_difftest_exec(1);
+
+  riscv32_CPU_state ref_state;
+  ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
+
   // check
   bool ok = true;
   for (int i = 1; i < 32; i++) {
