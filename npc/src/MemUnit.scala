@@ -10,6 +10,7 @@ class PmemReadBlackBox extends ExtModule{
         val raddr = Input(UInt(32.W))
         val rdata = Output(UInt(32.W))
         val valid = Input(Bool())
+        val error = Output(Bool())
     })
     addResource("/PmemReadBlackBox.v")
 }
@@ -20,6 +21,7 @@ class PmemWriteBlackBox extends ExtModule {
         val wdata = Input(UInt(32.W))
         val wmask = Input(UInt(4.W))
         val valid = Input(Bool())
+        val error = Output(Bool())
     })
     addResource("/PmemWriteBlackBox.v")
 }
