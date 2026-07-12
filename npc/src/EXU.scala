@@ -102,7 +102,10 @@ class EXU extends Module{
     })))
 
     val idu_out_reg = Reg(new DecodeBundle)
-    val lsu_out_reg = Reg(UInt(32.W))
+    val lsu_out_reg = Reg(new Bundle{
+        val rdata = UInt(32.W)
+        val error = Bool()
+    })
 
     // io.out := 0.U
     val AluResult = WireDefault(0.U(32.W))
