@@ -26,11 +26,15 @@ class LSU extends Module{
     val in = IO(Flipped(Decoupled(new LSUBundle)))
     val out = IO(Decoupled(new Bundle {
         val rdata = Output(UInt(32.W))
+        val error = Output(Bool())
     }))
     val pmem_unit = Module(new MemUnit())
     
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
-    val lsu_out_reg = Reg(UInt(32.W))
+    val lsu_out_reg = Reg(new Bundle {
+        val rdata = Output(UInt(32.W))
+        val error = Output(Bool())
+    })
 
     val rdata = WireDefault(0.U(32.W))
     val shifted_rdata = pmem_unit.port.rdata >> (lsu_in_reg.addr(1,0) << 3)
@@ -76,7 +80,8 @@ class LSU extends Module{
             pmem_unit.port.respReady := true.B
             when(pmem_unit.port.respValid){
                 when(!is_write){
-                    lsu_out_reg := rdata
+                    lsu_out_reg.rdata := rdata
+                    lsu_out_reg.error := pmem_unit.port.error
                 }
                 status := s_wait_fetch
             }
