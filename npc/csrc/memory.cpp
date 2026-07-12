@@ -14,6 +14,10 @@ extern struct timespec start, end;
 
 void difftest_skip_ref();
 
+static inline bool in_pmem(uint32_t addr) {
+  return addr - CONFIG_START_ADDR < 0x80000000;
+}
+
 uint32_t img[1024*1024] = {
   0x00c00593, // addi a1, zero, 12
   0x00b58633, // add a2, a1, a1
@@ -57,8 +61,9 @@ void load_img(const char* path){
     fclose(fp);
 }
 
-extern "C" int pmem_read(int addr, int valid) {
+extern "C" int pmem_read(int addr, int valid, int* error) {
     if(valid == 0) return -1;
+    *error = false;
     unsigned long long cpu_time_us;
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
@@ -77,14 +82,14 @@ extern "C" int pmem_read(int addr, int valid) {
                 + (end.tv_nsec - start.tv_nsec) / 1000;
         return (uint32_t)(cpu_time_us >> 32);
     }
-
+    if(!in_pmem(raddr)) *error = true;
     uint32_t data = mem[raddr >> 2];
 
     record_mtrace(READ_TRACE, raddr, 4, data);
     return data;
 }
 
-extern "C" void pmem_write(int addr, int data, char mask, int valid) {
+extern "C" int pmem_write(int addr, int data, char mask, int valid) {
     if(valid == 0) return;
     uint32_t waddr = (uint32_t)addr;
     uint32_t wdata = (uint32_t)data;
@@ -97,6 +102,7 @@ extern "C" void pmem_write(int addr, int data, char mask, int valid) {
         fflush(stdout);
         return;
     }
+    if(!in_pmem(raddr)) return true;
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
@@ -114,6 +120,7 @@ extern "C" void pmem_write(int addr, int data, char mask, int valid) {
         // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
     }
     record_mtrace(WRITE_TRACE, waddr, 4, wdata);
+    return false;
 }
 uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){
