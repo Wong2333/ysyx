@@ -150,7 +150,7 @@ class EXU extends Module{
         is(s_wait_lsu_valid){
             lsu_out.ready := true.B
             when(lsu_out.valid){
-                lsu_out_reg := lsu_out.bits.rdata
+                lsu_out_reg := lsu_out.bits
                 status := s_write_back
             }
         }
