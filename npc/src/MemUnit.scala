@@ -33,6 +33,7 @@ class MemPort extends Bundle{
     val wmask = Input(UInt(4.W))
 
     val rdata = Output(UInt(32.W))
+    val error = Output(Bool())
 
     val reqValid = Input(Bool())
     val respReady = Input(Bool())
@@ -51,6 +52,7 @@ class MemUnit extends Module{
     val wmask_reg = Reg(UInt(4.W))
     val wen_reg = Reg(Bool())
     val rdata_reg = Reg(UInt(32.W))
+    val error_reg = Reg(Bool())
 
     val LFSR  = random.LFSR(4)
     val latency = RegInit(LFSR)
@@ -94,9 +96,11 @@ class MemUnit extends Module{
                     pmem_write.io.waddr := addr_reg
                     pmem_write.io.wdata := wdata_reg
                     pmem_write.io.wmask := wmask_reg
+                    error_reg := pmem_write.io.error
                 }.otherwise{
                     pmem_read.io.valid := true.B
                     rdata_reg := pmem_read.io.rdata
+                    error_reg := pmem_read.io.error
                 }
 
             }
