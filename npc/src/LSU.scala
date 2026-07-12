@@ -55,7 +55,7 @@ class LSU extends Module{
 
     in.ready := false.B
     out.valid := false.B
-    out.bits.rdata := lsu_out_reg
+    out.bits := lsu_out_reg
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_resp :: s_wait_fetch :: Nil = Enum(4)
     val status = RegInit(s_idle)
