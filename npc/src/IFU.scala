@@ -18,6 +18,7 @@ class IFU extends Module{
 
     val pc_reg = RegInit(0.U(32.W))
     val inst_reg = RegInit(0.U(32.W))
+    val error = Wire(Bool())
     
     in.ready := false.B
     out.valid := false.B
@@ -32,7 +33,7 @@ class IFU extends Module{
 
     out.bits.pc := pc_reg
     out.bits.inst := inst_reg
-
+    error := pmem_read_inst.port.error
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(4)
     val status = RegInit(s_idle)
