@@ -71,6 +71,7 @@ class MemUnit extends Module{
     port.rdata := "hFFFFFFFF".U
     port.reqReady := false.B
     port.respValid := false.B
+    port.error := error_reg
 
     val s_idle :: s_busy :: s_valid :: Nil = Enum(3)
     val status = RegInit(s_idle)
