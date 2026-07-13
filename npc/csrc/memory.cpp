@@ -90,7 +90,7 @@ extern "C" int pmem_read(int addr, int valid, int* error) {
 }
 
 extern "C" int pmem_write(int addr, int data, char mask, int valid) {
-    if(valid == 0) return;
+    if(valid == 0) return 0;
     uint32_t waddr = (uint32_t)addr;
     uint32_t wdata = (uint32_t)data;
     uint8_t wmask = (uint8_t)mask & 0xF;
@@ -100,9 +100,9 @@ extern "C" int pmem_write(int addr, int data, char mask, int valid) {
         difftest_skip_ref();
         printf("%c",(char)data);
         fflush(stdout);
-        return;
+        return 0;
     }
-    if(!in_pmem(raddr)) return true;
+    if(!in_pmem(waddr)) return true;
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
         // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
