@@ -64,9 +64,6 @@ class IDU extends Module{
     val trap = RegInit(false.B)
     val invalid = WireDefault(true.B)
     out.bits.decode.invalid := invalid
-
-    val ebreak = Module(new EbreakBlackBox())
-    ebreak.io.ebreak_trap := trap
     
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
