@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import npc.EXUs._
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
