@@ -39,7 +39,7 @@ class LSU extends Module{
     val rdata = WireDefault(0.U(32.W))
     val shifted_rdata = pmem_unit.port.rdata >> (lsu_in_reg.addr(1,0) << 3)
     val shifted_wdata = lsu_in_reg.wdata << (lsu_in_reg.addr(1,0) << 3)
-    val is_write = lsu_in_reg.mem_ctl.isOneOf(MEM_CTL.Write4B, MEM_CTL.Write2B, MEM_CTL.Write1B)
+    val is_write = lsu_in_reg.mem_ctl.isOneOf(MemControl.sw, MemControl.sh, MemControl.sb)
     val wmask = WireDefault(0.U(4.W))
     dontTouch(wmask)
     dontTouch(rdata)
