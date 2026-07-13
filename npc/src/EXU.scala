@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import npc.EXUs._
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -12,30 +13,7 @@ object ALUOp extends ChiselEnum{
     BType = Value
 }
 
-object ALUSrc1 extends ChiselEnum{
-    val rs1,
-    pc = Value
-}
 
-object ALUSrc2 extends ChiselEnum{
-    val rs2,
-    imm,
-    shamt,
-    csr = Value
-}
-
-object ALUContorl extends ChiselEnum{
-    val none,
-    add,
-    sub,
-    and,
-    or,
-    xor,
-    lui,
-    sll,srl,sra, //左移右移
-    slt,sltu, //小于
-    equ = Value
-}
 
 object Jump extends ChiselEnum{
     val none,
@@ -202,45 +180,49 @@ class EXU extends Module{
             src2 := RFS_ReadPort.CSRReadPort.CSRRData
         }
     }
-
-    switch(idu_out_reg.exu_ctl.ALU_Control){
-        is(ALUContorl.add){
-            AluResult := src1 + src2
-        }
-        is(ALUContorl.sub){
-            AluResult := src1 - src2
-        }
-        is(ALUContorl.sltu){
-            AluResult := src1 < src2
-        }
-        is(ALUContorl.slt){
-            AluResult := src1.asSInt < src2.asSInt
-        }
-        is(ALUContorl.and){
-            AluResult := src1 & src2
-        }
-        is(ALUContorl.xor){
-            AluResult := src1 ^ src2
-        }
-        is(ALUContorl.or){
-            AluResult := src1 | src2
-        }
-        is(ALUContorl.equ){
-            AluResult := src1 === src2
-        }
-        is(ALUContorl.lui){
-            AluResult := idu_out_reg.decode.imm
-        }
-        is(ALUContorl.sll){
-            AluResult := src1 << src2(4,0)
-        }
-        is(ALUContorl.srl){
-            AluResult := src1 >> src2(4,0)
-        }
-        is(ALUContorl.sra){
-            AluResult := (src1.asSInt >> src2(4,0)).asUInt
-        }
-    }
+    val ALU_u = new ALU()
+    ALU_u.in.ctl := idu_out_reg.exu_ctl.ALU_Control
+    ALU_u.in.src1 := src1
+    ALU_u.in.src2 := src2
+    AluResult := ALU_u.out
+    // switch(idu_out_reg.exu_ctl.ALU_Control){
+    //     is(ALUContorl.add){
+    //         AluResult := src1 + src2
+    //     }
+    //     is(ALUContorl.sub){
+    //         AluResult := src1 - src2
+    //     }
+    //     is(ALUContorl.sltu){
+    //         AluResult := src1 < src2
+    //     }
+    //     is(ALUContorl.slt){
+    //         AluResult := src1.asSInt < src2.asSInt
+    //     }
+    //     is(ALUContorl.and){
+    //         AluResult := src1 & src2
+    //     }
+    //     is(ALUContorl.xor){
+    //         AluResult := src1 ^ src2
+    //     }
+    //     is(ALUContorl.or){
+    //         AluResult := src1 | src2
+    //     }
+    //     is(ALUContorl.equ){
+    //         AluResult := src1 === src2
+    //     }
+    //     is(ALUContorl.lui){
+    //         AluResult := idu_out_reg.decode.imm
+    //     }
+    //     is(ALUContorl.sll){
+    //         AluResult := src1 << src2(4,0)
+    //     }
+    //     is(ALUContorl.srl){
+    //         AluResult := src1 >> src2(4,0)
+    //     }
+    //     is(ALUContorl.sra){
+    //         AluResult := (src1.asSInt >> src2(4,0)).asUInt
+    //     }
+    // }
     wbu_in.bits := 0.U.asTypeOf(new WriteBackPortBundle)
     when(idu_out_reg.exu_ctl.ALUWrite2Reg){
         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
