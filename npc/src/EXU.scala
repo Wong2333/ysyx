@@ -187,8 +187,8 @@ class EXU extends Module{
     RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
 
     val CSRController_u = Module(new CSRController)
-    CSRController_u.CSRReadPort := RFS_ReadPort.CSRReadPort
-    CSRController_u.RegReadPort := RFS_ReadPort.RegReadPort
+    CSRController_u.CSRReadPort <> RFS_ReadPort.CSRReadPort
+    CSRController_u.RegReadPort <> RFS_ReadPort.RegReadPort
     CSRController_u.in.AluResult := AluResult
     CSRController_u.in.ctl := idu_out_reg.exu_ctl.CSR_Contorl
     CSRController_u.in.decode := idu_out_reg.decode
