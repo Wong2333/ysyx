@@ -33,6 +33,7 @@ class CSRController extends Module{
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
     
+    out :=  0.U.asTypeOf(new WriteBackPortBundle)
     switch(in.ctl){
         is(CSRControl.ebreak){
             ebreak.io.ebreak_trap := true.B
