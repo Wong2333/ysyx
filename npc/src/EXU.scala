@@ -195,40 +195,6 @@ class EXU extends Module{
     when(idu_out_reg.exu_ctl.CSR_Contorl =/= CSRControl.none){
         wbu_in.bits := CSRController_u.out
     }
-    // switch(idu_out_reg.exu_ctl.CSR_Contorl){
-    //     is(CSRControl.ebreak){
-    //         ebreak.io.ebreak_trap := true.B
-    //     }
-    //     is(CSRControl.ecall){
-    //         wbu_in.bits.Exception_Code := 11.U
-    //         wbu_in.bits.PC := idu_out_reg.decode.pc
-    //         wbu_in.bits.isTrap := true.B
-    //     }
-    //     is(CSRControl.mret){
-    //         RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
-    //         wbu_in.bits.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
-    //         wbu_in.bits.PCWrite := true.B
-    //     }
-    //     is(CSRControl.csrrs){
-    //         RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
-    //         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
-    //         wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-    //         wbu_in.bits.RegWrite := true.B
-    //         wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
-    //         wbu_in.bits.CSRData := AluResult
-    //         wbu_in.bits.CSRWrite := true.B
-    //     }
-    //     is(CSRControl.csrrw){
-    //         RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-    //         RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
-    //         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
-    //         wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-    //         wbu_in.bits.RegWrite := true.B
-    //         wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
-    //         wbu_in.bits.CSRData := RFS_ReadPort.RegReadPort.rdata1
-    //         wbu_in.bits.CSRWrite := true.B
-    //     }
-    // }
     
     switch(idu_out_reg.exu_ctl.ALU_Jump){
         is(Jump.jal){
@@ -282,32 +248,6 @@ class EXU extends Module{
         RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
         lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
-    switch(idu_out_reg.exu_ctl.Mem_Control){
-        is(MemControl.lw){
-            lsu_in.bits.mem_ctl := MEM_CTL.Read4B
-        }
-        is(MemControl.lbu){
-            lsu_in.bits.mem_ctl := MEM_CTL.Read1BU
-        }
-        is(MemControl.lb){
-            lsu_in.bits.mem_ctl := MEM_CTL.Read1B
-        }
-        is(MemControl.lh){
-            lsu_in.bits.mem_ctl := MEM_CTL.Read2B
-        }
-        is(MemControl.lhu){
-            lsu_in.bits.mem_ctl := MEM_CTL.Read2BU
-        }
-        is(MemControl.sb){
-            lsu_in.bits.mem_ctl := MEM_CTL.Write1B
-        }
-        is(MemControl.sh){
-            lsu_in.bits.mem_ctl := MEM_CTL.Write2B
-        }
-        is(MemControl.sw){
-            lsu_in.bits.mem_ctl := MEM_CTL.Write4B
-        }
-    }
-
-
+    lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
+    
 }

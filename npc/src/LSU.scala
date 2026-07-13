@@ -17,7 +17,7 @@ object MEM_CTL extends ChiselEnum{
 }
 
 class LSUBundle extends Bundle{
-    val mem_ctl = Output(MEM_CTL())
+    val mem_ctl = Output(MemControl())
     val wdata = Output(UInt(32.W))
     val addr = Output(UInt(32.W))
 }
@@ -96,30 +96,30 @@ class LSU extends Module{
 
 
     switch(lsu_in_reg.mem_ctl){
-        is(MEM_CTL.Read4B){
+        is(MemControl.lw){
             rdata := pmem_unit.port.rdata
         }
-        is(MEM_CTL.Read1B){
+        is(MemControl.lb){
             rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
         }
-        is(MEM_CTL.Read1BU){
+        is(MemControl.lbu){
             rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
         }
-        is(MEM_CTL.Read2B){
+        is(MemControl.lh){
             rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
         }
-        is(MEM_CTL.Read2BU){
+        is(MemControl.lhu){
             rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
         }
-        is(MEM_CTL.Write4B){
+        is(MemControl.sw){
             wmask := "b1111".U;
             // pmem_unit.port.wdata := lsu_in_reg.wdata
         }
-        is(MEM_CTL.Write1B){
+        is(MemControl.sb){
             wmask := 1.U << lsu_in_reg.addr(1,0)
             // pmem_unit.port.wdata := shifted_wdata
         }
-        is(MEM_CTL.Write2B){
+        is(MemControl.sh){
             wmask := 3.U << lsu_in_reg.addr(1,0)
             // pmem_unit.port.wdata := shifted_wdata
         }
