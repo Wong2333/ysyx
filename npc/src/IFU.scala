@@ -66,4 +66,10 @@ class IFU extends Module{
             }
         }
     }
+
+    val ebreak = Module(new EbreakBlackBox())
+    ebreak.io.ebreak_trap := false.B
+    when(pmem_read_inst.port.respValid && pmem_read_inst.port.respReady && pmem_read_inst.port.error === true.B){
+        ebreak.io.ebreak_trap := true.B
+    }
 }
