@@ -67,6 +67,7 @@ object BranchControl extends ChiselEnum{
 
 object CSRControl extends ChiselEnum{
     val none,
+    ebreak,
     ecall,
     mret,
     csrrw,
@@ -84,6 +85,8 @@ class EXUCTLBundle extends Bundle{
     val Mem_Control = Output(MemControl())
     val Branch_Control = Output(BranchControl())
 }
+
+
 
 class EXU extends Module{
 
@@ -163,6 +166,13 @@ class EXU extends Module{
         }
     }
 
+
+    val ebreak = Module(new EbreakBlackBox())
+    ebreak.io.ebreak_trap := false.B
+    when(lsu_out.fire && lsu_out.bits.error === true.B){
+        ebreak.io.ebreak_trap := true.B
+    }
+
     RFS_ReadPort.RegReadPort.raddr1 := 0.U
     RFS_ReadPort.RegReadPort.raddr2 := 0.U
     val src1 = WireDefault(0.U(32.W))
@@ -239,6 +249,9 @@ class EXU extends Module{
     }
     RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
     switch(idu_out_reg.exu_ctl.CSR_Contorl){
+        is(CSRControl.ebreak){
+            ebreak.io.ebreak_trap := true.B
+        }
         is(CSRControl.ecall){
             wbu_in.bits.Exception_Code := 11.U
             wbu_in.bits.PC := idu_out_reg.decode.pc

@@ -23,7 +23,7 @@ class InstDecode extends Bundle{
  
 class EbreakBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
-        val trap = Input(Bool())
+        val ebreak_trap = Input(Bool())
     })
     addResource("/EbreakBlackBox.v")
 }
@@ -66,7 +66,7 @@ class IDU extends Module{
     out.bits.decode.invalid := invalid
 
     val ebreak = Module(new EbreakBlackBox())
-    ebreak.io.trap := trap
+    ebreak.io.ebreak_trap := trap
     
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
@@ -151,7 +151,7 @@ class IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    trap := true.B
+                    out.bits.exu_ctl.CSR_Contorl := CSRControl.ebreak
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out.bits.decode.rd := inst.rd
