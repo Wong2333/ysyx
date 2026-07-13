@@ -180,7 +180,7 @@ class EXU extends Module{
             src2 := RFS_ReadPort.CSRReadPort.CSRRData
         }
     }
-    val ALU_u = new ALU()
+    val ALU_u = Module(new ALU())
     ALU_u.in.ctl := idu_out_reg.exu_ctl.ALU_Control
     ALU_u.in.src1 := src1
     ALU_u.in.src2 := src2
