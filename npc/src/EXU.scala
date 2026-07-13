@@ -339,7 +339,7 @@ class EXU extends Module{
         lsu_in.bits.addr := AluResult
         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
         wbu_in.bits.RegWrite := true.B
-        wbu_in.bits.RegWdata := lsu_out_reg
+        wbu_in.bits.RegWdata := lsu_out_reg.rdata
     }.elsewhen(idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         lsu_in.bits.addr := AluResult
         RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
