@@ -192,7 +192,9 @@ class EXU extends Module{
     CSRController_u.in.AluResult := AluResult
     CSRController_u.in.ctl := idu_out_reg.exu_ctl.CSR_Contorl
     CSRController_u.in.decode := idu_out_reg.decode
-    wbu_in.bits := CSRController_u.out
+    when(idu_out_reg.exu_ctl.CSR_Contorl =/= CSRControl.none){
+        wbu_in.bits := CSRController_u.out
+    }
     // switch(idu_out_reg.exu_ctl.CSR_Contorl){
     //     is(CSRControl.ebreak){
     //         ebreak.io.ebreak_trap := true.B
