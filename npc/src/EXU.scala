@@ -43,15 +43,6 @@ object BranchControl extends ChiselEnum{
     bgeu = Value
 }
 
-object CSRControl extends ChiselEnum{
-    val none,
-    ebreak,
-    ecall,
-    mret,
-    csrrw,
-    csrrs = Value
-}
-
 class EXUCTLBundle extends Bundle{
     val ALU_Op = Output(ALUOp())
     val ALU_Src1 = Output(ALUSrc1())
@@ -73,7 +64,7 @@ class EXU extends Module{
         val CSRReadPort = new CSRReadPortBundle
     })
 
-    val idu_out = IO(Flipped(Decoupled(new DecodeBundle)))
+    val idu_out = IO(Flipped(Decoupled(new IDUBundle)))
     val wbu_in = IO(Decoupled(new WriteBackPortBundle))
 
     val lsu_in = IO(Decoupled(new LSUBundle))
@@ -82,7 +73,7 @@ class EXU extends Module{
         val error = Input(Bool())
     })))
 
-    val idu_out_reg = Reg(new DecodeBundle)
+    val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
         val rdata = UInt(32.W)
         val error = Bool()
@@ -185,44 +176,8 @@ class EXU extends Module{
     ALU_u.in.src1 := src1
     ALU_u.in.src2 := src2
     AluResult := ALU_u.out
-    // switch(idu_out_reg.exu_ctl.ALU_Control){
-    //     is(ALUContorl.add){
-    //         AluResult := src1 + src2
-    //     }
-    //     is(ALUContorl.sub){
-    //         AluResult := src1 - src2
-    //     }
-    //     is(ALUContorl.sltu){
-    //         AluResult := src1 < src2
-    //     }
-    //     is(ALUContorl.slt){
-    //         AluResult := src1.asSInt < src2.asSInt
-    //     }
-    //     is(ALUContorl.and){
-    //         AluResult := src1 & src2
-    //     }
-    //     is(ALUContorl.xor){
-    //         AluResult := src1 ^ src2
-    //     }
-    //     is(ALUContorl.or){
-    //         AluResult := src1 | src2
-    //     }
-    //     is(ALUContorl.equ){
-    //         AluResult := src1 === src2
-    //     }
-    //     is(ALUContorl.lui){
-    //         AluResult := idu_out_reg.decode.imm
-    //     }
-    //     is(ALUContorl.sll){
-    //         AluResult := src1 << src2(4,0)
-    //     }
-    //     is(ALUContorl.srl){
-    //         AluResult := src1 >> src2(4,0)
-    //     }
-    //     is(ALUContorl.sra){
-    //         AluResult := (src1.asSInt >> src2(4,0)).asUInt
-    //     }
-    // }
+
+
     wbu_in.bits := 0.U.asTypeOf(new WriteBackPortBundle)
     when(idu_out_reg.exu_ctl.ALUWrite2Reg){
         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
@@ -230,40 +185,47 @@ class EXU extends Module{
         wbu_in.bits.RegWdata := AluResult
     }
     RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
-    switch(idu_out_reg.exu_ctl.CSR_Contorl){
-        is(CSRControl.ebreak){
-            ebreak.io.ebreak_trap := true.B
-        }
-        is(CSRControl.ecall){
-            wbu_in.bits.Exception_Code := 11.U
-            wbu_in.bits.PC := idu_out_reg.decode.pc
-            wbu_in.bits.isTrap := true.B
-        }
-        is(CSRControl.mret){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
-            wbu_in.bits.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
-            wbu_in.bits.PCWrite := true.B
-        }
-        is(CSRControl.csrrs){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
-            wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
-            wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-            wbu_in.bits.RegWrite := true.B
-            wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
-            wbu_in.bits.CSRData := AluResult
-            wbu_in.bits.CSRWrite := true.B
-        }
-        is(CSRControl.csrrw){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
-            wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
-            wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
-            wbu_in.bits.RegWrite := true.B
-            wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
-            wbu_in.bits.CSRData := RFS_ReadPort.RegReadPort.rdata1
-            wbu_in.bits.CSRWrite := true.B
-        }
-    }
+
+    val CSRController_u = Module(new CSRController)
+    CSRController_u.CSRReadPort := RFS_ReadPort.CSRReadPort
+    CSRController_u.RegReadPort := RFS_ReadPort.RegReadPort
+    CSRController_u.in.AluResult := AluResult
+    CSRController_u.in.ctl := idu_out_reg.exu_ctl.CSR_Contorl
+    CSRController_u.in.decode := idu_out_reg.decode
+    // switch(idu_out_reg.exu_ctl.CSR_Contorl){
+    //     is(CSRControl.ebreak){
+    //         ebreak.io.ebreak_trap := true.B
+    //     }
+    //     is(CSRControl.ecall){
+    //         wbu_in.bits.Exception_Code := 11.U
+    //         wbu_in.bits.PC := idu_out_reg.decode.pc
+    //         wbu_in.bits.isTrap := true.B
+    //     }
+    //     is(CSRControl.mret){
+    //         RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
+    //         wbu_in.bits.PCNext := RFS_ReadPort.CSRReadPort.CSRRData
+    //         wbu_in.bits.PCWrite := true.B
+    //     }
+    //     is(CSRControl.csrrs){
+    //         RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
+    //         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
+    //         wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
+    //         wbu_in.bits.RegWrite := true.B
+    //         wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
+    //         wbu_in.bits.CSRData := AluResult
+    //         wbu_in.bits.CSRWrite := true.B
+    //     }
+    //     is(CSRControl.csrrw){
+    //         RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
+    //         RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
+    //         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
+    //         wbu_in.bits.RegWdata := RFS_ReadPort.CSRReadPort.CSRRData
+    //         wbu_in.bits.RegWrite := true.B
+    //         wbu_in.bits.CSRAddr := idu_out_reg.decode.imm(11,0)
+    //         wbu_in.bits.CSRData := RFS_ReadPort.RegReadPort.rdata1
+    //         wbu_in.bits.CSRWrite := true.B
+    //     }
+    // }
     
     switch(idu_out_reg.exu_ctl.ALU_Jump){
         is(Jump.jal){
@@ -276,35 +238,25 @@ class EXU extends Module{
     }
 
     val BranchCond = WireDefault(false.B)
+    RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
+    RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
     switch(idu_out_reg.exu_ctl.Branch_Control){
         is(BranchControl.beq){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 === RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bne){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 =/= RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.blt){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt < RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bge){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt >= RFS_ReadPort.RegReadPort.rdata2.asSInt
         }
         is(BranchControl.bltu){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 < RFS_ReadPort.RegReadPort.rdata2
         }
         is(BranchControl.bgeu){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
             BranchCond := RFS_ReadPort.RegReadPort.rdata1 >= RFS_ReadPort.RegReadPort.rdata2
         }
     }

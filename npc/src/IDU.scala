@@ -38,7 +38,6 @@ class InvalidInstructionBlackBox extends ExtModule{
 }
 
 class DecodeBundle extends Bundle{
-    val decode = new Bundle {
         val inst = Output(UInt(32.W))
         val invalid = Output(Bool())
         val rs1 = Output(UInt(5.W))
@@ -46,7 +45,12 @@ class DecodeBundle extends Bundle{
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
-    }
+    
+
+}
+
+class IDUBundle extends Bundle{
+    val decode = new DecodeBundle
     val exu_ctl = new EXUCTLBundle
 }
 
@@ -56,7 +60,7 @@ class IDU extends Module{
         val inst = Input(UInt(32.W))
     })))
 
-    val out = IO(Decoupled(new DecodeBundle))
+    val out = IO(Decoupled(new IDUBundle))
 
     in.ready := out.ready
     out.valid := in.valid
