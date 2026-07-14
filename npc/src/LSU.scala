@@ -99,6 +99,7 @@ class LSU extends Module{
                 mem_port.B.bready := true.B
                 when(mem_port.B.bvalid){
                     status := s_wait_fetch
+                    lsu_out_reg.error := mem_port.B.bresp
                 }
             }.otherwise{
                 mem_port.R.rready := true.B                
