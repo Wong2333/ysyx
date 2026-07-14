@@ -47,6 +47,7 @@ class CLINT extends Module{
             port.R.rresp := false.B
             port.R.rvalid := true.B
             when(port.R.rready){
+                printf("read mtime\n")
                 status := s_idle
             }
         }
