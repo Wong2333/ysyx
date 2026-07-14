@@ -45,9 +45,9 @@ static const char *reg_names[] = {
 
 static bool is_skip_ref = false;
 
-void difftest_skip_ref() {
+extern "C" void difftest_skip_ref() {
   is_skip_ref = true;
-}
+} 
 
 void init_difftest(const char *ref_so_file, long img_sz) {
   assert(ref_so_file != NULL);
