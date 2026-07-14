@@ -22,7 +22,7 @@ class Top extends Module{
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
     val Arbiter_u = Module(new Arbiter(2))
-    val Xbar_u = Module(new Xbar(2,area))
+    val Xbar_u = Module(new Xbar(3,area))
     val MemUnit_u = Module(new MemUnit())
     val uart_u = Module(new uart)
     val CLINT_u = Module(new CLINT)
