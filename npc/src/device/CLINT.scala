@@ -30,7 +30,6 @@ class CLINT extends Module{
     switch(status){
         is(s_idle){
             when(port.AR.arvalid){
-                printf("reading\n")
                 when(port.AR.araddr === (0x10000000 + 48).U){
                     port.AR.arready := true.B
                     out_reg := mtime(31,0)
@@ -48,7 +47,6 @@ class CLINT extends Module{
             port.R.rresp := false.B
             port.R.rvalid := true.B
             when(port.R.rready){
-                printf("read mtime\n")
                 skip_difftest.io.skip := true.B
                 status := s_idle
             }
