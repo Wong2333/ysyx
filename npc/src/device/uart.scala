@@ -14,6 +14,8 @@ class uart extends Module{
     val port = IO(new MemPort)
     // val skip_difftest = IO(Output(Bool()))
     // skip_difftest := false.B
+    val skip_difftest = Module(new SkipDifftest)
+    skip_difftest.io.skip := false.B
 
     port.AR.arready := false.B
     port.AW.awready := true.B
@@ -28,7 +30,7 @@ class uart extends Module{
         assert(port.AW.awaddr === 0x10000000.U)
     }
     when(port.W.wvalid){
-        skip_difftest := true.B
+        skip_difftest.io.skip := true.B
         printf("%c",port.W.wdata)
     }
 }
