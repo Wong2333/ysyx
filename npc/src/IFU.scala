@@ -14,26 +14,29 @@ class IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    val pmem_read_inst = Module(new MemUnit())
+    val mem_port = IO(Flipped(new MemPort))
+
+    // val pmem_read_inst = Module(new MemUnit())
 
     val pc_reg = RegInit(0.U(32.W))
     val inst_reg = RegInit(0.U(32.W))
-    val error = Wire(Bool())
+    val error_reg = RegInit(false.B)
     
     in.ready := false.B
     out.valid := false.B
 
-    
-    pmem_read_inst.port.addr := pc_reg
-    pmem_read_inst.port.wen := false.B
-    pmem_read_inst.port.wdata := DontCare
-    pmem_read_inst.port.wmask := DontCare
-    pmem_read_inst.port.reqValid := false.B
-    pmem_read_inst.port.respReady := false.B
+    mem_port.AR.arvalid := false.B
+    mem_port.AR.araddr := pc_reg
+    mem_port.R.rready := false.B
+    mem_port.AW.awaddr := 0.U
+    mem_port.AW.awvalid := false.B
+    mem_port.W.wdata := 0.U
+    mem_port.W.wstrb := 0.U
+    mem_port.W.wvalid := false.B
+    mem_port.B.bready := false.B
 
     out.bits.pc := pc_reg
     out.bits.inst := inst_reg
-    error := pmem_read_inst.port.error
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(4)
     val status = RegInit(s_idle)
@@ -47,15 +50,16 @@ class IFU extends Module{
             }
         }
         is(s_wait_mem_free){
-            pmem_read_inst.port.reqValid := true.B
-            when(pmem_read_inst.port.reqReady){
+            mem_port.AR.arvalid := true.B
+            when(mem_port.AR.arready){
                 status := s_wait_mem_data
             }
         }
         is(s_wait_mem_data){
-            pmem_read_inst.port.respReady := true.B
-            when(pmem_read_inst.port.respValid){
-                inst_reg := pmem_read_inst.port.rdata
+            mem_port.R.rready := true.B
+            when(mem_port.R.rvalid){
+                inst_reg := mem_port.R.rdata
+                error_reg := mem_port.R.rresp
                 status := s_wait_fetch
             }
         }
@@ -69,7 +73,7 @@ class IFU extends Module{
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
-    when(pmem_read_inst.port.respValid && pmem_read_inst.port.respReady && pmem_read_inst.port.error === true.B){
+    when(mem_port.R.rvalid && mem_port.R.rready && mem_port.R.rresp){
         ebreak.io.ebreak_trap := true.B
     }
 }

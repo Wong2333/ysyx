@@ -15,6 +15,8 @@ class Top extends Module{
     val IDU_u = Module(new IDU())
     val EXU_u = Module(new EXU())
     val WBU_u = Module(new WBU())
+    val Arbiter_u = Module(new Arbiter(2))
+    val MemUnit_u = Module(new MemUnit())
     
     IFU_u.in <> RFS_u.pc_out
     io.pc := RFS_u.pc_out.bits.pc
@@ -34,4 +36,8 @@ class Top extends Module{
     WBU_u.out <> RFS_u.wbu_in
 
     io.WriteBack := RFS_u.wbu_in.fire
+
+    IFU_u.mem_port <> Arbiter_u.in(0)
+    LSU_u.mem_port <> Arbiter_u.in(1)
+    Arbiter_u.out <> MemUnit_u.port
 }
