@@ -22,7 +22,14 @@ class Arbiter(n_in : Int) extends Module{
         in(i).B.bresp := false.B
         in(i).B.bvalid := false.B
     }
-
+    out.AR.arvalid := false.B
+    out.AW.awaddr := 0.U
+    out.AW.awvalid := false.B
+    out.B.bready := false.B
+    out.R.rready := false.B
+    out.W.wdata := 0.U
+    out.W.wstrb := 0.U
+    out.W.wvalid := false.B
     switch(r_status){
         is(r_idle){
             for(i <- 0 until n_in){
