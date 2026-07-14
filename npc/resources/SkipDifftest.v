@@ -2,10 +2,10 @@
 module SkipDifftest(
     input skip
 );
-    import "DPI-C" context function void skip_difftest();
+    import "DPI-C" context function void difftest_skip_ref();
     always @(*) begin
         if(skip)begin
-            skip_difftest();
+            difftest_skip_ref();
         end
     end
 endmodule

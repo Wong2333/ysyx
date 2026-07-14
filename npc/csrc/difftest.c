@@ -45,11 +45,11 @@ static const char *reg_names[] = {
 
 static bool is_skip_ref = false;
 
-extern "C" void difftest_skip_ref() {
+void difftest_skip_ref() {
   is_skip_ref = true;
 }
 
-extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
+void init_difftest(const char *ref_so_file, long img_sz) {
   assert(ref_so_file != NULL);
 
   void *handle = dlopen(ref_so_file, RTLD_LAZY);
@@ -94,7 +94,7 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
 
 void my_assert(bool cond);
 
-extern "C" void check_difftest(uint32_t pc) {
+void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   riscv32_CPU_state dut_state;
@@ -136,6 +136,6 @@ extern "C" void check_difftest(uint32_t pc) {
   }
 }
 
-extern "C" bool difftest_enabled() {
+bool difftest_enabled() {
   return difftest_on;
 }
