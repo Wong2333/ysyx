@@ -31,6 +31,6 @@ class uart extends Module{
     }
     when(port.W.wvalid){
         skip_difftest.io.skip := true.B
-        printf("p%c",port.W.wdata)
+        printf("%c",port.W.wdata)
     }
 }
