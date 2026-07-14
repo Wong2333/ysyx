@@ -172,7 +172,7 @@ class MemUnit extends Module{
             write_latency := LFSR
         }
     }
-    val s_write_wait :: s_write_valid :: Nil = Enum(3)
+    val s_write_wait :: s_write_valid :: Nil = Enum(2)
     val write_status = RegInit(s_write_wait)
 
     switch(write_status){
