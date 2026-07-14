@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import npc.Xbar.{Arbiter,Xbar}
+import npc.device.uart
 
 class Top extends Module{
 
@@ -22,6 +23,7 @@ class Top extends Module{
     val Arbiter_u = Module(new Arbiter(2))
     val Xbar_u = Module(new Xbar(2,area))
     val MemUnit_u = Module(new MemUnit())
+    val uart_u = Module(new uart)
     
     IFU_u.in <> RFS_u.pc_out
     io.pc := RFS_u.pc_out.bits.pc
@@ -44,6 +46,8 @@ class Top extends Module{
 
     IFU_u.mem_port <> Arbiter_u.in(0)
     LSU_u.mem_port <> Arbiter_u.in(1)
-    Arbiter_u.out <> MemUnit_u.port
+    Arbiter_u.out <> Xbar_u.in
+    Xbar_u.out(0) <>  uart_u.port
+    Xbar_u.out(1) <> MemUnit_u.port
 
 }
