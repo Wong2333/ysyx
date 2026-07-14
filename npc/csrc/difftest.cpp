@@ -114,6 +114,7 @@ void check_difftest(uint32_t pc) {
   ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
 
   // check
+  printf("difftesting...\n");
   bool ok = true;
   for (int i = 1; i < 32; i++) {
     if (dut_state.gpr[i] != ref_state.gpr[i]) {
