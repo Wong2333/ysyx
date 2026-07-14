@@ -30,6 +30,7 @@ class CLINT extends Module{
     switch(status){
         is(s_idle){
             when(port.AW.awvalid){
+                printf("reading\n")
                 when(port.AW.awaddr === (0x10000000 + 48).U){
                     port.AW.awready := true.B
                     out_reg := mtime(31,0)
