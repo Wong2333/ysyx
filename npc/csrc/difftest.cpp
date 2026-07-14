@@ -45,7 +45,7 @@ static const char *reg_names[] = {
 
 static bool is_skip_ref = false;
 
-void difftest_skip_ref() {
+extern "C" void difftest_skip_ref() {
   is_skip_ref = true;
 }
 
