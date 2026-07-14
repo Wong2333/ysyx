@@ -29,15 +29,15 @@ class CLINT extends Module{
 
     switch(status){
         is(s_idle){
-            when(port.AW.awvalid){
+            when(port.AR.arvalid){
                 printf("reading\n")
-                when(port.AW.awaddr === (0x10000000 + 48).U){
-                    port.AW.awready := true.B
+                when(port.AR.araddr === (0x10000000 + 48).U){
+                    port.AR.arready := true.B
                     out_reg := mtime(31,0)
                     status := s_busy
                 }
-                when(port.AW.awaddr === (0x10000000 + 48 + 4).U){
-                    port.AW.awready := true.B
+                when(port.AR.araddr === (0x10000000 + 48 + 4).U){
+                    port.AR.arready := true.B
                     out_reg := mtime(63,32)
                     status := s_busy
                 }
