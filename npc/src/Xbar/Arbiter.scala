@@ -1,6 +1,7 @@
-package npc
+package npc.Xbar
 import chisel3._
 import chisel3.util._
+import npc.MemPort
 
 class Arbiter(n_in : Int) extends Module{
     val in = IO(Vec(n_in,new MemPort))
