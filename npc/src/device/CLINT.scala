@@ -49,6 +49,7 @@ class CLINT extends Module{
             port.R.rvalid := true.B
             when(port.R.rready){
                 printf("read mtime\n")
+                skip_difftest.io.skip := true.B
                 status := s_idle
             }
         }
