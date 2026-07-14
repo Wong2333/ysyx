@@ -23,6 +23,7 @@ class Arbiter(n_in : Int) extends Module{
         in(i).B.bvalid := false.B
     }
     out.AR.arvalid := false.B
+    out.AR.araddr := 0.U
     out.AW.awaddr := 0.U
     out.AW.awvalid := false.B
     out.B.bready := false.B
