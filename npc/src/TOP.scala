@@ -8,7 +8,7 @@ class Top extends Module{
 
     val area = Seq((0x10000000L, 0x10000002L),
                     (0x10000002L, 0x10000040L),
-                    (0x80000000L, 0x80ffffffL))
+                    (0x80000000L, 0x8fffffffL))
 
     val io = IO(new Bundle{
         val pc = Output(UInt(32.W))
