@@ -43,7 +43,13 @@ static const char *reg_names[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
-extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
+static bool is_skip_ref = false;
+
+extern "C" void difftest_skip_ref() {
+  is_skip_ref = true;
+} 
+
+void init_difftest(const char *ref_so_file, long img_sz) {
   assert(ref_so_file != NULL);
 
   void *handle = dlopen(ref_so_file, RTLD_LAZY);
@@ -71,14 +77,11 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
   printf("Differential testing: ON\n");
   fflush(stdout);
 
-  /* Initialize REF simulator */
   ref_difftest_init(0);
 
-  /* Copy program image from NPC memory to REF memory */
   void *img_ptr = (uint8_t *)mem + CONFIG_START_ADDR;
   ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_sz, DIFFTEST_TO_REF);
 
-  /* Copy NPC register state to REF */
   riscv32_CPU_state dut_state;
   for (int i = 0; i < 32; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
@@ -91,24 +94,28 @@ extern "C" void init_difftest(const char *ref_so_file, long img_sz) {
 
 void my_assert(bool cond);
 
-extern "C" void check_difftest(uint32_t pc) {
+void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
-  /* Step REF by one instruction */
-  ref_difftest_exec(1);
-
-  /* Get REF state after execution */
-  riscv32_CPU_state ref_state;
-  ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
-
-  /* Read DUT (NPC) state */
   riscv32_CPU_state dut_state;
   for (int i = 0; i < 32; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.pc = read_pc_reg();
 
-  /* Compare GPRs (skip x0 which is always 0) */
+  if (is_skip_ref) {
+    ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
+    is_skip_ref = false;
+    return;
+  }
+  ref_difftest_exec(1);
+
+  riscv32_CPU_state ref_state;
+  ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
+
+  // check
+  // static uint32_t cnt = 0;
+  // printf("difftesting...%u\n",cnt++);
   bool ok = true;
   for (int i = 1; i < 32; i++) {
     if (dut_state.gpr[i] != ref_state.gpr[i]) {
@@ -131,6 +138,6 @@ extern "C" void check_difftest(uint32_t pc) {
   }
 }
 
-extern "C" bool difftest_enabled() {
+bool difftest_enabled() {
   return difftest_on;
 }

@@ -1,9 +1,9 @@
 module EbreakBlackBox (
-    input trap
+    input ebreak_trap
 );
     import "DPI-C" function void ebreak();   
     always @(*) begin
-        if(trap)begin 
+        if(ebreak_trap)begin 
             ebreak();
         end
     end

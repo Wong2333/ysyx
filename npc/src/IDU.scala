@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import npc.EXUs._
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
@@ -23,7 +24,7 @@ class InstDecode extends Bundle{
  
 class EbreakBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
-        val trap = Input(Bool())
+        val ebreak_trap = Input(Bool())
     })
     addResource("/EbreakBlackBox.v")
 }
@@ -37,7 +38,6 @@ class InvalidInstructionBlackBox extends ExtModule{
 }
 
 class DecodeBundle extends Bundle{
-    val decode = new Bundle {
         val inst = Output(UInt(32.W))
         val invalid = Output(Bool())
         val rs1 = Output(UInt(5.W))
@@ -45,7 +45,12 @@ class DecodeBundle extends Bundle{
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
-    }
+    
+
+}
+
+class IDUBundle extends Bundle{
+    val decode = new DecodeBundle
     val exu_ctl = new EXUCTLBundle
 }
 
@@ -55,7 +60,7 @@ class IDU extends Module{
         val inst = Input(UInt(32.W))
     })))
 
-    val out = IO(Decoupled(new DecodeBundle))
+    val out = IO(Decoupled(new IDUBundle))
 
     in.ready := out.ready
     out.valid := in.valid
@@ -65,8 +70,6 @@ class IDU extends Module{
     val invalid = WireDefault(true.B)
     out.bits.decode.invalid := invalid
 
-    val ebreak = Module(new EbreakBlackBox())
-    ebreak.io.trap := trap
     
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
@@ -151,7 +154,7 @@ class IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    trap := true.B
+                    out.bits.exu_ctl.CSR_Contorl := CSRControl.ebreak
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out.bits.decode.rd := inst.rd

@@ -57,7 +57,7 @@ static void single_cycle() {
     uint32_t next_pc = read_pc_reg();
 
     if(commit){
-        trace_and_difftest(current_pc, mem[current_pc >> 2], next_pc);
+        trace_record(current_pc, mem[current_pc >> 2], next_pc);
         check_difftest(current_pc);
     }
 
