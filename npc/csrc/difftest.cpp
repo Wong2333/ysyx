@@ -105,7 +105,6 @@ void check_difftest(uint32_t pc) {
 
   if (is_skip_ref) {
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-    printf("skip\n");
     is_skip_ref = false;
     return;
   }
