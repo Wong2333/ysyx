@@ -23,9 +23,9 @@ uint32_t read_rf_reg(int addr) {
 
 uint32_t read_pc_reg() {
     const char* scope_name = "ysyxSoCFull"; 
-    
+    printf("Scope: %s\n", svGetNameFromScope(svGetScope()));
     svScope scope = svGetScopeFromName(scope_name);
-    
+
     if (!scope) {
         printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
         return -1;
