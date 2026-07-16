@@ -133,6 +133,7 @@ extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
 
 
 uint32_t mrom[1024] = {
+    0x00100513,
     0x00100073
 };
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
