@@ -8,7 +8,6 @@ uint32_t read_rf_reg(int addr) {
     const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 
     
     svScope scope = svGetScopeFromName(scope_name);
-    printf("Scope: %s\n", svGetNameFromScope(svGetScope()));
     if (!scope) {
         printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
         return -1;
