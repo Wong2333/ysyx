@@ -67,7 +67,7 @@ test:
 	mill -i test
 
 verilog: $(Top)
-$(Top): $(CHISEL_SRC) $(RESOURCES)
+$(Top): #$(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
