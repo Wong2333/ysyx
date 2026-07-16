@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import npc.AXI.AXI4Bundle
+import npc.AXI.AXI4Arbiter
 // import npc.Xbar.{Arbiter,Xbar}
 // import npc.device._
 
@@ -30,6 +31,7 @@ class ysyx_26030092 extends Module{
     // // val MemUnit_u = Module(new MemUnit())
     // val uart_u = Module(new uart)
     // val CLINT_u = Module(new CLINT)
+    val AXI4Arbiter_u = Module(new AXI4Arbiter(2))
     
     IFU_u.in <> RFS_u.pc_out
     // io.pc := RFS_u.pc_out.bits.pc
@@ -47,7 +49,11 @@ class ysyx_26030092 extends Module{
     EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
     WBU_u.out <> RFS_u.wbu_in
+    IFU_u.AXI4_port <> AXI4Arbiter_u.in(0)
+    LSU_u.AXI4_port <> AXI4Arbiter_u.in(1)
 
+    io.master <> AXI4Arbiter_u.out
+    io.slave.initSlave()
     // io.WriteBack := RFS_u.wbu_in.fire
 
     // IFU_u.mem_port <> Arbiter_u.in(0)
