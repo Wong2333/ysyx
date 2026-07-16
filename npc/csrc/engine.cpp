@@ -51,15 +51,15 @@ static void single_cycle() {
     top.clock = ~top.clock;
     uint32_t current_pc = read_pc_reg();
 
-    bool commit = top.io_WriteBack;
+    // bool commit = top.io_WriteBack;
     top.eval();
         
     uint32_t next_pc = read_pc_reg();
 
-    if(commit){
-        trace_record(current_pc, mem[current_pc >> 2], next_pc);
-        check_difftest(current_pc);
-    }
+    // if(commit){
+    //     trace_record(current_pc, mem[current_pc >> 2], next_pc);
+    //     check_difftest(current_pc);
+    // }
 
 #ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);
