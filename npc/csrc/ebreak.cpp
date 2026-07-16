@@ -23,7 +23,6 @@ uint32_t read_rf_reg(int addr) {
 
 uint32_t read_pc_reg() {
     const char* scope_name = "TOP.ysyxSoCFull"; 
-    printf("Scope: %s\n", svGetScope());
     svScope scope = svGetScopeFromName(scope_name);
 
     if (!scope) {

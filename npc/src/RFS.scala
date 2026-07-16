@@ -83,6 +83,7 @@ class ysyx_26030092_RFS extends Module {
     
     val s_idle :: s_wait_write_back :: Nil = Enum(2)
     val status = RegInit(s_idle)
+    printf("Instance path: %m\n")
 
     switch(status){
       is(s_idle){
