@@ -8,6 +8,7 @@
 #include <mmio.h>
 #include <autoconfig.h>
 #include <trace.h>
+#include<assert.h>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
@@ -128,5 +129,5 @@ extern "C" void printCurrentInst(){
 }
 
 
-extern "C" void flash_read(int32_t addr, int32_t *data) { my_assert(0); }
-extern "C" void mrom_read(int32_t addr, int32_t *data) { my_assert(0); }
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
