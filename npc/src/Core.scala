@@ -1,15 +1,13 @@
 package npc
 
 import chisel3._
-import npc.AXI.AXI4Bundle
-import npc.AXI.AXI4Arbiter
+import npc.AXI._
 // import npc.Xbar.{Arbiter,Xbar}
-// import npc.device._
+import npc.device._
 
 class ysyx_26030092 extends Module{
 
-    val area = Seq((0x10000000L, 0x10000002L),
-                    (0x10000002L, 0x10000040L),
+    val area = Seq((0X2000000L, 0X200BFFFL),
                     (0x80000000L, 0x8fffffffL))
 
     val io = IO(new Bundle{
@@ -30,8 +28,9 @@ class ysyx_26030092 extends Module{
     // val Xbar_u = Module(new Xbar(3,area))
     // // val MemUnit_u = Module(new MemUnit())
     // val uart_u = Module(new uart)
-    // val CLINT_u = Module(new CLINT)
-    val AXI4Arbiter_u = Module(new AXI4Arbiter(2))
+    val CLINT_u = Module(new ysyx_26030092_CLINT())
+    val CLINT_AXI4Router_u = Module(new ysyx_26030092_CLINT_AXI4Router())
+    val AXI4Arbiter_u = Module(new ysyx_26030092_AXI4Arbiter(2))
     
     IFU_u.in <> RFS_u.pc_out
     // io.pc := RFS_u.pc_out.bits.pc
@@ -50,17 +49,11 @@ class ysyx_26030092 extends Module{
 
     WBU_u.out <> RFS_u.wbu_in
     IFU_u.AXI4_port <> AXI4Arbiter_u.in(0)
-    LSU_u.AXI4_port <> AXI4Arbiter_u.in(1)
+    LSU_u.AXI4_port <> CLINT_AXI4Router_u.in
+    CLINT_AXI4Router_u.toSoC <> AXI4Arbiter_u.in(1)
+    CLINT_AXI4Router_u.toCLINT <> CLINT_u.AXI4_port
 
     io.master <> AXI4Arbiter_u.out
     io.slave.initSlave()
-    // io.WriteBack := RFS_u.wbu_in.fire
-
-    // IFU_u.mem_port <> Arbiter_u.in(0)
-    // LSU_u.mem_port <> Arbiter_u.in(1)
-    // Arbiter_u.out <> Xbar_u.in
-    // Xbar_u.out(0) <>  uart_u.port
-    // Xbar_u.out(1) <> CLINT_u.port
-    // Xbar_u.out(2) <> MemUnit_u.port
 
 }

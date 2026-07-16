@@ -1,4 +1,4 @@
-TOPNAME = Top
+TOPNAME = ysyxSoCFull
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/repo/include
@@ -7,7 +7,8 @@ KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
+				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL \
+				--timescale "1ns/1ns --no-timing
 
 VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
 
@@ -33,7 +34,10 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 
 # project source
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-VSRCS = $(shell find $(abspath $(YSYX_SoC_HOME)) -name "*.v")
+VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)) -name "*.v")
+VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
+VERILATOR_CFLAGS += $(addprefix -v , $(VSRCS))
+
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
@@ -54,7 +58,7 @@ bin:
 $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
 		-Iresources/include
