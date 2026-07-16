@@ -64,7 +64,7 @@ class ReadRegPortBundle extends Bundle{
     val rdata2 = Input(UInt(32.W))
 }
 
-class RFS extends Module {
+class ysyx_26030092_RFS extends Module {
   val wbu_in = IO(Flipped(Decoupled(new Bundle {
     val WriteRegPort = Flipped(new WriteRegPortBundle)
     val ExceptionPort = Flipped(new ExceptionInfoBundle)

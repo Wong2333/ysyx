@@ -28,7 +28,7 @@ object ALUContorl extends ChiselEnum{
     equ = Value
 }
 
-class ALU extends Module{
+class ysyx_26030092_ALU extends Module{
 
     val in = IO(Input(new Bundle {
         val ctl = ALUContorl()
