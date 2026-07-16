@@ -128,5 +128,5 @@ extern "C" void printCurrentInst(){
 }
 
 
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
-extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void flash_read(int32_t addr, int32_t *data) { my_assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { my_assert(0); }
