@@ -116,7 +116,6 @@ class ysyx_26030092_EXU extends Module{
             lsu_in.valid := true.B
             invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(lsu_in.ready){
-                printf("[EXU] waddr=%x src1=%x src2=%x\n",AluResult,ALU_u.in.src1,ALU_u.in.src2)
                 status := s_wait_lsu_valid
             }
         }
@@ -250,5 +249,9 @@ class ysyx_26030092_EXU extends Module{
         lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
     lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
+
+    when(lsu_in.fire){
+        printf("[EXU] waddr=%x src1=%x src2=%x\n",AluResult,ALU_u.in.src1,ALU_u.in.src2)
+    }
     
 }
