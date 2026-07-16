@@ -4,7 +4,7 @@
 #include <time.h>
 #include <cassert>
 #include <nvboard.h>
-#include <VTop.h>
+#include <VysyxSoCFull.h>
 #include <autoconfig.h>
 #ifdef CONFIG_ENABLE_FST_TRACE
 #include <verilated_fst_c.h>

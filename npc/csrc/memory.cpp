@@ -1,5 +1,5 @@
 #include <svdpi.h>
-#include <VTop__Dpi.h>
+#include <VysyxSoCFull__Dpi.h>
 #include <stdint.h> // 引入 uint32_t, uint8_t 等标准类型
 #include <stdio.h>
 #include <stdlib.h>
