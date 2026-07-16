@@ -68,21 +68,21 @@ extern "C" int pmem_read(int addr, int valid, int* error) {
     unsigned long long cpu_time_us;
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
-    if(addr == RTC_ADDR){
-        difftest_skip_ref();
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        // 3. 计算纳秒差值
-        cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-                + (end.tv_nsec - start.tv_nsec) / 1000;
-        return (uint32_t)cpu_time_us; 
-    }else if(addr == RTC_ADDR + 4){
-        difftest_skip_ref();
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        // 3. 计算纳秒差值
-        cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-                + (end.tv_nsec - start.tv_nsec) / 1000;
-        return (uint32_t)(cpu_time_us >> 32);
-    }
+    // if(addr == RTC_ADDR){
+    //     difftest_skip_ref();
+    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    //     // 3. 计算纳秒差值
+    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
+    //             + (end.tv_nsec - start.tv_nsec) / 1000;
+    //     return (uint32_t)cpu_time_us; 
+    // }else if(addr == RTC_ADDR + 4){
+    //     difftest_skip_ref();
+    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    //     // 3. 计算纳秒差值
+    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
+    //             + (end.tv_nsec - start.tv_nsec) / 1000;
+    //     return (uint32_t)(cpu_time_us >> 32);
+    // }
     if(!in_pmem(raddr)) *error = true;
     uint32_t data = mem[raddr >> 2];
 
@@ -97,12 +97,12 @@ extern "C" int pmem_write(int addr, int data, char mask, int valid) {
     uint8_t wmask = (uint8_t)mask & 0xF;
     uint8_t *pmem_byte = (uint8_t *)mem;
     waddr = waddr & (~0x3);
-    if(addr == SERIAL_PORT){
-        difftest_skip_ref();
-        printf("%c",(char)data);
-        fflush(stdout);
-        return 0;
-    }
+    // if(addr == SERIAL_PORT){
+    //     difftest_skip_ref();
+    //     printf("%c",(char)data);
+    //     fflush(stdout);
+    //     return 0;
+    // }
     if(!in_pmem(waddr)) return true;
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
