@@ -34,7 +34,7 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 
 # project source
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)) -name "*.v")
+VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)/perip) -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 VERILATOR_CFLAGS += $(addprefix -v , $(VSRCS))
 
