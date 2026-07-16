@@ -91,7 +91,6 @@ class AXI4Arbiter(n_in : Int) extends Module{
     val in = IO(Vec(n_in, Flipped(new AXI4Bundle)))   // 接收多个 Master 的请求
     val out = IO(new AXI4Bundle)    // 输出给单个 Slave
 
-    // 1. 默认初始化：防止 Chisel 报未连接警告，同时保证未被选中的 Master/Slave 信号保持空闲
     for(i <- 0 until n_in){
         in(i).initSlave()
     }
@@ -100,14 +99,12 @@ class AXI4Arbiter(n_in : Int) extends Module{
     // ================= 读通道仲裁 (AR / R) =================
     val r_idle :: r_busy :: Nil = Enum(2)
     val r_status = RegInit(r_idle)
-    val r_sel = RegInit(0.U(log2Ceil(n_in).W)) // 记录当前选中的 Master
+    val r_sel = RegInit(0.U(log2Ceil(n_in).W))
 
     switch(r_status){
         is(r_idle){
-            // 将所有 in 的 arvalid 组合起来，例如 in(0)有效且 in(1)有效，就是 0b11
             val ar_reqs = VecInit(in.map(_.arvalid)).asUInt
             when(ar_reqs =/= 0.U){
-                // 使用优先级编码器，编号小(0)的优先级最高
                 r_sel := PriorityEncoder(ar_reqs)
                 r_status := r_busy
             }

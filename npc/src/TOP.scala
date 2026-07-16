@@ -18,7 +18,7 @@ class ysyx_26030092 extends Module{
         // val WriteBack = Output(Bool())
         val interrupt = Input(Bool())
         val master = new AXI4Bundle()
-        val slave = new AXI4Bundle()
+        val slave = Flipped(new AXI4Bundle())
     })
     val IFU_u = Module(new ysyx_26030092_IFU())
     val RFS_u = Module(new ysyx_26030092_RFS())
