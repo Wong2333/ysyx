@@ -22,7 +22,7 @@ uint32_t read_rf_reg(int addr) {
 }
 
 uint32_t read_pc_reg() {
-    const char* scope_name = "TOP.ysyxSoCFull"; 
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.PC_reg"; 
     svScope scope = svGetScopeFromName(scope_name);
 
     if (!scope) {
