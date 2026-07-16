@@ -119,6 +119,7 @@ void init_nvboard(){
 }
 
 void init_engine(int argc, char **argv) {
+    Verilated::commandArgs(argc, argv);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;

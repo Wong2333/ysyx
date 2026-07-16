@@ -126,3 +126,7 @@ uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){
     printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
 }
+
+
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
