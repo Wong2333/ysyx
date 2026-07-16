@@ -65,6 +65,7 @@ class ysyx_26030092_LSU extends Module{
                     AXI4_port.awaddr := lsu_in_reg.addr
                     AXI4_port.awvalid := true.B
                     when(AXI4_port.awready){
+                        printf("[LSU] awaddr=%x\n",AXI4_port.awaddr)
                         waddr_ready := true.B
                     }
                 }
@@ -73,6 +74,7 @@ class ysyx_26030092_LSU extends Module{
                     AXI4_port.wstrb := wmask
                     AXI4_port.wvalid := true.B
                     when(AXI4_port.wready){
+                        printf("[LSU] wdata=%x\n",AXI4_port.wdata)
                         wdata_ready := true.B
                     }
                 }
