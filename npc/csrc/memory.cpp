@@ -37,17 +37,23 @@ uint32_t img[1024*1024] = {
   0x00000000,
   0x00000000
 };
+
+uint32_t mrom[1024] = {
+    0x00000513,
+    0x00100073
+};
 uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
-    mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
-    if (!mem) {
-        printf("Failed to allocate memory!\n");
-        exit(1);
-    }
+    // mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
+    // if (!mem) {
+    //     printf("Failed to allocate memory!\n");
+    //     exit(1);
+    // }
     
-    memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
-    uint8_t *pmem_byte = (uint8_t *)mem;
+    // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
+    printf("loading image...\n");
+    uint8_t *pmem_byte = (uint8_t *)mrom;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
         printf("can't open this file: %s\n",path);
@@ -55,11 +61,12 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+CONFIG_START_ADDR,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
     img_size = idx;
     fclose(fp);
+    printf("images loaded\n");
 }
 
 extern "C" int pmem_read(int addr, int valid, int* error) {
@@ -132,10 +139,7 @@ extern "C" void printCurrentInst(){
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
 
 
-uint32_t mrom[1024] = {
-    0x00000513,
-    0x00100073
-};
+
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
     uaddr = uaddr - 0x20000000;

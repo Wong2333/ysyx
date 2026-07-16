@@ -31,6 +31,7 @@ class ysyx_26030092 extends Module{
     val CLINT_u = Module(new ysyx_26030092_CLINT())
     val CLINT_AXI4Router_u = Module(new ysyx_26030092_CLINT_AXI4Router())
     val AXI4Arbiter_u = Module(new ysyx_26030092_AXI4Arbiter(2))
+    io.slave.initSlave()
     
     IFU_u.in <> RFS_u.pc_out
     // io.pc := RFS_u.pc_out.bits.pc
@@ -54,6 +55,10 @@ class ysyx_26030092 extends Module{
     CLINT_AXI4Router_u.toCLINT <> CLINT_u.AXI4_port
 
     io.master <> AXI4Arbiter_u.out
-    io.slave.initSlave()
-
+    when(io.master.awvalid && io.master.awready && io.master.awaddr === "h10000000".U){
+        printf("writing\n")
+    }
+    when(io.master.wvalid && io.master.wready){
+        printf("write %c\n",io.master.wdata)
+    }
 }
