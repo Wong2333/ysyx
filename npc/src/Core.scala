@@ -55,10 +55,4 @@ class ysyx_26030092 extends Module{
     CLINT_AXI4Router_u.toCLINT <> CLINT_u.AXI4_port
 
     io.master <> AXI4Arbiter_u.out
-    when(io.master.awvalid && io.master.awready){
-        printf("writing to %x\n",io.master.awaddr)
-    }
-    when(io.master.wvalid && io.master.wready){
-        printf("write %c\n",io.master.wdata)
-    }
 }
