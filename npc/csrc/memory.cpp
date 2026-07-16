@@ -52,7 +52,6 @@ void load_img(const char* path){
     // }
     
     // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
-    printf("loading image...\n");
     uint8_t *pmem_byte = (uint8_t *)mrom;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
@@ -66,7 +65,6 @@ void load_img(const char* path){
     }
     img_size = idx;
     fclose(fp);
-    printf("images loaded\n");
 }
 
 extern "C" int pmem_read(int addr, int valid, int* error) {
