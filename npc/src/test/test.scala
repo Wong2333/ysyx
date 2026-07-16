@@ -3,7 +3,7 @@ package test
 import chisel3._
 import chisel3.util._
 
-class b extends Bundle{
+class Bun extends Bundle{
     val A = FlatIO(new Bundle {
         val a = Input(Bool())
     })
@@ -13,6 +13,6 @@ class b extends Bundle{
 }
 
 class test extends Module{
-    val io = IO(new b)
+    val io = IO(new Bun)
     io.B.b := io.A.a
 }
