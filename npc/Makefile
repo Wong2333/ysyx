@@ -8,7 +8,7 @@ KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
 				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL \
-				--timescale "1ns/1ns --no-timing
+				--timescale "1ns/1ns" --no-timing
 
 VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
 
