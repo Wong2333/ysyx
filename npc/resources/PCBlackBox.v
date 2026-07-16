@@ -22,7 +22,7 @@ module PCBlackBox(
             end
         end
     end
-    export "DPI-C" context task read_pc;
+    export "DPI-C" task read_pc;
     task read_pc(output int data);
         data = PC;
     endtask
