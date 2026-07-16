@@ -116,6 +116,7 @@ class ysyx_26030092_EXU extends Module{
             lsu_in.valid := true.B
             invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(lsu_in.ready){
+                printf("[EXU] waddr=%x\n",AluResult)
                 status := s_wait_lsu_valid
             }
         }
