@@ -4,15 +4,18 @@ import chisel3._
 import chisel3.util._
 
 class AXI4Bundle extends Bundle {
-  
+    
+    val AW = FlatIO(new Bundle {
     // ================= 写地址通道 (AW) =================
-    val awready = Input(Bool())       // Slave 准备好接收写地址
-    val awvalid = Output(Bool())      // Master 写地址有效
-    val awaddr  = Output(UInt(32.W))  // 写地址 (32位)
-    val awid    = Output(UInt(4.W))   // 写操作ID (4位)
-    val awlen   = Output(UInt(8.W))   // 突发长度 (8位)
-    val awsize  = Output(UInt(3.W))   // 突发大小 (3位)
-    val awburst = Output(UInt(2.W))   // 突发类型 (2位)
+        val awready = Input(Bool())       // Slave 准备好接收写地址
+        val awvalid = Output(Bool())      // Master 写地址有效
+        val awaddr  = Output(UInt(32.W))  // 写地址 (32位)
+        val awid    = Output(UInt(4.W))   // 写操作ID (4位)
+        val awlen   = Output(UInt(8.W))   // 突发长度 (8位)
+        val awsize  = Output(UInt(3.W))   // 突发大小 (3位)
+        val awburst = Output(UInt(2.W))   // 突发类型 (2位)
+    })
+
 
     // ================= 写数据通道 (W) =================
     val wready = Input(Bool())        // Slave 准备好接收写数据
