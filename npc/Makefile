@@ -9,6 +9,10 @@ VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
 				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
 
+VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
+
+VERILATOR_CFLAGS += $(addprefix -I, $(VERILATOR_INC_PATH))
+
 -include .config
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
 VERILATOR_CFLAGS += --trace-fst
@@ -29,6 +33,7 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 
 # project source
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+VSRCS = $(shell find $(abspath $(YSYX_SoC_HOME)) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
