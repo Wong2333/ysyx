@@ -5,7 +5,7 @@
 #include "VysyxSoCFull.h"
 
 uint32_t read_rf_reg(int addr) {
-    const char* scope_name = "TOP.Top.RFS_u.Reg_u"; 
+    const char* scope_name = "TOP.ysyxSoCFull"; 
     
     svScope scope = svGetScopeFromName(scope_name);
     
@@ -22,7 +22,7 @@ uint32_t read_rf_reg(int addr) {
 }
 
 uint32_t read_pc_reg() {
-    const char* scope_name = "TOP.Top.RFS_u.PC_reg"; 
+    const char* scope_name = "TOP.ysyxSoCFull"; 
     
     svScope scope = svGetScopeFromName(scope_name);
     
