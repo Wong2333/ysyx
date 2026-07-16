@@ -22,7 +22,7 @@ endif
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
-Top = $(BUILD_DIR)/$(TOPNAME).sv
+CORE = $(BUILD_DIR)/ysyx_26030092.sv
 
 default: 
 	make bin
@@ -66,8 +66,8 @@ $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR
 test:
 	mill -i test
 
-verilog: $(Top)
-$(Top): #$(CHISEL_SRC) $(RESOURCES)
+verilog: $(CORE)
+$(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)

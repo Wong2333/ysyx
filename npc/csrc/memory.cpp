@@ -136,7 +136,8 @@ uint32_t mrom[1024] = {
     0x00100073
 };
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
-    printf("%x\n",addr);
-    exit(0);
+    uint32_t uaddr = addr;
+    uaddr = uaddr - 0x20000000;
+    *data = (int32_t)mrom[uaddr >> 2];
     // data = mrom[addr >> 2];
 }
