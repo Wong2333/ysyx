@@ -8,7 +8,7 @@
 #include <mmio.h>
 #include <autoconfig.h>
 #include <trace.h>
-#include<assert.h>
+#include <cassert>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
