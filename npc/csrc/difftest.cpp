@@ -34,7 +34,7 @@ static bool difftest_on = false;
 /* NPC memory and register access */
 extern uint32_t *mem;
 extern uint32_t img_size;
-extern uint32_t *mrom;
+extern uint32_t mrom[1024];
 extern uint32_t mrom_size;
 uint32_t read_rf_reg(int addr);
 uint32_t read_pc_reg();
