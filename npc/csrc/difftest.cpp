@@ -82,17 +82,6 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 
   ref_difftest_init(0);
 
-  void *img_ptr = (uint8_t *)mrom;
-  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
-
-  riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
-    dut_state.gpr[i] = read_rf_reg(i);
-  }
-  dut_state.pc = read_pc_reg();
-  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-
-  difftest_on = true;
 }
 
 void my_assert(bool cond);
@@ -149,6 +138,20 @@ static bool commit = false;
 
 extern "C" void difftest_commit(){
   commit = true;
+}
+
+extern "C" void difftest_reset(){
+  void *img_ptr = (uint8_t *)mrom;
+  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
+
+  riscv32_CPU_state dut_state;
+  for (int i = 0; i < 32; i++) {
+    dut_state.gpr[i] = read_rf_reg(i);
+  }
+  dut_state.pc = read_pc_reg();
+  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
+
+  difftest_on = true;
 }
 
 void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){

@@ -98,15 +98,24 @@ void init_mem(const char* img_path){
 
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-    top.clock = 0;
+    
     top.reset = 1;
-    top.eval();
-    top.clock = 1;
-    top.eval();
-    top.reset = 0;
     top.clock = 0;
     top.eval();
+
+    for(int i = 0; i < 15; i++) {
+        // 时钟上升沿
+        top.clock = 1;
+        top.eval();
+        
+        // 时钟下降沿
+        top.clock = 0;
+        top.eval();
+    }
+    top.reset = 0;
+    top.eval(); // 立即更新组合逻辑状态
 }
+
 
 void init_nvboard(){
     nvboard_bind_all_pins(&top);
