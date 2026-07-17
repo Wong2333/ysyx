@@ -52,6 +52,7 @@ static void single_cycle() {
     uint32_t current_pc = read_pc_reg();
 
     // bool commit = top.io_WriteBack;
+    printf("pc: 0x%x\n",current_pc);
     top.eval();
         
     uint32_t next_pc = read_pc_reg();
