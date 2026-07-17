@@ -42,6 +42,7 @@ uint32_t mrom[1024] = {
     0x00000513,
     0x00100073
 };
+uint32_t mrom_size = 4*1024;
 uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){

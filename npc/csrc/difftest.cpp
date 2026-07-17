@@ -34,6 +34,8 @@ static bool difftest_on = false;
 /* NPC memory and register access */
 extern uint32_t *mem;
 extern uint32_t img_size;
+extern uint32_t *mrom;
+extern uint32_t mrom_size;
 uint32_t read_rf_reg(int addr);
 uint32_t read_pc_reg();
 
@@ -80,8 +82,9 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 
   ref_difftest_init(0);
 
-  void *img_ptr = (uint8_t *)mem + CONFIG_START_ADDR;
-  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_sz, DIFFTEST_TO_REF);
+  void *img_ptr = (uint8_t *)mrom;
+  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
+
 
   riscv32_CPU_state dut_state;
   for (int i = 0; i < 32; i++) {
