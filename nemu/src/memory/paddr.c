@@ -32,6 +32,7 @@ uint8_t* guest_to_host(paddr_t paddr) {
   if(in_pmem(paddr))
     return pmem + paddr - CONFIG_MBASE; 
   else if(in_mrom(paddr)){
+    printf("return mrom addr: %x\n",paddr);
     return mrom + paddr - CONFIG_MROM_BASE;
   }
   else if(in_sram(paddr)){
