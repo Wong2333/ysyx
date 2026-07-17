@@ -6,6 +6,7 @@
 #include <nvboard.h>
 #include <VysyxSoCFull.h>
 #include <autoconfig.h>
+
 #ifdef CONFIG_ENABLE_FST_TRACE
 #include <verilated_fst_c.h>
 #endif
@@ -50,17 +51,10 @@ void my_assert(bool cond){
 static void single_cycle() {
     top.clock = ~top.clock;
     uint32_t current_pc = read_pc_reg();
-
-    // bool commit = top.io_WriteBack;
-    printf("pc: 0x%x\n",current_pc);
     top.eval();
         
-    uint32_t next_pc = read_pc_reg();
-
-    // if(commit){
-    //     trace_record(current_pc, mem[current_pc >> 2], next_pc);
-    //     check_difftest(current_pc);
-    // }
+    uint32_t next_pc = read_pc_reg();    
+    trace_and_difftest(uint32_t current_pc, uint32_t next_pc)
 
 #ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <difftest.h>
 #include <autoconfig.h>
+#include <trace.h>
 
 /* Function pointer types for the REF shared library API */
 typedef void (*ref_difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
@@ -140,4 +141,18 @@ void check_difftest(uint32_t pc) {
 
 bool difftest_enabled() {
   return difftest_on;
+}
+
+static bool commit = false;
+
+extern "C" void commit_inst(){
+  commit = true;
+}
+
+void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){
+  if(commit){
+    trace_record(current_pc, mem[current_pc >> 2], next_pc);
+    check_difftest(current_pc);
+  }
+  commit = false;
 }

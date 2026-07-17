@@ -3,6 +3,7 @@ import chisel3._
 import chisel3.util._
 import npc.MemControl.sw
 import scala.annotation.varargs
+import _root_.test.Bun
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -28,6 +29,12 @@ class PCBlackBox extends ExtModule{
         val pc = Output(UInt(32.W))
     })
     addResource("/PCBlackBox.v")
+}
+class DifftestCommit extends ExtModule{
+  val io = FlatIO(new Bundle{
+    val commit = Input(Bool());
+  })
+  addResource("/DifftestCommit.v")
 }
 
 class WriteRegPortBundle extends Bundle{
@@ -96,6 +103,7 @@ class ysyx_26030092_RFS extends Module {
         wbu_in.ready := true.B
         when(wbu_in.fire){
           status := s_idle
+
         }
       }
     }
