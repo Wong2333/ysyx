@@ -147,7 +147,7 @@ bool difftest_enabled() {
 
 static bool commit = false;
 
-extern "C" void commit_inst(){
+extern "C" void difftest_commit(){
   commit = true;
 }
 
