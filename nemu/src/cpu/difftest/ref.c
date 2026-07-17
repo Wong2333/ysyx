@@ -37,6 +37,7 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
+  printf("difftest\n");
   cpu_exec(n);
 }
 
