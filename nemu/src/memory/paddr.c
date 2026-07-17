@@ -57,6 +57,10 @@ word_t paddr_read(paddr_t addr, int len) {
   if (likely(in_pmem(addr))){
     record_mtrace(WRITE_TRACE,addr,len, pmem_read(addr, len));
     return pmem_read(addr, len);
+  }else if(in_mrom(addr)){
+    
+  }else if(in_sram(addr)){
+
   }
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr); 
@@ -68,6 +72,11 @@ void paddr_write(paddr_t addr, int len, word_t data) {
     record_mtrace(READ_TRACE,addr,len, data);
     pmem_write(addr, len, data); 
     return; 
+  }else if(in_mrom(addr)){
+    printf("cann't write to mrom!\n");
+    assert(0);
+  }else if(in_sram(addr)){
+    
   }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
 
