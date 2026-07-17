@@ -49,6 +49,7 @@ void uart_init() {
 }
 
 void _trm_init() {
+  uart_init();
   char mvendorid[5];
   mvendorid[4] = 0;
   uint32_t marchid;
