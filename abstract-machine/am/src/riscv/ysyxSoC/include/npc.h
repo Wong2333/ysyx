@@ -2,10 +2,9 @@
 #define NPC_H__
 
 #ifndef UART_BASE
-#define UART_BASE 0xa0000000 
+#define UART_BASE 0x10000000 
 #endif
 
-// 寄存器偏移量定义 (依据你提供的 Verilog)
 #define UART_REG_DL1 0x0 // Divisor Latch Low
 #define UART_REG_DL2 0x1 // Divisor Latch High
 #define UART_REG_LC  0x3 // Line Control
