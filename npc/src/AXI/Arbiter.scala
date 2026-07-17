@@ -36,6 +36,10 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
             // 🌟 关键：只有当读数据最后一拍握手完成，才释放总线
             when(out.rvalid && out.rready && out.rlast){
                 r_status := r_idle
+                when(out.rresp =/= 0.U){
+                    printf("Access Fault!\n")
+                    assert(false.B)
+                }
             }
         }
     }
@@ -66,6 +70,10 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
             // 🌟 关键：只有当写响应握手完成，才释放总线
             when(out.bvalid && out.bready){
                 w_status := w_idle
+                when(out.bresp =/= 0.U){
+                    printf("Access Fault!\n")
+                    assert(false.B)
+                }
             }
         }
     }
