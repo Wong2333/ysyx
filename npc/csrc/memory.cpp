@@ -146,7 +146,6 @@ extern "C" void printCurrentInst(){
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
-    printf("addr=%x, uaddr >> 2=%x, uaddr=%x\n",addr, uaddr >> 2,uaddr);
     *data = (int32_t)flash[uaddr >> 2];
 }
 
