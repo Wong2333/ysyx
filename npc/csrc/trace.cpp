@@ -253,7 +253,7 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
 }
 
 extern "C" void trace(int32_t pc, int32_t inst){
-  printf("trace\n");
+  printf("trace pc=%x inst=%x\n",pc,inst);
   trace_record(pc, inst, pc + 4);
 }
 
