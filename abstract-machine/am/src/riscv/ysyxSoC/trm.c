@@ -1,5 +1,6 @@
 #include <am.h>
 #include <klib-macros.h>
+#include <klib.h>
 #include <npc.h>
 #include <riscv/riscv.h>
 extern char _heap_start;
@@ -21,6 +22,15 @@ void halt(int code) {
   while (1);
 }
 
+extern char _data_lma_start;
+extern char _data_vma_start;
+extern char _data_vma_end;
+
+void bootloader(){
+  uint32_t data_size = &_data_vma_end - &_data_vma_start;
+  memcpy(&_data_vma_start,&_data_lma_start,data_size);
+}
+
 void _trm_init() {
   char mvendorid[5];
   mvendorid[4] = 0;
@@ -30,6 +40,8 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
+  bootloader();
   int ret = main(mainargs);
   halt(ret);
 }
+

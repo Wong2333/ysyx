@@ -139,8 +139,6 @@ $(IMAGE).elf: $(LINKAGE) $(LDSCRIPTS)
 ifneq ($(filter $(ARCH),native),)
 	@$(CXX) -o $@ -Wl,--whole-archive $(LINKAGE) -Wl,-no-whole-archive $(LDFLAGS_CXX)
 else
-	@echo $(LINKAGE)
-	@echo $(LDFLAGS)
 	$(LD) $(LDFLAGS) -o $@ --start-group $(LINKAGE) --end-group
 endif
 
