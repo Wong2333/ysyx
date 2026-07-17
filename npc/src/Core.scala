@@ -56,9 +56,7 @@ class ysyx_26030092 extends Module{
 
     io.master <> AXI4Arbiter_u.out
 
-    val reset_reg = RegNext(reset.asBool,false.B)
+    val difftest_u = Module(new Difftest)
+    difftest_u.commit := WBU_u.out.fire
 
-    when(reset_reg && !reset.asBool){
-        
-    }
 }
