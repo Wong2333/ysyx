@@ -7,6 +7,7 @@ import npc.AXI.AXI4Bundle
 class trace extends ExtModule{
     val pc = FlatIO(Input(UInt(32.W)))
     val inst = FlatIO(Input(UInt(32.W)))
+    val valid = FlatIO(Input(Bool()))
     addResource("/trace.v")
 }
 
@@ -75,7 +76,11 @@ class ysyx_26030092_IFU extends Module{
     }
     
     val trace_u = Module(new trace)
+    trace_u.pc := 0.U
+    trace_u.inst := 0.U
+    trace_u.valid := false.B
     when(out.fire){
+        trace_u.valid := true.B
         trace_u.pc := out.bits.pc
         trace_u.pc := out.bits.inst
     }
