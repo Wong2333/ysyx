@@ -83,8 +83,9 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_init(0);
 
   void *img_ptr = (uint8_t *)mrom;
+  printf("mron size: %x\n",mrom_size);
   ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
-
+  printf("finished\n");
 
   riscv32_CPU_state dut_state;
   for (int i = 0; i < 32; i++) {
