@@ -84,6 +84,8 @@ class ysyx_26030092_RFS extends Module {
   val pc_out = IO(Decoupled(new Bundle{
       val pc = Output(UInt(32.W))
     }))
+    val inst_commit = Module(new DifftestCommit)
+    inst_commit.io.commit := false.B
 
     wbu_in.ready := false.B
     pc_out.valid := false.B
@@ -103,7 +105,7 @@ class ysyx_26030092_RFS extends Module {
         wbu_in.ready := true.B
         when(wbu_in.fire){
           status := s_idle
-
+          inst_commit.io.commit := true.B
         }
       }
     }
