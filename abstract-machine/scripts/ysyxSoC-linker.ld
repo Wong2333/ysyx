@@ -21,6 +21,7 @@ SECTIONS {
   .data : {
     _data_vma_start = .;
     *(.data*)
+    *(.sdata*)
     _data_vma_end = .;
     _data_lma_start = LOADADDR(.data);
   } > sram AT> mrom
