@@ -73,8 +73,10 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
-
+    
+    val trace_u = Module(new trace)
     when(out.fire){
-
+        trace_u.pc := out.bits.pc
+        trace_u.pc := out.bits.inst
     }
 }
