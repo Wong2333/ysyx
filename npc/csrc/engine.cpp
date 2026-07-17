@@ -54,7 +54,7 @@ static void single_cycle() {
     top.eval();
         
     uint32_t next_pc = read_pc_reg();    
-    trace_and_difftest(uint32_t current_pc, uint32_t next_pc)
+    trace_and_difftest(current_pc, next_pc);
 
 #ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);
