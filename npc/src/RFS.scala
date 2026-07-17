@@ -30,12 +30,7 @@ class PCBlackBox extends ExtModule{
     })
     addResource("/PCBlackBox.v")
 }
-class DifftestCommit extends ExtModule{
-  val io = FlatIO(new Bundle{
-    val commit = Input(Bool());
-  })
-  addResource("/DifftestCommit.v")
-}
+
 
 class WriteRegPortBundle extends Bundle{
     val wdata  = Output(UInt(32.W))
@@ -84,12 +79,6 @@ class ysyx_26030092_RFS extends Module {
   val pc_out = IO(Decoupled(new Bundle{
       val pc = Output(UInt(32.W))
     }))
-    val inst_commit = Module(new DifftestCommit)
-    val commit = WireDefault(false.B)
-    inst_commit.io.commit := RegNext(commit,false.B)
-    val cycle = RegInit(0.U(32.W))
-    cycle := cycle + 1.U
-    printf("[RFS] %x %x %b\n",inst_commit.io.commit, cycle, clock.asBool);
 
     wbu_in.ready := false.B
     pc_out.valid := false.B
@@ -109,8 +98,6 @@ class ysyx_26030092_RFS extends Module {
         wbu_in.ready := true.B
         when(wbu_in.fire){
           status := s_idle
-          commit := true.B
-
         }
       }
     }
