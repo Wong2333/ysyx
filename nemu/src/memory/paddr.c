@@ -38,6 +38,7 @@ uint8_t* guest_to_host(paddr_t paddr) {
   else if(in_sram(paddr)){
     return sram + paddr - CONFIG_SRAM_BASE;
   }
+  return 0;
 }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 
