@@ -80,9 +80,9 @@ class ysyx_26030092_IFU extends Module{
     trace_u.inst := 0.U
     trace_u.valid := false.B
     when(out.fire){
-        printf("trace pc=%x, inst=%x\n",out.bits.pc,out.bits.inst);
+        //printf("trace pc=%x, inst=%x\n",out.bits.pc,out.bits.inst);
         trace_u.valid := true.B
         trace_u.pc := out.bits.pc
-        trace_u.pc := out.bits.inst
+        trace_u.inst := out.bits.inst
     }
 }
