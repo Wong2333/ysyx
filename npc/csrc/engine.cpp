@@ -98,14 +98,14 @@ void init_mem(const char* img_path){
 
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-    top.clock = 0;
-    top.reset = 1;
-    top.eval();
-    top.clock = 1;
-    top.eval();
-    top.reset = 0;
-    top.clock = 0;
-    top.eval();
+    // top.clock = 0;
+    // top.reset = 1;
+    // top.eval();
+    // top.clock = 1;
+    // top.eval();
+    // top.reset = 0;
+    // top.clock = 0;
+    // top.eval();
 }
 
 void init_nvboard(){
