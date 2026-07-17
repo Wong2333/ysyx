@@ -30,6 +30,7 @@ extern char _data_vma_end;
 
 void bootloader(){
   uint32_t data_size = &_data_vma_end - &_data_vma_start;
+  printf("data_size: %x\n",data_size);
   memcpy(&_data_vma_start,&_data_lma_start,data_size);
 }
 
