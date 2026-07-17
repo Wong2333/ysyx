@@ -106,7 +106,7 @@ class ysyx_26030092_RFS extends Module {
         wbu_in.ready := true.B
         when(wbu_in.fire){
           status := s_idle
-          commit := true.B
+          //commit := true.B
           printf("[RFS] %d %d\n",commit,status);
         }
       }
