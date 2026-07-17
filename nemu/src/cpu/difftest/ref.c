@@ -20,6 +20,7 @@
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
+    printf("nemu copy size: %x\n",(uint32_t)n);
     memcpy(guest_to_host(addr), buf, n);
   } else {
     memcpy(buf, guest_to_host(addr), n);
