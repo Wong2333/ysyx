@@ -94,7 +94,8 @@ class ysyx_26030092_RFS extends Module {
     val s_idle :: s_wait_write_back :: Nil = Enum(2)
     val status = RegInit(s_idle)
     // printf("Instance path: %m\n")
-
+    val cycle = RegInit(0.U(32.W))
+    cycle := cycle + 1.U
     switch(status){
       is(s_idle){
         pc_out.valid := true.B
@@ -107,7 +108,7 @@ class ysyx_26030092_RFS extends Module {
         when(wbu_in.fire){
           status := s_idle
           commit := true.B
-          printf("[RFS] %d %t\n",status);
+          printf("[RFS] %d %x\n",status,cycle);
         }
       }
     }
