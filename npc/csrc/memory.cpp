@@ -45,7 +45,7 @@ uint32_t mrom[1024] = {
 uint32_t mrom_size = 4*1024;
 
 #define FLASH_SIZE  (256*1024*1024)
-uint32_t flash[FLASH_SIZE] = {
+uint32_t flash[FLASH_SIZE / 4] = {
     1231,
     54346,
     3425
@@ -147,7 +147,7 @@ extern "C" void printCurrentInst(){
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
     uaddr = uaddr - 0x30000000;
-    printf("flash[uaddr >> 2]=%d, uaddr=%x\n",flash[uaddr >> 2],uaddr);
+    printf("uaddr >> 2=%d, uaddr=%x\n",uaddr >> 2,uaddr);
     *data = (int32_t)flash[uaddr >> 2];
 }
 
