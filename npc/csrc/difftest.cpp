@@ -152,8 +152,8 @@ extern "C" void commit_inst(){
 }
 
 void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){
-  printf("difftest commit:%d",commit);
   if(commit){
+    printf("difftest\n");
     trace_record(current_pc, mem[current_pc >> 2], next_pc);
     check_difftest(current_pc);
   }
