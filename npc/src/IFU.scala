@@ -4,6 +4,12 @@ import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
 
+class trace extends ExtModule{
+    val pc = FlatIO(Input(UInt(32.W)))
+    val inst = FlatIO(Input(UInt(32.W)))
+    addResource("/trace.v")
+}
+
 class ysyx_26030092_IFU extends Module{
 
     val in = IO(Flipped(Decoupled(new Bundle {
@@ -66,5 +72,9 @@ class ysyx_26030092_IFU extends Module{
     ebreak.io.ebreak_trap := false.B
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
+    }
+
+    when(out.fire){
+
     }
 }

@@ -252,6 +252,10 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
 #endif
 }
 
+extern "C" void trace(int32_t pc, int32_t inst){
+  trace_record(pc, inst, pc + 4);
+}
+
 void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 #ifdef CONFIG_ENABLE_ITRACE
   if (!itrace_fp) return;
