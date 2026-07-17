@@ -20,6 +20,7 @@
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
+    printf("guest_to_host(addr): %x\n",guest_to_host(addr));
     memcpy(guest_to_host(addr), buf, n);
   } else {
     memcpy(buf, guest_to_host(addr), n);
