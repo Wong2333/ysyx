@@ -43,6 +43,15 @@ uint32_t mrom[1024] = {
     0x00100073
 };
 uint32_t mrom_size = 4*1024;
+
+#define FLASH_SIZE  (256*1024*1024)
+uint32_t flash[FLASH_SIZE] = {
+    1231,
+    54346,
+    3425
+};
+
+
 uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
@@ -135,7 +144,11 @@ extern "C" void printCurrentInst(){
 }
 
 
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void flash_read(int32_t addr, int32_t *data) {
+    uint32_t uaddr = addr;
+    uaddr = uaddr - 0x30000000;
+    *data = (int32_t)flash[uaddr >> 2];
+}
 
 
 
