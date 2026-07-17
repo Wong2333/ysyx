@@ -22,12 +22,12 @@ class ysyx_26030092_CLINT extends Module{
     switch(status){
         is(s_idle){
             when(AXI4_port.arvalid){
-                when(AXI4_port.araddr === (0x10000000 + 48).U){
+                when(AXI4_port.araddr === (0x02000000L + 0XBFF8).U){
                     AXI4_port.arready := true.B
                     out_reg := mtime(31,0)
                     status := s_busy
                 }
-                when(AXI4_port.araddr === (0x10000000 + 48 + 4).U){
+                when(AXI4_port.araddr === (0x02000000L + 0XBFF8 + 4).U){
                     AXI4_port.arready := true.B
                     out_reg := mtime(63,32)
                     status := s_busy

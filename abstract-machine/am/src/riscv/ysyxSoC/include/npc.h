@@ -2,5 +2,5 @@
 #define NPC_H__
 
 #define SERIAL_PORT      (0x10000000)
-#define RTC_ADDR         (0x10000000 + 48)
+#define RTC_ADDR         (0x02000000 + 0XBFF8)
 #endif
