@@ -89,7 +89,7 @@ class ysyx_26030092_RFS extends Module {
     inst_commit.io.commit := RegNext(commit,false.B)
     val cycle = RegInit(0.U(32.W))
     cycle := cycle + 1.U
-    printf("[RFS] %x %x %d\n",inst_commit.io.commit, cycle, clock.asBool);
+    printf("[RFS] %x %x %b\n",inst_commit.io.commit, cycle, clock.asBool);
 
     wbu_in.ready := false.B
     pc_out.valid := false.B
