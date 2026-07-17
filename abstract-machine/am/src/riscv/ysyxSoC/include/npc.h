@@ -5,9 +5,14 @@
 #define UART_BASE 0x10000000 
 #endif
 
+#define UART_REG_TR  0x0 
 #define UART_REG_DL1 0x0 // Divisor Latch Low
 #define UART_REG_DL2 0x1 // Divisor Latch High
 #define UART_REG_LC  0x3 // Line Control
+
+#define UART_REG_LS  0x5  // 线路状态寄存器
+
+#define UART_LS_THRE 0x20 // Bit 5: Transmitter Holding Register Empty
 
 #define RTC_ADDR         (0x02000000 + 0XBFF8)
 #endif
