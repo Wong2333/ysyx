@@ -49,6 +49,7 @@ void my_assert(bool cond){
 }
 
 void eval(){
+    top.eval();
     for(int i = 0;i<10;i++){
         Verilated::timeInc(1);
         top.eval();
@@ -105,7 +106,7 @@ void init_mem(const char* img_path){
 
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-    
+    //eval();
     top.reset = 1;
     top.clock = 0;
     eval();
