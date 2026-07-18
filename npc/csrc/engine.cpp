@@ -49,7 +49,7 @@ void my_assert(bool cond){
 }
 
 void eval(){
-    for(int i = 0;i<5;i++){
+    for(int i = 0;i<10;i++){
         Verilated::timeInc(1);
         top.eval();
     }
