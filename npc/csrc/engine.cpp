@@ -51,7 +51,7 @@ void my_assert(bool cond){
 static void single_cycle() {
     top.clock = ~top.clock;
     uint32_t current_pc = read_pc_reg();
-    //Verilated::timeInc(1);
+    Verilated::timeInc(1);
     top.eval();
         
     uint32_t next_pc = read_pc_reg();    
@@ -61,7 +61,7 @@ static void single_cycle() {
     if (tfp) tfp->dump(sim_time++);
 #endif
     top.clock = ~top.clock;
-    //Verilated::timeInc(1);
+    Verilated::timeInc(1);
     top.eval();
 #ifdef CONFIG_ENABLE_FST_TRACE
     if (tfp) tfp->dump(sim_time++);
@@ -104,18 +104,18 @@ void init_cpu(){
     top.reset = 1;
     top.clock = 0;
     top.eval();
-    //Verilated::timeInc(1);
+    Verilated::timeInc(1);
 
     for(int i = 0; i < 15; i++) {
         // 时钟上升沿
         top.clock = 1;
         top.eval();
-        //Verilated::timeInc(1);
+        Verilated::timeInc(1);
         
         // 时钟下降沿
         top.clock = 0;
         top.eval();
-        //Verilated::timeInc(1);
+        Verilated::timeInc(1);
     }
     top.reset = 0;
     // top.eval(); // 立即更新组合逻辑状态
