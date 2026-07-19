@@ -90,6 +90,9 @@ idea:
 clean:
 	-rm -rf $(BUILD_DIR)
 	-rm -rf out
+rebuild:
+	make clean
+	make
 
 .PHONY: bin test verilog help reformat checkformat clean
 
