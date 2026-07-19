@@ -50,9 +50,15 @@ void my_assert(bool cond){
 
 void eval(){
     top.eval();
+    #ifdef CONFIG_ENABLE_FST_TRACE
+        if (tfp) tfp->dump(sim_time++);
+    #endif
     for(int i = 0;i<10;i++){
         Verilated::timeInc(1);
         top.eval();
+        #ifdef CONFIG_ENABLE_FST_TRACE
+            if (tfp) tfp->dump(sim_time++);
+        #endif
     }
 }
 
@@ -64,14 +70,8 @@ static void single_cycle() {
     uint32_t next_pc = read_pc_reg();    
     trace_and_difftest(current_pc, next_pc);
 
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if (tfp) tfp->dump(sim_time++);
-#endif
     top.clock = ~top.clock;
     eval();
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if (tfp) tfp->dump(sim_time++);
-#endif
     nvboard_update();
     if(check_wp()){
         STATE = STOP;
