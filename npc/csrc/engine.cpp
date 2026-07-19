@@ -34,10 +34,6 @@ extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
 uint32_t cycle = 0;
 
-#ifdef CONFIG_ENABLE_FST_TRACE
-static uint64_t sim_time = 0;
-#endif
-
 void my_assert(bool cond){
 #ifdef CONFIG_ENABLE_FST_TRACE
     if(cond) return;
@@ -51,14 +47,8 @@ void my_assert(bool cond){
 void eval(){
     top.eval();
     #ifdef CONFIG_ENABLE_FST_TRACE
-        if (tfp) tfp->dump(sim_time++);
+        if (tfp) tfp->dump(Verilated::time());
     #endif
-    Verilated::timeInc(1);
-    top.eval();
-    #ifdef CONFIG_ENABLE_FST_TRACE
-        if (tfp) tfp->dump(sim_time++);
-    #endif
-    Verilated::timeInc(1);
 }
 
 static void single_cycle() {
