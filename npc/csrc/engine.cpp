@@ -33,6 +33,7 @@ extern uint32_t img_size;
 extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
 uint32_t cycle = 0;
+uint64_t dump_time = 0;
 
 void my_assert(bool cond){
 #ifdef CONFIG_ENABLE_FST_TRACE
@@ -47,7 +48,8 @@ void my_assert(bool cond){
 void eval(){
     top.eval();
     #ifdef CONFIG_ENABLE_FST_TRACE
-        if (tfp) tfp->dump(Verilated::time());
+        if (tfp) tfp->dump(dump_time);
+        dump_time++;
     #endif
 }
 
