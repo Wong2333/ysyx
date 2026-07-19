@@ -44,11 +44,11 @@ uint32_t mrom[1024] = {
 };
 uint32_t mrom_size = 4*1024;
 
-#define FLASH_SIZE  (256*1024*1024)
+#define FLASH_SIZE  (16*1024*1024)
 uint32_t flash[FLASH_SIZE / 4] = {
-    1231,
-    54346,
-    3425
+    0x12345678,
+    0x54346231,
+    0x11223425
 };
 
 
