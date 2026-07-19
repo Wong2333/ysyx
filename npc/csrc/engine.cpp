@@ -3,7 +3,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <cassert>
-#include <nvboard.h>
+//#include <nvboard.h>
 #include <VysyxSoCFull.h>
 #include <autoconfig.h>
 
@@ -19,7 +19,7 @@ static VerilatedFstC* tfp = NULL;
 #endif
 struct timespec start, end;
 bool check_wp();
-void nvboard_bind_all_pins(TOP_NAME* top);
+//void nvboard_bind_all_pins(TOP_NAME* top);
 void load_img(const char* path);
 
 typedef enum {
@@ -71,7 +71,7 @@ static void single_cycle() {
 
     top.clock = ~top.clock;
     eval();
-    nvboard_update();
+    //nvboard_update();
     if(check_wp()){
         STATE = STOP;
     }
@@ -124,10 +124,10 @@ void init_cpu(){
 }
 
 
-void init_nvboard(){
-    nvboard_bind_all_pins(&top);
-    nvboard_init();
-}
+// void init_nvboard(){
+//     nvboard_bind_all_pins(&top);
+//     nvboard_init();
+// }
 
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
@@ -169,7 +169,7 @@ void init_engine(int argc, char **argv) {
         }
     }
 
-    init_nvboard();
+    //init_nvboard();
 #ifdef CONFIG_ENABLE_SDB
     if (!batch_mode) {
         init_sdb();
