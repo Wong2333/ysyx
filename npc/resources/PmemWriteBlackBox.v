@@ -8,7 +8,6 @@ module PmemWriteBlackBox(
 );
     import "DPI-C" context function int pmem_write(input int waddr, input int wdata, input byte wmask, input int valid);
     always @(*) begin
-        error = pmem_write(waddr, wdata, {4'b0,wmask}, {31'b0,valid})[0];
-        
+        error = pmem_write(waddr, wdata, {4'b0,wmask}, {31'b0,valid});
     end
 endmodule
