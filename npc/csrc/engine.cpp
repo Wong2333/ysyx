@@ -8,14 +8,14 @@
 #include <autoconfig.h>
 
 #ifdef CONFIG_ENABLE_FST_TRACE
-#include <verilated_fst_c.h>
+#include <verilated_vcd_c.h>
 #endif
 // #define DEBUG
 #include <difftest.h>
 #include <trace.h>
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
-static VerilatedFstC* tfp = NULL;
+static VerilatedVcdC* tfp = NULL;
 #endif
 struct timespec start, end;
 bool check_wp();
@@ -58,6 +58,7 @@ void eval(){
     #ifdef CONFIG_ENABLE_FST_TRACE
         if (tfp) tfp->dump(sim_time++);
     #endif
+    Verilated::timeInc(1);
     
 }
 
@@ -183,9 +184,9 @@ void init_engine(int argc, char **argv) {
 #ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
     Verilated::traceEverOn(true);
-    tfp = new VerilatedFstC;
+    tfp = new VerilatedVcdC;
     top.trace(tfp, 99);  // trace 99 levels of hierarchy
-    tfp->open("waveform.fst");
+    tfp->open("waveform.vcd");
 #endif
     init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST

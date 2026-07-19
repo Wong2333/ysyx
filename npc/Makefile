@@ -16,7 +16,7 @@ VERILATOR_CFLAGS += $(addprefix -I, $(VERILATOR_INC_PATH))
 
 -include .config
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
-VERILATOR_CFLAGS += --trace-fst
+VERILATOR_CFLAGS += --trace
 endif
 
 BUILD_DIR = ./build
