@@ -269,6 +269,7 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
   };
   disassemble(buf, sizeof(buf), pc, code, 4);
   fprintf(itrace_fp, "0x%08x: 0x%08x\t%s\n", pc, inst, buf);
+  fflush(itrace_fp);
   {
     static char ringbuf_entry[128];
     snprintf(ringbuf_entry, sizeof(ringbuf_entry), "0x%08x: 0x%08x\t%s", pc, inst, buf);
