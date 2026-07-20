@@ -1,21 +1,21 @@
 ENTRY(_start)
 
 MEMORY {
-  mrom : ORIGIN = 0x20000000, LENGTH = 4K
+  flash : ORIGIN = 0x30000000, LENGTH = 16M
   sram : ORIGIN = 0x0f000000, LENGTH = 8K
 }
 
 SECTIONS {
   /* _pmem_start and _entry_offset are defined in LDFLAGS */
-  . = ORIGIN(mrom);
+  . = ORIGIN(flash);
   .text : {
     *(entry)
     *(.text*)
-  } > mrom AT> mrom
+  } > flash AT> flash
 
   .rodata : {
     *(.rodata*)
-  } > mrom AT> mrom
+  } > flash AT> flash
 
   . = ORIGIN(sram);
   .data : {
@@ -24,7 +24,7 @@ SECTIONS {
     *(.sdata*)
     _data_vma_end = .;
     _data_lma_start = LOADADDR(.data);
-  } > sram AT> mrom
+  } > sram AT> flash
 
   .bss : {
 	_bss_start = .;

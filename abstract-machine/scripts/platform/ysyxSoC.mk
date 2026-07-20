@@ -11,7 +11,7 @@ AM_SRCS := riscv/ysyxSoC/start.S \
 CFLAGS    += -fdata-sections -ffunction-sections
 CFLAGS    += -I$(AM_HOME)/am/src/riscv/ysyxSoC/include
 LDSCRIPTS += $(AM_HOME)/scripts/ysyxSoC-linker.ld
-LDFLAGS   += --defsym=_mrom_start=0x20000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
+#LDFLAGS   += --defsym=_mrom_start=0x20000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
 LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
