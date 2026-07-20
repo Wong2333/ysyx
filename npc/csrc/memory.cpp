@@ -63,7 +63,7 @@ void load_img(const char* path){
     // }
     
     // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
-    uint8_t *pmem_byte = (uint8_t *)mrom;
+    uint8_t *pmem_byte = (uint8_t *)flash;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
         printf("can't open this file: %s\n",path);
