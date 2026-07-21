@@ -73,9 +73,8 @@ void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            printf("2\n");
             single_cycle();
-
+            printf("2\n");
             if(STATE == STOP) break;
         }
         printCurrentInst();
