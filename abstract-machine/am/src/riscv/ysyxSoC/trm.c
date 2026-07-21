@@ -24,13 +24,13 @@ void halt(int code) {
   while (1);
 }
 
-extern char _data_lma_start;
-extern char _data_vma_start;
-extern char _data_vma_end;
+extern char _bootloader_lma_start;
+extern char _bootloader_start;
+extern char _bootloader_end;
 
 void bootloader(){
-  uint32_t data_size = &_data_vma_end - &_data_vma_start;
-  memcpy(&_data_vma_start,&_data_lma_start,data_size);
+  uint32_t data_size = &_bootloader_end - &_bootloader_start;
+  memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
 }
 
 

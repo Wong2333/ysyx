@@ -8,31 +8,36 @@ MEMORY {
 SECTIONS {
   /* _pmem_start and _entry_offset are defined in LDFLAGS */
   . = ORIGIN(flash);
-  .text : {
+  .text_start : {
     *(entry)
-    *(.text*)
-  } > flash AT> flash
-
-  .rodata : {
-    *(.rodata*)
+    *(bootloader)
   } > flash AT> flash
 
   . = ORIGIN(psram);
   _pmem_start = .;
+
+  .text : {
+    _bootloader_start = .;
+    _bootloader_lma_start = LOADADDR(.text);
+    *(.text*)
+  } > psram AT> flash
+
+  .rodata : {
+    *(.rodata*)
+  } > psram AT> flash
+
   .data : {
-    _data_vma_start = .;
     *(.data*)
     *(.sdata*)
-    _data_vma_end = .;
-    _data_lma_start = LOADADDR(.data);
   } > psram AT> flash
 
   .bss : {
-	_bss_start = .;
+	  _bss_start = .;
     *(.bss*)
     *(.sbss*)
     *(.scommon)
   } > psram
+  _bootloader_end = .;
 
   . = ALIGN(8);
   _heap_start = .;
