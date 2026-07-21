@@ -15,7 +15,6 @@ static char* rl_gets() {
     free(line_read);
     line_read = NULL;
   }
-  printf("3\n");
   line_read = readline("(npc) ");
 
   if (line_read && *line_read) {
@@ -42,6 +41,7 @@ static int cmd_si(char *args){
   int n = 1;
   if (args != NULL && sscanf(args, "%d", &n) == 1) {
     cpu_exec(n);
+    printf("3\n");
   }else{
     cpu_exec(1);
   }

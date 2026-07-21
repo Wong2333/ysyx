@@ -74,7 +74,6 @@ void cpu_exec(int n){
     if(n > 0){
         for(int i = 0;i<n;i++){
             single_cycle();
-            printf("2\n");
             if(STATE == STOP) break;
         }
         printCurrentInst();
