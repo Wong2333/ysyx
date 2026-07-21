@@ -5,7 +5,7 @@
 _start:
   mv s0, zero
   la sp, _stack_pointer
-  
+  call bootloader
   call _trm_init
 
 .size _start, . - _start
