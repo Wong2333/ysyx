@@ -165,6 +165,5 @@ uint32_t psram[1024*1024] = {
 
 extern "C" void psram_read(int32_t addr,int32_t *data){
     uint32_t uaddr = addr;
-    uaddr = uaddr - 0x80000000;
     *data = (int32_t)psram[uaddr >> 2];
 }
