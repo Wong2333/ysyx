@@ -30,6 +30,7 @@ SECTIONS {
     *(.data*)
     *(.sdata*)
   } > psram AT> flash
+  _bootloader_end = .;
 
   .bss : {
 	  _bss_start = .;
@@ -37,7 +38,6 @@ SECTIONS {
     *(.sbss*)
     *(.scommon)
   } > psram
-  _bootloader_end = .;
 
   . = ALIGN(8);
   _heap_start = .;

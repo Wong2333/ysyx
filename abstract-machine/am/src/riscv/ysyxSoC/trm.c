@@ -24,16 +24,16 @@ void halt(int code) {
   while (1);
 }
 
-extern uint8_t *_bootloader_lma_start;
-extern uint8_t *_bootloader_start;
-extern uint8_t *_bootloader_end;
+extern uint8_t _bootloader_lma_start;
+extern uint8_t _bootloader_start;
+extern uint8_t _bootloader_end;
 
 void bootloader() __attribute__((section(".bootloader")));
 
 void bootloader(){
-  uint8_t *dst = _bootloader_start;
-  uint8_t *src = _bootloader_lma_start;
-  uint8_t *end = _bootloader_end;
+  uint8_t *dst = &_bootloader_start;
+  uint8_t *src = &_bootloader_lma_start;
+  uint8_t *end = &_bootloader_end;
   // for(int start = _bootloader_start )
   while(dst < end){
     *dst++ = *src++; 
