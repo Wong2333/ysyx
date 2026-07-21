@@ -97,7 +97,7 @@ static int cmd_x(char *args) {
   }
 
   for (int i = 0; i < n; i++) {
-    uint32_t word = pmem_read(addr + i * 4);
+    uint32_t word = mem_read(addr + i * 4);
     printf("0x%08x\n", word); 
   }
 
@@ -210,6 +210,11 @@ void sdb_mainloop() {
 
     if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
   }
+}
+
+uint32_t read_pc_reg();
+extern "C" void printCurrentInst(){
+    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem_read(read_pc_reg()));
 }
 
 void init_sdb() {

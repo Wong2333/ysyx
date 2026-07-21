@@ -69,6 +69,8 @@ static void single_cycle() {
     }
 }
 
+
+
 void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){

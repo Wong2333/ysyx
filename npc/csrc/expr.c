@@ -236,7 +236,7 @@ static void get_expr_val(int p,int q,uint32_t* val,bool*success){
       get_expr_val(main_op+1,q, &val1,&su1);
       if(!(*success=su1)) return;
       if(tokens[main_op].type==TK_NEG) *val = -val1;
-      else *val = pmem_read(val1);
+      else *val = mem_read(val1);
     }else{
       get_expr_val(p,main_op-1, &val1,&su1);
       if(!(*success=su1)) return;

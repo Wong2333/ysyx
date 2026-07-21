@@ -139,10 +139,6 @@ extern "C" int pmem_write(int addr, int data, char mask, int valid) {
     record_mtrace(WRITE_TRACE, waddr, 4, wdata);
     return false;
 }
-uint32_t read_pc_reg();
-extern "C" void printCurrentInst(){
-    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
-}
 
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
@@ -173,4 +169,17 @@ extern "C" void psram_write(int32_t addr,char data){
     psram_8bits[uaddr] = data;
     //uint32_t p = (uint32_t)data;
     //printf("write addr: %x data: %x\n",uaddr,p);
+}
+
+/* 总的内存访问函数，供 SDB 调用。
+ * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
+ */
+uint32_t mem_read(uint32_t addr) {
+    if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
+        return mrom[(addr - 0x20000000) >> 2];
+    else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
+        return flash[(addr - 0x30000000) >> 2];
+    else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
+        return psram[(addr - 0x80000000) >> 2];
+    return 0;
 }
