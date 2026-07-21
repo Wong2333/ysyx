@@ -27,7 +27,9 @@ void halt(int code) {
 extern uint8_t *_bootloader_lma_start;
 extern uint8_t *_bootloader_start;
 extern uint8_t *_bootloader_end;
+
 void bootloader() __attribute__((section(".bootloader")));
+
 void bootloader(){
   uint8_t *dst = _bootloader_start;
   uint8_t *src = _bootloader_lma_start;
