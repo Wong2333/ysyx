@@ -24,23 +24,6 @@ void halt(int code) {
   while (1);
 }
 
-extern uint8_t _bootloader_lma_start;
-extern uint8_t _bootloader_start;
-extern uint8_t _bootloader_end;
-
-void bootloader() __attribute__((section(".bootloader")));
-
-void bootloader(){
-  uint8_t *dst = &_bootloader_start;
-  uint8_t *src = &_bootloader_lma_start;
-  uint8_t *end = &_bootloader_end;
-  // for(int start = _bootloader_start )
-  while(dst < end){
-    *dst++ = *src++; 
-  }
-  //memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
-}
-
 
 void uart_init() {
   // 1. 设置 LCR 的第 7 位 (DLAB) 为 1，开启除数寄存器访问
@@ -68,7 +51,6 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
-  bootloader();
   int ret = main(mainargs);
   halt(ret);
 }

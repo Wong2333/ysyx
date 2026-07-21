@@ -10,11 +10,18 @@ SECTIONS {
   . = ORIGIN(flash);
   .text_start : {
     *(entry)
-    *(.bootloader)
+    *(.FSBL)
   } > flash AT> flash
 
   . = ORIGIN(psram);
   _pmem_start = .;
+
+  .SSBL : {
+    _SSBL_start = .;
+    *(.SSBL)
+    _SSBL_end = .;
+    _SSBL_lma_start = LOADADDR(.text);
+  } > psram AT> flash
 
   .text : {
     _bootloader_start = .;
