@@ -159,9 +159,7 @@ extern "C" void mrom_read(int32_t addr, int32_t *data) {
     // data = mrom[addr >> 2];
 }
 
-uint32_t psram[1024*1024] = {
-    0x12345678
-};
+uint32_t psram[1024*1024];
 
 extern "C" void psram_read(int32_t addr,int32_t *data){
     uint32_t uaddr = addr;
