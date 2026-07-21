@@ -164,13 +164,13 @@ uint32_t psram[1024*1024];
 extern "C" void psram_read(int32_t addr,int32_t *data){
     uint32_t uaddr = addr;
     *data = (int32_t)psram[uaddr >> 2];
-    printf("read addr: %x data: %x\n",uaddr,*data);
+    //printf("read addr: %x data: %x\n",uaddr,*data);
 }
 
 extern "C" void psram_write(int32_t addr,char data){
     uint32_t uaddr = addr;
     uint8_t *psram_8bits = (uint8_t*)psram;
     psram_8bits[uaddr] = data;
-    uint32_t p = (uint32_t)data;
-    printf("write addr: %x data: %x\n",uaddr,p);
+    //uint32_t p = (uint32_t)data;
+    //printf("write addr: %x data: %x\n",uaddr,p);
 }
