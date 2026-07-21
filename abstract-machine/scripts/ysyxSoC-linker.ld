@@ -18,6 +18,7 @@ SECTIONS {
   } > flash AT> flash
 
   . = ORIGIN(psram);
+  _pmem_start = .;
   .data : {
     _data_vma_start = .;
     *(.data*)
