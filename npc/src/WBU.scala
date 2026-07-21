@@ -19,7 +19,7 @@ class WriteBackPortBundle extends Bundle{
     val Exception_Code = Output(UInt(32.W))
 }
 
-class WBU extends Module{
+class ysyx_26030092_WBU extends Module{
     val in = IO(Flipped(Decoupled(new WriteBackPortBundle)))
 
     val out = IO(Decoupled(new Bundle {

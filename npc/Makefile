@@ -1,4 +1,4 @@
-TOPNAME = Top
+TOPNAME = ysyxSoCFull
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/repo/include
@@ -7,7 +7,12 @@ KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O1 --x-assign fast --x-initial fast --noassert -Wall -Wno-UNUSEDSIGNAL
+				-O1 --x-assign fast --x-initial fast --noassert \
+				--timescale "1ns/1ns" --no-timing --autoflush 
+
+VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
+
+VERILATOR_CFLAGS += $(addprefix -I, $(VERILATOR_INC_PATH))
 
 -include .config
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
@@ -17,7 +22,7 @@ endif
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
-Top = $(BUILD_DIR)/$(TOPNAME).sv
+CORE = $(BUILD_DIR)/ysyx_26030092.sv
 
 default: 
 	make bin
@@ -29,6 +34,10 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 
 # project source
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)/perip) -name "*.v")
+VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
+VERILATOR_CFLAGS += $(addprefix -v , $(VSRCS))
+
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
@@ -49,7 +58,7 @@ bin:
 $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
 		-Iresources/include
@@ -57,8 +66,8 @@ $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR
 test:
 	mill -i test
 
-verilog: $(Top)
-$(Top): $(CHISEL_SRC) $(RESOURCES)
+verilog: $(CORE)
+$(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
@@ -81,6 +90,9 @@ idea:
 clean:
 	-rm -rf $(BUILD_DIR)
 	-rm -rf out
+rebuild:
+	make clean
+	make
 
 .PHONY: bin test verilog help reformat checkformat clean
 

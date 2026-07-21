@@ -3,9 +3,10 @@
 #include <getopt.h>
 #include <time.h>
 #include <cassert>
-#include <nvboard.h>
-#include <VTop.h>
+//#include <nvboard.h>
+#include <VysyxSoCFull.h>
 #include <autoconfig.h>
+
 #ifdef CONFIG_ENABLE_FST_TRACE
 #include <verilated_fst_c.h>
 #endif
@@ -18,7 +19,7 @@ static VerilatedFstC* tfp = NULL;
 #endif
 struct timespec start, end;
 bool check_wp();
-void nvboard_bind_all_pins(TOP_NAME* top);
+//void nvboard_bind_all_pins(TOP_NAME* top);
 void load_img(const char* path);
 
 typedef enum {
@@ -32,10 +33,7 @@ extern uint32_t img_size;
 extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
 uint32_t cycle = 0;
-
-#ifdef CONFIG_ENABLE_FST_TRACE
-static uint64_t sim_time = 0;
-#endif
+uint64_t dump_time = 0;
 
 void my_assert(bool cond){
 #ifdef CONFIG_ENABLE_FST_TRACE
@@ -47,29 +45,25 @@ void my_assert(bool cond){
     assert(0);
 }
 
+void eval(){
+    top.eval();
+    #ifdef CONFIG_ENABLE_FST_TRACE
+        if (tfp) tfp->dump(dump_time);
+        dump_time++;
+    #endif
+}
+
 static void single_cycle() {
     top.clock = ~top.clock;
     uint32_t current_pc = read_pc_reg();
-
-    bool commit = top.io_WriteBack;
-    top.eval();
+    eval();
         
     uint32_t next_pc = read_pc_reg();
+    trace_and_difftest(current_pc, next_pc);
 
-    if(commit){
-        trace_record(current_pc, mem[current_pc >> 2], next_pc);
-        check_difftest(current_pc);
-    }
-
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if (tfp) tfp->dump(sim_time++);
-#endif
     top.clock = ~top.clock;
-    top.eval();
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if (tfp) tfp->dump(sim_time++);
-#endif
-    nvboard_update();
+    eval();
+    //nvboard_update();
     if(check_wp()){
         STATE = STOP;
     }
@@ -103,22 +97,32 @@ void init_mem(const char* img_path){
 
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-    top.clock = 0;
+    //eval();
     top.reset = 1;
-    top.eval();
-    top.clock = 1;
-    top.eval();
-    top.reset = 0;
     top.clock = 0;
-    top.eval();
+    eval();
+
+    for(int i = 0; i < 15; i++) {
+        // 时钟上升沿
+        top.clock = 1;
+        eval();
+        // 时钟下降沿
+        top.clock = 0;
+        eval();
+
+    }
+    top.reset = 0;
+    // top.eval(); // 立即更新组合逻辑状态
 }
 
-void init_nvboard(){
-    nvboard_bind_all_pins(&top);
-    nvboard_init();
-}
+
+// void init_nvboard(){
+//     nvboard_bind_all_pins(&top);
+//     nvboard_init();
+// }
 
 void init_engine(int argc, char **argv) {
+    Verilated::commandArgs(argc, argv);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;
@@ -157,7 +161,7 @@ void init_engine(int argc, char **argv) {
         }
     }
 
-    init_nvboard();
+    //init_nvboard();
 #ifdef CONFIG_ENABLE_SDB
     if (!batch_mode) {
         init_sdb();

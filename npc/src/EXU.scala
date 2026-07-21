@@ -57,7 +57,7 @@ class EXUCTLBundle extends Bundle{
 
 
 
-class EXU extends Module{
+class ysyx_26030092_EXU extends Module{
 
     val RFS_ReadPort = IO(new Bundle {
         val RegReadPort = new ReadRegPortBundle
@@ -171,7 +171,7 @@ class EXU extends Module{
             src2 := RFS_ReadPort.CSRReadPort.CSRRData
         }
     }
-    val ALU_u = Module(new ALU())
+    val ALU_u = Module(new ysyx_26030092_ALU)
     ALU_u.in.ctl := idu_out_reg.exu_ctl.ALU_Control
     ALU_u.in.src1 := src1
     ALU_u.in.src2 := src2
@@ -186,7 +186,7 @@ class EXU extends Module{
     }
     RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
 
-    val CSRController_u = Module(new CSRController)
+    val CSRController_u = Module(new ysyx_26030092_CSRController)
     CSRController_u.CSRReadPort <> RFS_ReadPort.CSRReadPort
     CSRController_u.RegReadPort <> RFS_ReadPort.RegReadPort
     CSRController_u.in.AluResult := AluResult

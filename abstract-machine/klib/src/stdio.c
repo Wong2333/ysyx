@@ -6,6 +6,28 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 
+static int print_hex(char *out, unsigned int val, int upper) {
+  char buffer[32];
+  const char *hex_digits = upper ? "0123456789ABCDEF" : "0123456789abcdef";
+  int i = 0;
+
+  if (val == 0) {
+    *out = '0';
+    return 1;
+  }
+
+  while (val > 0) {
+    buffer[i++] = hex_digits[val & 0xf];
+    val >>= 4;
+  }
+
+  int len = i;
+  while (i > 0) {
+    *out++ = buffer[--i];
+  }
+  return len;
+}
+
 static int print_unsigned(char *out, unsigned int val) {
   char buffer[32]; 
   int i = 0;
@@ -66,6 +88,16 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
       case 'u': {
         int d = va_arg(ap, int); // 使用 ap
         p += print_unsigned(p, d);
+        break;
+      }
+      case 'x': {
+        unsigned int x = va_arg(ap, unsigned int);
+        p += print_hex(p, x, 0);
+        break;
+      }
+      case 'X': {
+        unsigned int x = va_arg(ap, unsigned int);
+        p += print_hex(p, x, 1);
         break;
       }
       case 'c': {

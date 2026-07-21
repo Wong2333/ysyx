@@ -17,7 +17,7 @@ object CSRControl extends ChiselEnum{
     csrrs = Value
 }
 
-class CSRController extends Module{
+class ysyx_26030092_CSRController extends Module{
     val in = IO(Input(new Bundle {
         val ctl = CSRControl()
         val decode = new DecodeBundle()

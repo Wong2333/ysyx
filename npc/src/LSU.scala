@@ -2,7 +2,7 @@ package npc
 
 import chisel3._
 import chisel3.util._
-import npc.PmemReadBlackBox
+import npc.AXI.AXI4Bundle
 
 class LSUBundle extends Bundle{
     val mem_ctl = Output(MemControl())
@@ -10,14 +10,14 @@ class LSUBundle extends Bundle{
     val addr = Output(UInt(32.W))
 }
 
-class LSU extends Module{
+class ysyx_26030092_LSU extends Module{
     val in = IO(Flipped(Decoupled(new LSUBundle)))
     val out = IO(Decoupled(new Bundle {
         val rdata = Output(UInt(32.W))
         val error = Output(Bool())
     }))
 
-    val mem_port = IO(Flipped(new MemPort))
+    val AXI4_port = IO(new AXI4Bundle)
     
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
@@ -26,7 +26,7 @@ class LSU extends Module{
     })
 
     val rdata = WireDefault(0.U(32.W))
-    val shifted_rdata = mem_port.R.rdata >> (lsu_in_reg.addr(1,0) << 3)
+    val shifted_rdata = AXI4_port.rdata >> (lsu_in_reg.addr(1,0) << 3)
     val shifted_wdata = lsu_in_reg.wdata << (lsu_in_reg.addr(1,0) << 3)
     val is_write = lsu_in_reg.mem_ctl.isOneOf(MemControl.sw, MemControl.sh, MemControl.sb)
     val wmask = WireDefault(0.U(4.W))
@@ -39,15 +39,11 @@ class LSU extends Module{
     out.valid := false.B
     out.bits := lsu_out_reg
 
-    mem_port.AR.arvalid := false.B
-    mem_port.AR.araddr := lsu_in_reg.addr
-    mem_port.R.rready := false.B
-    mem_port.AW.awaddr := lsu_in_reg.addr
-    mem_port.AW.awvalid := false.B
-    mem_port.W.wdata := lsu_in_reg.wdata
-    mem_port.W.wstrb := wmask
-    mem_port.W.wvalid := false.B
-    mem_port.B.bready := false.B
+    AXI4_port.initMaster()
+    AXI4_port.araddr := lsu_in_reg.addr
+    AXI4_port.awaddr := lsu_in_reg.addr
+    AXI4_port.wdata := lsu_in_reg.wdata
+    AXI4_port.wstrb := wmask
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_resp :: s_wait_fetch :: Nil = Enum(4)
     val status = RegInit(s_idle)
@@ -66,17 +62,17 @@ class LSU extends Module{
         is(s_wait_mem_free){
             when(is_write){
                 when(!waddr_ready){
-                    mem_port.AW.awaddr := lsu_in_reg.addr
-                    mem_port.AW.awvalid := true.B
-                    when(mem_port.AW.awready){
+                    AXI4_port.awaddr := lsu_in_reg.addr
+                    AXI4_port.awvalid := true.B
+                    when(AXI4_port.awready){
                         waddr_ready := true.B
                     }
                 }
                 when(!wdata_ready){
-                    mem_port.W.wdata := shifted_wdata
-                    mem_port.W.wstrb := wmask
-                    mem_port.W.wvalid := true.B
-                    when(mem_port.W.wready){
+                    AXI4_port.wdata := shifted_wdata
+                    AXI4_port.wstrb := wmask
+                    AXI4_port.wvalid := true.B
+                    when(AXI4_port.wready){
                         wdata_ready := true.B
                     }
                 }
@@ -87,8 +83,8 @@ class LSU extends Module{
                 }
 
             }.otherwise{
-                mem_port.AR.arvalid := true.B
-                when(mem_port.AR.arready){
+                AXI4_port.arvalid := true.B
+                when(AXI4_port.arready){
                     status := s_wait_mem_resp
                 }
 
@@ -96,17 +92,17 @@ class LSU extends Module{
         }
         is(s_wait_mem_resp){
             when(is_write){
-                mem_port.B.bready := true.B
-                when(mem_port.B.bvalid){
+                AXI4_port.bready := true.B
+                when(AXI4_port.bvalid){
                     status := s_wait_fetch
-                    lsu_out_reg.error := mem_port.B.bresp
+                    lsu_out_reg.error := AXI4_port.bresp
                 }
             }.otherwise{
-                mem_port.R.rready := true.B                
-                when(mem_port.R.rvalid){
+                AXI4_port.rready := true.B                
+                when(AXI4_port.rvalid){
                     status := s_wait_fetch
                     lsu_out_reg.rdata := rdata
-                    lsu_out_reg.error := mem_port.R.rresp
+                    lsu_out_reg.error := AXI4_port.rresp
                 }
 
             }
@@ -122,7 +118,7 @@ class LSU extends Module{
 
     switch(lsu_in_reg.mem_ctl){
         is(MemControl.lw){
-            rdata := mem_port.R.rdata
+            rdata := AXI4_port.rdata
         }
         is(MemControl.lb){
             rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))

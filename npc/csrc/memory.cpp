@@ -1,5 +1,5 @@
 #include <svdpi.h>
-#include <VTop__Dpi.h>
+#include <VysyxSoCFull__Dpi.h>
 #include <stdint.h> // 引入 uint32_t, uint8_t 等标准类型
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +8,7 @@
 #include <mmio.h>
 #include <autoconfig.h>
 #include <trace.h>
+#include <cassert>
 // 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
@@ -36,17 +37,33 @@ uint32_t img[1024*1024] = {
   0x00000000,
   0x00000000
 };
+
+uint32_t mrom[1024] = {
+    0x00000513,
+    0x00100073
+};
+uint32_t mrom_size = 4*1024;
+
+#define FLASH_SIZE  (16*1024*1024)
+uint32_t flash[FLASH_SIZE / 4] = {
+    0x100007b7,
+    0x04100713,
+    0x00e78023,
+    0x0000006f
+};
+
+
 uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
-    mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
-    if (!mem) {
-        printf("Failed to allocate memory!\n");
-        exit(1);
-    }
+    // mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
+    // if (!mem) {
+    //     printf("Failed to allocate memory!\n");
+    //     exit(1);
+    // }
     
-    memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
-    uint8_t *pmem_byte = (uint8_t *)mem;
+    // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
+    uint8_t *pmem_byte = (uint8_t *)flash;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
         printf("can't open this file: %s\n",path);
@@ -54,7 +71,7 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    while((len = fread(pmem_byte+idx+CONFIG_START_ADDR,1,1024,fp)) > 0){
+    while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
     img_size = idx;
@@ -67,21 +84,21 @@ extern "C" int pmem_read(int addr, int valid, int* error) {
     unsigned long long cpu_time_us;
     // 将有符号地址转为无符号，防止算术移位问题
     uint32_t raddr = (uint32_t)addr;
-    if(addr == RTC_ADDR){
-        difftest_skip_ref();
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        // 3. 计算纳秒差值
-        cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-                + (end.tv_nsec - start.tv_nsec) / 1000;
-        return (uint32_t)cpu_time_us; 
-    }else if(addr == RTC_ADDR + 4){
-        difftest_skip_ref();
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        // 3. 计算纳秒差值
-        cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-                + (end.tv_nsec - start.tv_nsec) / 1000;
-        return (uint32_t)(cpu_time_us >> 32);
-    }
+    // if(addr == RTC_ADDR){
+    //     difftest_skip_ref();
+    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    //     // 3. 计算纳秒差值
+    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
+    //             + (end.tv_nsec - start.tv_nsec) / 1000;
+    //     return (uint32_t)cpu_time_us; 
+    // }else if(addr == RTC_ADDR + 4){
+    //     difftest_skip_ref();
+    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    //     // 3. 计算纳秒差值
+    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
+    //             + (end.tv_nsec - start.tv_nsec) / 1000;
+    //     return (uint32_t)(cpu_time_us >> 32);
+    // }
     if(!in_pmem(raddr)) *error = true;
     uint32_t data = mem[raddr >> 2];
 
@@ -96,12 +113,12 @@ extern "C" int pmem_write(int addr, int data, char mask, int valid) {
     uint8_t wmask = (uint8_t)mask & 0xF;
     uint8_t *pmem_byte = (uint8_t *)mem;
     waddr = waddr & (~0x3);
-    if(addr == SERIAL_PORT){
-        difftest_skip_ref();
-        printf("%c",(char)data);
-        fflush(stdout);
-        return 0;
-    }
+    // if(addr == SERIAL_PORT){
+    //     difftest_skip_ref();
+    //     printf("%c",(char)data);
+    //     fflush(stdout);
+    //     return 0;
+    // }
     if(!in_pmem(waddr)) return true;
     if (wmask & 0x1) {
         pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
@@ -125,4 +142,35 @@ extern "C" int pmem_write(int addr, int data, char mask, int valid) {
 uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){
     printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
+}
+
+
+extern "C" void flash_read(int32_t addr, int32_t *data) {
+    uint32_t uaddr = addr;
+    *data = (int32_t)flash[uaddr >> 2];
+}
+
+
+
+extern "C" void mrom_read(int32_t addr, int32_t *data) {
+    uint32_t uaddr = addr;
+    uaddr = uaddr - 0x20000000;
+    *data = (int32_t)mrom[uaddr >> 2];
+    // data = mrom[addr >> 2];
+}
+
+uint32_t psram[1024*1024];
+
+extern "C" void psram_read(int32_t addr,int32_t *data){
+    uint32_t uaddr = addr;
+    *data = (int32_t)psram[uaddr >> 2];
+    //printf("read addr: %x data: %x\n",uaddr,*data);
+}
+
+extern "C" void psram_write(int32_t addr,char data){
+    uint32_t uaddr = addr;
+    uint8_t *psram_8bits = (uint8_t*)psram;
+    psram_8bits[uaddr] = data;
+    //uint32_t p = (uint32_t)data;
+    //printf("write addr: %x data: %x\n",uaddr,p);
 }

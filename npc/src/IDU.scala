@@ -54,7 +54,7 @@ class IDUBundle extends Bundle{
     val exu_ctl = new EXUCTLBundle
 }
 
-class IDU extends Module{
+class ysyx_26030092_IDU extends Module{
     val in = IO(Flipped(Decoupled(new Bundle {
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))

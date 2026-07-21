@@ -1,14 +1,13 @@
 #include "svdpi.h"
-#include "VTop__Dpi.h"
+#include "VysyxSoCFull__Dpi.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "VTop.h"
+#include "VysyxSoCFull.h"
 
 uint32_t read_rf_reg(int addr) {
-    const char* scope_name = "TOP.Top.RFS_u.Reg_u"; 
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 
     
     svScope scope = svGetScopeFromName(scope_name);
-    
     if (!scope) {
         printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
         return -1;
@@ -22,10 +21,9 @@ uint32_t read_rf_reg(int addr) {
 }
 
 uint32_t read_pc_reg() {
-    const char* scope_name = "TOP.Top.RFS_u.PC_reg"; 
-    
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.PC_reg"; 
     svScope scope = svGetScopeFromName(scope_name);
-    
+
     if (!scope) {
         printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
         return -1;

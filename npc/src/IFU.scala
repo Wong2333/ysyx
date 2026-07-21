@@ -2,9 +2,16 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import npc.AXI.AXI4Bundle
 
+class trace extends ExtModule{
+    val pc = FlatIO(Input(UInt(32.W)))
+    val inst = FlatIO(Input(UInt(32.W)))
+    val valid = FlatIO(Input(Bool()))
+    addResource("/trace.v")
+}
 
-class IFU extends Module{
+class ysyx_26030092_IFU extends Module{
 
     val in = IO(Flipped(Decoupled(new Bundle {
         val pc = UInt(32.W)
@@ -14,9 +21,7 @@ class IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    val mem_port = IO(Flipped(new MemPort))
-
-    // val pmem_read_inst = Module(new MemUnit())
+    val AXI4_port = IO(new AXI4Bundle)
 
     val pc_reg = RegInit(0.U(32.W))
     val inst_reg = RegInit(0.U(32.W))
@@ -25,15 +30,8 @@ class IFU extends Module{
     in.ready := false.B
     out.valid := false.B
 
-    mem_port.AR.arvalid := false.B
-    mem_port.AR.araddr := pc_reg
-    mem_port.R.rready := false.B
-    mem_port.AW.awaddr := 0.U
-    mem_port.AW.awvalid := false.B
-    mem_port.W.wdata := 0.U
-    mem_port.W.wstrb := 0.U
-    mem_port.W.wvalid := false.B
-    mem_port.B.bready := false.B
+    AXI4_port.initMaster()
+    AXI4_port.araddr := pc_reg
 
     out.bits.pc := pc_reg
     out.bits.inst := inst_reg
@@ -50,16 +48,16 @@ class IFU extends Module{
             }
         }
         is(s_wait_mem_free){
-            mem_port.AR.arvalid := true.B
-            when(mem_port.AR.arready){
+            AXI4_port.arvalid := true.B
+            when(AXI4_port.arready){
                 status := s_wait_mem_data
             }
         }
         is(s_wait_mem_data){
-            mem_port.R.rready := true.B
-            when(mem_port.R.rvalid){
-                inst_reg := mem_port.R.rdata
-                error_reg := mem_port.R.rresp
+            AXI4_port.rready := true.B
+            when(AXI4_port.rvalid){
+                inst_reg := AXI4_port.rdata
+                error_reg := AXI4_port.rresp
                 status := s_wait_fetch
             }
         }
@@ -73,7 +71,18 @@ class IFU extends Module{
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
-    when(mem_port.R.rvalid && mem_port.R.rready && mem_port.R.rresp){
+    when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
+    }
+    
+    val trace_u = Module(new trace)
+    trace_u.pc := 0.U
+    trace_u.inst := 0.U
+    trace_u.valid := false.B
+    when(out.fire){
+        //printf("trace pc=%x, inst=%x\n",out.bits.pc,out.bits.inst);
+        trace_u.valid := true.B
+        trace_u.pc := out.bits.pc
+        trace_u.inst := out.bits.inst
     }
 }

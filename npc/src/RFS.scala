@@ -3,6 +3,7 @@ import chisel3._
 import chisel3.util._
 import npc.MemControl.sw
 import scala.annotation.varargs
+import _root_.test.Bun
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -29,6 +30,7 @@ class PCBlackBox extends ExtModule{
     })
     addResource("/PCBlackBox.v")
 }
+
 
 class WriteRegPortBundle extends Bundle{
     val wdata  = Output(UInt(32.W))
@@ -64,7 +66,7 @@ class ReadRegPortBundle extends Bundle{
     val rdata2 = Input(UInt(32.W))
 }
 
-class RFS extends Module {
+class ysyx_26030092_RFS extends Module {
   val wbu_in = IO(Flipped(Decoupled(new Bundle {
     val WriteRegPort = Flipped(new WriteRegPortBundle)
     val ExceptionPort = Flipped(new ExceptionInfoBundle)
@@ -83,6 +85,7 @@ class RFS extends Module {
     
     val s_idle :: s_wait_write_back :: Nil = Enum(2)
     val status = RegInit(s_idle)
+    // printf("Instance path: %m\n")
 
     switch(status){
       is(s_idle){
