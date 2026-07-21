@@ -27,7 +27,7 @@ void halt(int code) {
 extern char _bootloader_lma_start;
 extern char _bootloader_start;
 extern char _bootloader_end;
-
+void bootloader() __attribute__((section(".bootloader")));
 void bootloader(){
   uint32_t data_size = &_bootloader_end - &_bootloader_start;
   memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
