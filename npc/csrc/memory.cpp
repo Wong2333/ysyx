@@ -171,4 +171,5 @@ extern "C" void psram_read(int32_t addr,int32_t *data){
 extern "C" void psram_write(int32_t addr,int32_t data){
     uint32_t uaddr = addr;
     psram[uaddr >> 2] = data;
+    printf("write addr: %x data: %x\n",uaddr,data);
 }
