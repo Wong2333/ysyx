@@ -20,7 +20,7 @@ SECTIONS {
     _SSBL_start = .;
     *(.SSBL)
     _SSBL_end = .;
-    _SSBL_lma_start = LOADADDR(.text);
+    _SSBL_lma_start = LOADADDR(.SSBL);
   } > psram AT> flash
 
   .text : {
