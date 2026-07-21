@@ -167,3 +167,8 @@ extern "C" void psram_read(int32_t addr,int32_t *data){
     uint32_t uaddr = addr;
     *data = (int32_t)psram[uaddr >> 2];
 }
+
+extern "C" void psram_write(int32_t addr,int32_t data){
+    uint32_t uaddr = addr;
+    psram[uaddr >> 2] = data;
+}
