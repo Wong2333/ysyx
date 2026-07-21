@@ -10,7 +10,7 @@ SECTIONS {
   . = ORIGIN(flash);
   .text_start : {
     *(entry)
-    *(bootloader)
+    *(.bootloader)
   } > flash AT> flash
 
   . = ORIGIN(psram);
