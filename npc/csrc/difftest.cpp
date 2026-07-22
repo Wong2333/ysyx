@@ -35,8 +35,8 @@ static bool difftest_on = false;
 /* NPC memory and register access */
 extern uint32_t *mem;
 extern uint32_t img_size;
-extern uint32_t mrom[1024];
-extern uint32_t mrom_size;
+extern uint32_t flash[1024];
+extern uint32_t img_size;
 uint32_t read_rf_reg(int addr);
 uint32_t read_pc_reg();
 
@@ -81,10 +81,22 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_init_t ref_difftest_init = (ref_difftest_init_t)dlsym(handle, "difftest_init");
   assert(ref_difftest_init);
 
-  printf("Differential testing: ON\n");
+  printf("\033[32mDifferential testing: ON\033[0m\n");
   fflush(stdout);
 
   ref_difftest_init(0);
+
+  void *img_ptr = (uint8_t *)flash;
+  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
+
+  riscv32_CPU_state dut_state;
+  for (int i = 0; i < 32; i++) {
+    dut_state.gpr[i] = read_rf_reg(i);
+  }
+  dut_state.pc = read_pc_reg();
+  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
+
+  difftest_on = true;
 
 }
 
@@ -145,15 +157,5 @@ extern "C" void difftest_commit(){
 }
 
 extern "C" void difftest_reset(){
-  void *img_ptr = (uint8_t *)mrom;
-  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
 
-  riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
-    dut_state.gpr[i] = read_rf_reg(i);
-  }
-  dut_state.pc = read_pc_reg();
-  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-
-  difftest_on = true;
 }

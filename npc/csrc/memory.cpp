@@ -44,9 +44,8 @@ uint32_t mrom_size = 4*1024;
 #define FLASH_SIZE  (16*1024*1024)
 uint32_t flash[FLASH_SIZE / 4];
 
-
 uint32_t img_size = 0;
-uint32_t *mem = img;
+
 void load_img(const char* path){
 
     uint8_t *pmem_byte = (uint8_t *)flash;
@@ -63,69 +62,6 @@ void load_img(const char* path){
     img_size = idx;
     fclose(fp);
 }
-
-extern "C" int pmem_read(int addr, int valid, int* error) {
-    if(valid == 0) return -1;
-    *error = false;
-    unsigned long long cpu_time_us;
-    // 将有符号地址转为无符号，防止算术移位问题
-    uint32_t raddr = (uint32_t)addr;
-    // if(addr == RTC_ADDR){
-    //     difftest_skip_ref();
-    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-    //     // 3. 计算纳秒差值
-    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-    //             + (end.tv_nsec - start.tv_nsec) / 1000;
-    //     return (uint32_t)cpu_time_us; 
-    // }else if(addr == RTC_ADDR + 4){
-    //     difftest_skip_ref();
-    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-    //     // 3. 计算纳秒差值
-    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-    //             + (end.tv_nsec - start.tv_nsec) / 1000;
-    //     return (uint32_t)(cpu_time_us >> 32);
-    // }
-    if(!in_pmem(raddr)) *error = true;
-    uint32_t data = mem[raddr >> 2];
-
-    record_mtrace(READ_TRACE, raddr, 4, data);
-    return data;
-}
-
-extern "C" int pmem_write(int addr, int data, char mask, int valid) {
-    if(valid == 0) return 0;
-    uint32_t waddr = (uint32_t)addr;
-    uint32_t wdata = (uint32_t)data;
-    uint8_t wmask = (uint8_t)mask & 0xF;
-    uint8_t *pmem_byte = (uint8_t *)mem;
-    waddr = waddr & (~0x3);
-    // if(addr == SERIAL_PORT){
-    //     difftest_skip_ref();
-    //     printf("%c",(char)data);
-    //     fflush(stdout);
-    //     return 0;
-    // }
-    if(!in_pmem(waddr)) return true;
-    if (wmask & 0x1) {
-        pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
-    }
-    if (wmask & 0x2) {
-        pmem_byte[waddr + 1] = (uint8_t)(wdata >> 8);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
-    }
-    if (wmask & 0x4) {
-        pmem_byte[waddr + 2] = (uint8_t)(wdata >> 16);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
-    }
-    if (wmask & 0x8) {
-        pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
-    }
-    record_mtrace(WRITE_TRACE, waddr, 4, wdata);
-    return false;
-}
-
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
