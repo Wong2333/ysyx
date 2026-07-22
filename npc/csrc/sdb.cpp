@@ -41,9 +41,7 @@ static int cmd_help(char *args);
 static int cmd_si(char *args){
   int n = 1;
   if (args != NULL && sscanf(args, "%d", &n) == 1) {
-    printf("2\n");
     cpu_exec(n);
-    printf("3\n");
   }else{
     cpu_exec(1);
   }
@@ -203,7 +201,6 @@ void sdb_mainloop() {
     int i;
     for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        printf("1\n");
         if (cmd_table[i].handler(args) < 0) { return; }
         break;
       }
