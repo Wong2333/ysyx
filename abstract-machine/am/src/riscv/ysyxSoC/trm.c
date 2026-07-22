@@ -40,7 +40,9 @@ void uart_init() {
   // bit 1-0 = 11 (8位数据长度)
   outb(UART_BASE + UART_REG_LC, 0x03);
 }
-
+extern uint32_t _data_lma_start;
+extern uint32_t _data_vma_start;
+extern uint32_t _data_vma_end;
 void _trm_init() {
   uart_init();
   char mvendorid[5];
@@ -51,6 +53,9 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
+  printf("_data_lma_start: %x\n",&_data_lma_start);
+  printf("data_vma_start: %x\n",&_data_vma_start);
+  printf("_data_vma_end: %x\n", &_data_vma_end);
   int ret = main(mainargs);
   halt(ret);
 }
