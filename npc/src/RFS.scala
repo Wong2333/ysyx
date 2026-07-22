@@ -205,6 +205,8 @@ class ysyx_26030092_RFS extends Module {
     val commit_reg = RegInit(false.B)
     val commit_pc_reg = Reg(UInt(32.W))
     val commit_u = Module(new Commit)
+    commit_u.valid := false.B
+    commit_u.pc := DontCare
     when(wbu_in.fire){
       commit_reg := true.B
       commit_pc_reg := PC_reg.io.pc
