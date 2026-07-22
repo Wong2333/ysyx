@@ -11,8 +11,9 @@
 #include <verilated_fst_c.h>
 #endif
 // #define DEBUG
-#include <difftest.h>
+#include <sdb.h>
 #include <trace.h>
+#include <difftest.h>
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
 static VerilatedFstC* tfp = NULL;
@@ -81,7 +82,7 @@ void cpu_exec(int n){
     }else{
         while(1){
             single_cycle();
-            check_commit()
+            check_commit();
             // cycle++;
             // if(cycle == 20) {tfp->close(); exit(0);}
             if(STATE == STOP) break;
