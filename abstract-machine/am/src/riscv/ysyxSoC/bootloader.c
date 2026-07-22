@@ -25,9 +25,9 @@ extern uint32_t _text_vma_end;
 extern uint32_t _data_lma_start;
 extern uint32_t _data_vma_start;
 extern uint32_t _data_vma_end;
-extern uint32_t _rtt_lma_start;
-extern uint32_t _rtt_vma_start;
-extern uint32_t _rtt_vma_end;
+extern uint32_t _rtt_lma_start __attribute__((weak));
+extern uint32_t _rtt_vma_start __attribute__((weak));
+extern uint32_t _rtt_vma_end __attribute__((weak));
 
 void second_stage_bootloader() __attribute__((section(".SSBL")));
 
@@ -52,12 +52,14 @@ void second_stage_bootloader(){
     dst++;
     src++;
   } 
-  dst = &_data_vma_start;
-  src = &_data_lma_start;
-  end = &_data_vma_end;
-  while(dst < end){
-    *dst = *src;
-    dst++;
-    src++;
-  } 
+  if (&_rtt_vma_start != 0 && &_rtt_vma_end != 0 && &_rtt_vma_start < &_rtt_vma_end) {
+    dst = &_rtt_vma_start;
+    src = &_rtt_lma_start;
+    end = &_rtt_vma_end;
+    while(dst < end){
+      *dst = *src;
+      dst++;
+      src++;
+    }
+  }
 }
