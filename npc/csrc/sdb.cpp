@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sdb.h>
 #include <autoconfig.h>
+#include <trace.h>
 #include <disasm.h>
 
 static int is_batch_mode = false;
@@ -210,10 +211,9 @@ void sdb_mainloop() {
   }
 }
 
-uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){
-    uint32_t pc = read_pc_reg();
-    uint32_t inst = mem_read(pc);
+    uint32_t pc = get_committed_pc();
+    uint32_t inst = get_committed_inst();
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),

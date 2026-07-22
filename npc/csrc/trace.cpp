@@ -202,8 +202,18 @@ void record_ftrace(uint32_t pc, uint32_t dnpc, uint32_t inst) {
 #endif
 }
 
+static uint32_t committed_pc = 0;
+static uint32_t committed_inst = 0;
+static int commit_cnt = 0;
+
+extern "C" uint32_t get_committed_pc() { return committed_pc; }
+extern "C" uint32_t get_committed_inst() { return committed_inst; }
+extern "C" int get_commit_cnt() { return commit_cnt; }
+
 extern "C" void trace(int32_t pc, int32_t inst){
-  // printf("trace pc=%x inst=%x\n",pc,inst);
+  committed_pc = pc;
+  committed_inst = inst;
+  commit_cnt++;
   trace_record(pc, inst, pc + 4);
 }
 
