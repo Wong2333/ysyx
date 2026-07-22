@@ -75,8 +75,8 @@ void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            printCurrentInst();
             single_cycle();
+            printCurrentInst();
             if(STATE == STOP) break;
         }
     }else{
