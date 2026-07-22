@@ -1,23 +1,16 @@
-#include <dlfcn.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <elf.h>
-#include <capstone/capstone.h>
 #include <autoconfig.h>
 #include "trace.h"
+#include "disasm.h"
 
 
 #ifdef CONFIG_ENABLE_ITRACE
 static FILE *itrace_fp = NULL;
-static void *cs_handle = NULL;
-static size_t (*cs_disasm_dl)(csh handle, const uint8_t *code,
-    size_t code_size, uint64_t address, size_t count, cs_insn **insn) = NULL;
-static void (*cs_free_dl)(cs_insn *insn, size_t count) = NULL;
-static csh cs_h;
-static bool disasm_ok = false;
 
 /* Ring buffer for last 32 instructions */
 static char iringbuf[32][128];
@@ -49,49 +42,6 @@ static int ftrace_top = -1;
 #endif
 
 #ifdef CONFIG_ENABLE_ITRACE
-static void init_disasm(void) {
-  const char *cs_lib = "tools/capstone/repo/libcapstone.so.5";
-
-  cs_handle = dlopen(cs_lib, RTLD_LAZY);
-  if (!cs_handle) {
-    printf("ITrace: Cannot open '%s'. ITrace disabled.\n", cs_lib);
-    return;
-  }
-
-  cs_err (*cs_open_dl)(cs_arch arch, cs_mode mode, csh *handle);
-  cs_open_dl = (cs_err (*)(cs_arch, cs_mode, csh *))dlsym(cs_handle, "cs_open");
-  assert(cs_open_dl);
-
-  cs_disasm_dl = (size_t (*)(csh, const uint8_t *, size_t, uint64_t, size_t, cs_insn **))
-                 dlsym(cs_handle, "cs_disasm");
-  assert(cs_disasm_dl);
-
-  cs_free_dl = (void (*)(cs_insn *, size_t))dlsym(cs_handle, "cs_free");
-  assert(cs_free_dl);
-
-  int ret = cs_open_dl(CS_ARCH_RISCV, CS_MODE_RISCV32, &cs_h);
-  assert(ret == CS_ERR_OK);
-  disasm_ok = true;
-}
-
-static void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte) {
-  if (!disasm_ok) {
-    snprintf(str, size, "0x%08x", *(uint32_t *)code);
-    return;
-  }
-  cs_insn *insn;
-  size_t count = cs_disasm_dl(cs_h, code, nbyte, pc, 0, &insn);
-  if (count == 0) {
-    snprintf(str, size, "0x%08x", *(uint32_t *)code);
-    return;
-  }
-  int ret = snprintf(str, size, "%s", insn->mnemonic);
-  if (insn->op_str[0] != '\0') {
-    snprintf(str + ret, size - ret, "\t%s", insn->op_str);
-  }
-  cs_free_dl(insn, count);
-}
-
 static void push_itrace(const char *trace) {
   strcpy(iringbuf[ibuf_tail], trace);
   ibuf_tail = (ibuf_tail + 1) % 32;
@@ -286,8 +236,9 @@ void init_trace(const char *trace_dir, const char *elf_file) {
     trace_dir = CONFIG_TRACE_PATH[0] ? CONFIG_TRACE_PATH : NULL;
   printf("Trace init: dir=%s, elf=%s\n", trace_dir ? trace_dir : "NULL", elf_file ? elf_file : "NULL");
 
-#ifdef CONFIG_ENABLE_ITRACE
   init_disasm();
+
+#ifdef CONFIG_ENABLE_ITRACE
   {
     char path[4096];
     if (trace_dir)

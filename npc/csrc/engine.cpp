@@ -75,12 +75,10 @@ void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            printf("c1\n");
+            printCurrentInst();
             single_cycle();
-            printf("c2\n");
             if(STATE == STOP) break;
         }
-        printCurrentInst();
     }else{
         while(1){
             single_cycle();

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sdb.h>
 #include <autoconfig.h>
+#include <disasm.h>
 
 static int is_batch_mode = false;
 
@@ -214,10 +215,21 @@ void sdb_mainloop() {
 
 uint32_t read_pc_reg();
 extern "C" void printCurrentInst(){
-    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem_read(read_pc_reg()));
+    uint32_t pc = read_pc_reg();
+    uint32_t inst = mem_read(pc);
+    uint8_t code[4] = {
+        (uint8_t)(inst >> 0),
+        (uint8_t)(inst >> 8),
+        (uint8_t)(inst >> 16),
+        (uint8_t)(inst >> 24)
+    };
+    char buf[128];
+    disassemble(buf, sizeof(buf), pc, code, 4);
+    printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
 }
 
 void init_sdb() {
+  init_disasm();
   init_regex();
   init_wp_pool();
 }
