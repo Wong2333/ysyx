@@ -43,6 +43,9 @@ void uart_init() {
 extern uint32_t _data_lma_start;
 extern uint32_t _data_vma_start;
 extern uint32_t _data_vma_end;
+extern uint32_t _rtt_lma_start;
+extern uint32_t _rtt_vma_start;
+extern uint32_t _rtt_vma_end;
 void _trm_init() {
   uart_init();
   char mvendorid[5];
@@ -56,6 +59,9 @@ void _trm_init() {
   printf("_data_lma_start: %x\n",&_data_lma_start);
   printf("data_vma_start: %x\n",&_data_vma_start);
   printf("_data_vma_end: %x\n", &_data_vma_end);
+  printf("_rtt_lma_start: %x\n",&_rtt_lma_start);
+  printf("_rtt_vma_start: %x\n",&_rtt_vma_start);
+  printf("_rtt_vma_end: %x\n", &_rtt_vma_end);
   int ret = main(mainargs);
   halt(ret);
 }
