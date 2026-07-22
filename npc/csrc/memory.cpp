@@ -105,3 +105,13 @@ uint32_t mem_read(uint32_t addr) {
         return psram[(addr - 0x80000000) >> 2];
     return 0;
 }
+
+bool in_mem(uint32_t addr){
+    if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
+        return true;
+    else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
+        return true;
+    else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
+        return true;
+    return false;
+}
