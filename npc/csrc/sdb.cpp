@@ -224,7 +224,7 @@ extern "C" void commit(int pc){
 bool check_commit(){
   if(has_commit){
     has_commit = false;
-    check_difftest(read_pc_reg());
+    check_difftest(commit_pc);
     trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
     return true;
   }
