@@ -12,7 +12,9 @@ void first_stage_bootloader(){
   uint32_t *end = &_SSBL_end;
   // for(int start = _bootloader_start )
   while(dst < end){
-    *dst++ = *src++; 
+    *dst = *src;
+    dst++;
+    src++; 
   }
   //memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
 }
@@ -29,5 +31,9 @@ void second_stage_bootloader(){
   uint32_t *src = &_bootloader_lma_start;
   uint32_t *end = &_bootloader_end;
   // for(int start = _bootloader_start )
-  while(dst < end) *dst++ = *src++; 
+  while(dst < end){
+    *dst = *src;
+    dst++;
+    src++;
+  } 
 }
