@@ -25,10 +25,10 @@ SECTIONS {
 
   .text : {
     _bootloader_start = .;
-    _bootloader_lma_start = LOADADDR(.text);
+
     *(.text*)
   } > psram AT> flash
-
+  _bootloader_lma_start = LOADADDR(.text);
   .rodata : {
     *(.rodata*)
   } > psram AT> flash
