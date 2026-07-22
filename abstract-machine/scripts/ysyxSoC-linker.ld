@@ -23,21 +23,22 @@ SECTIONS {
     _SSBL_lma_start = LOADADDR(.SSBL);
   } > psram AT> flash
 
-  .text : {
-    _bootloader_start = .;
 
+  .text : {
+    _text_vma_start = .;
     *(.text*)
-  } > psram AT> flash
-  _bootloader_lma_start = LOADADDR(.text);
-  .rodata : {
     *(.rodata*)
+    _text_vma_end = .;
   } > psram AT> flash
+  _text_lma_start = LOADADDR(.text);
 
   .data : {
+    _data_vma_start = .;
     *(.data*)
     *(.sdata*)
+    _data_vma_end = .;
   } > psram AT> flash
-  _bootloader_end = .;
+  _data_lma_start = LOADADDR(.data);
 
   .bss : {
 	  _bss_start = .;
