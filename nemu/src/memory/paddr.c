@@ -75,7 +75,7 @@ void init_mem() {
 
 
 word_t paddr_read(paddr_t addr, int len) {
-  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr))){
+  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr) || in_flash(addr))){
     record_mtrace(WRITE_TRACE,addr,len, pmem_read(addr, len));
     return pmem_read(addr, len);
   }
@@ -85,7 +85,7 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  if (likely(in_pmem(addr) || in_sram(addr))) {   
+  if (likely(in_pmem(addr) || in_sram(addr)|| in_flash(addr))) {   
     record_mtrace(READ_TRACE,addr,len, data);
     pmem_write(addr, len, data);
     return; 
