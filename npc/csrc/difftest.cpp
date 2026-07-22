@@ -7,6 +7,7 @@
 #include <difftest.h>
 #include <autoconfig.h>
 #include <trace.h>
+#include <sdb.h>
 
 /* Function pointer types for the REF shared library API */
 typedef void (*ref_difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
@@ -47,6 +48,15 @@ static const char *reg_names[] = {
 };
 
 static bool is_skip_ref = false;
+
+/* Commit tracking for single-step */
+static uint32_t commit_pc = 0;
+static uint32_t commit_inst = 0;
+static int commit_count = 0;
+
+extern "C" uint32_t get_commit_pc() { return commit_pc; }
+extern "C" uint32_t get_commit_inst() { return commit_inst; }
+extern "C" int get_commit_count() { return commit_count; }
 
 extern "C" void difftest_skip_ref() {
   is_skip_ref = true;
@@ -156,8 +166,9 @@ extern "C" void difftest_reset(){
 
 void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){
   if(commit){
-    // printf("difftest current pc: %x next pc %x\n",current_pc,next_pc);
-    // trace_record(current_pc, mem[current_pc >> 2], next_pc);
+    commit_pc = current_pc;
+    commit_inst = mem_read(current_pc);
+    commit_count++;
     check_difftest(current_pc);
   }
   commit = false;

@@ -75,11 +75,11 @@ void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            int cnt_before = get_commit_cnt();
+            int cnt_before = get_commit_count();
             do {
                 single_cycle();
                 if(STATE == STOP) break;
-            } while (get_commit_cnt() == cnt_before);
+            } while (get_commit_count() == cnt_before);
             printCurrentInst();
             if(STATE == STOP) break;
         }

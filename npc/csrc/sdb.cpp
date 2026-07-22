@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <sdb.h>
 #include <autoconfig.h>
-#include <trace.h>
+#include <difftest.h>
 #include <disasm.h>
 
 static int is_batch_mode = false;
@@ -212,8 +212,8 @@ void sdb_mainloop() {
 }
 
 extern "C" void printCurrentInst(){
-    uint32_t pc = get_committed_pc();
-    uint32_t inst = get_committed_inst();
+    uint32_t pc = get_commit_pc();
+    uint32_t inst = get_commit_inst();
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),
