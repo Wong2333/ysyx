@@ -38,31 +38,17 @@ uint32_t img[1024*1024] = {
   0x00000000
 };
 
-uint32_t mrom[1024] = {
-    0x00000513,
-    0x00100073
-};
+uint32_t mrom[1024];
 uint32_t mrom_size = 4*1024;
 
 #define FLASH_SIZE  (16*1024*1024)
-uint32_t flash[FLASH_SIZE / 4] = {
-    0x100007b7,
-    0x04100713,
-    0x00e78023,
-    0x0000006f
-};
+uint32_t flash[FLASH_SIZE / 4];
 
 
 uint32_t img_size = 0;
 uint32_t *mem = img;
 void load_img(const char* path){
-    // mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
-    // if (!mem) {
-    //     printf("Failed to allocate memory!\n");
-    //     exit(1);
-    // }
-    
-    // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
+
     uint8_t *pmem_byte = (uint8_t *)flash;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
