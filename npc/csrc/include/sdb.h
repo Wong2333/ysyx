@@ -16,6 +16,8 @@ void init_regex();
 void init_wp_pool();
 uint32_t mem_read(uint32_t addr);
 uint32_t read_rf_reg(int addr);
+uint32_t read_pc_reg();
+bool check_commit();
 uint32_t isa_reg_str2val(const char *s, bool *success);
 void cpu_exec(int n);
 void isa_reg_display();

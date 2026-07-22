@@ -6,6 +6,7 @@
 #include <autoconfig.h>
 #include <difftest.h>
 #include <disasm.h>
+#include <trace.h>
 
 static int is_batch_mode = false;
 
@@ -211,9 +212,28 @@ void sdb_mainloop() {
   }
 }
 
+
+static uint32_t commit_pc;
+static bool has_commit = false;
+
+extern "C" void commit(int pc){
+  commit_pc = pc;
+  has_commit = true;
+}
+
+bool check_commit(){
+  if(has_commit){
+    has_commit = false;
+    check_difftest(read_pc_reg());
+    trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
+    return true;
+  }
+  return false;
+}
+
 extern "C" void printCurrentInst(){
-    uint32_t pc = get_commit_pc();
-    uint32_t inst = get_commit_inst();
+    uint32_t pc = commit_pc;
+    uint32_t inst = mem_read(commit_pc);
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),
@@ -224,6 +244,8 @@ extern "C" void printCurrentInst(){
     disassemble(buf, sizeof(buf), pc, code, 4);
     printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
 }
+
+
 
 void init_sdb() {
   init_disasm();

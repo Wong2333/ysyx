@@ -55,11 +55,7 @@ void eval(){
 
 static void single_cycle() {
     top.clock = ~top.clock;
-    uint32_t current_pc = read_pc_reg();
     eval();
-        
-    uint32_t next_pc = read_pc_reg();
-    trace_and_difftest(current_pc, next_pc);
 
     top.clock = ~top.clock;
     eval();
@@ -75,17 +71,17 @@ void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-            int cnt_before = get_commit_count();
             do {
                 single_cycle();
                 if(STATE == STOP) break;
-            } while (get_commit_count() == cnt_before);
+            } while (!check_commit());
             printCurrentInst();
             if(STATE == STOP) break;
         }
     }else{
         while(1){
             single_cycle();
+            check_commit()
             // cycle++;
             // if(cycle == 20) {tfp->close(); exit(0);}
             if(STATE == STOP) break;

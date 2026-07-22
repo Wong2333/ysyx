@@ -50,13 +50,7 @@ static const char *reg_names[] = {
 static bool is_skip_ref = false;
 
 /* Commit tracking for single-step */
-static uint32_t commit_pc = 0;
-static uint32_t commit_inst = 0;
-static int commit_count = 0;
 
-extern "C" uint32_t get_commit_pc() { return commit_pc; }
-extern "C" uint32_t get_commit_inst() { return commit_inst; }
-extern "C" int get_commit_count() { return commit_count; }
 
 extern "C" void difftest_skip_ref() {
   is_skip_ref = true;
@@ -162,14 +156,4 @@ extern "C" void difftest_reset(){
   ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
 
   difftest_on = true;
-}
-
-void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){
-  if(commit){
-    commit_pc = current_pc;
-    commit_inst = mem_read(current_pc);
-    commit_count++;
-    check_difftest(current_pc);
-  }
-  commit = false;
 }
