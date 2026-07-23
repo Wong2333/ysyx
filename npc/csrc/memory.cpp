@@ -93,6 +93,35 @@ extern "C" void psram_write(int32_t addr,char data){
     //printf("write addr: %x data: %x\n",uaddr,p);
 }
 
+uint16_t sdram [32*1024*1024/2] = {
+    0x1234,
+    0x5678
+};
+extern "C" void sdram_read(int32_t addr, int16_t* data){
+    *data = sdram[addr];
+}
+
+extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
+    // 简单的边界检查（可选）
+    if (addr < 0 || addr >= 32*1024*1024/2) return;
+
+    uint16_t current_data = sdram[addr];
+    uint16_t new_data = current_data; // 默认保持原值
+
+    // 处理低字节
+    if (!(mask & 0x1)) { // 如果 mask bit 0 为 0，说明需要写入
+        new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
+    }
+
+    // 处理高字节
+    if (!(mask & 0x2)) { // 如果 mask bit 1 为 0，说明需要写入
+        new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
+    }
+
+    sdram[addr] = new_data;
+}
+
+
 /* 总的内存访问函数，供 SDB 调用。
  * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
  */
@@ -115,3 +144,4 @@ bool in_mem(uint32_t addr){
         return true;
     return false;
 }
+
