@@ -98,8 +98,8 @@ uint16_t sdram [32*1024*1024/2] = {
     0x5678
 };
 extern "C" void sdram_read(int32_t addr, int16_t* data){
-    printf("addr: %x\n",addr);
-    *data = sdram[addr];
+    //printf("addr: %x\n",addr);
+    *data = sdram[addr & ~1];
 }
 
 extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
