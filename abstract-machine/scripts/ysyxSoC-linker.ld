@@ -3,6 +3,7 @@ ENTRY(_start)
 MEMORY {
   flash : ORIGIN = 0x30000000, LENGTH = 16M
   psram : ORIGIN = 0x80000000, LENGTH = 4M
+  sdram : ORIGIN = 0xa0000000, LENGTH = 32M
 }
 
 SECTIONS {
@@ -21,7 +22,7 @@ SECTIONS {
     *(.SSBL)
     _SSBL_end = .;
     _SSBL_lma_start = LOADADDR(.SSBL);
-  } > psram AT> flash
+  } > sdram AT> flash
 
 
   .text : {
@@ -29,7 +30,7 @@ SECTIONS {
     *(.text*)
     *(.rodata*)
     _text_vma_end = .;
-  } > psram AT> flash
+  } > sdram AT> flash
   _text_lma_start = LOADADDR(.text);
 
   .data : {
@@ -37,7 +38,7 @@ SECTIONS {
     *(.data*)
     *(.sdata*)
     _data_vma_end = .;
-  } > psram AT> flash
+  } > sdram AT> flash
   _data_lma_start = LOADADDR(.data);
 
   .bss : {
@@ -45,11 +46,11 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > psram
+  } > sdram
 
   . = ALIGN(8);
   _heap_start = .;
 
-  _stack_pointer = ORIGIN(psram) + LENGTH(psram);
+  _stack_pointer = ORIGIN(sdram) + LENGTH(sdram);
 
 }
