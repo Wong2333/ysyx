@@ -89,41 +89,28 @@ extern "C" void psram_write(int32_t addr,char data){
     uint32_t uaddr = addr;
     uint8_t *psram_8bits = (uint8_t*)psram;
     psram_8bits[uaddr] = data;
-    //uint32_t p = (uint32_t)data;
-    //printf("write addr: %x data: %x\n",uaddr,p);
 }
 
 uint16_t sdram [32*1024*1024/2];
 extern "C" void sdram_read(int32_t addr, int16_t* data){
-    //printf("addr: %x\n",addr);
     *data = sdram[addr];
 }
 
 extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
-    // 边界检查（可选）
-    if (addr < 0 || addr >= 32 * 1024 * 1024 / 2) return;
-    // printf("------------------------------\n");
-    // printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
-
     uint16_t current_data = sdram[addr];
-    uint16_t new_data = current_data; // 保留原值，仅更新目标字节
+    uint16_t new_data = current_data;
 
-    // 解析 mask：提取低字节/高字节使能状态（1=使能，0=屏蔽）
-    uint8_t low_enable = !(mask & 0x1);   // 低字节是否使能（bit0=0 时为 1）
-    uint8_t high_enable = !(mask & 0x2);  // 高字节是否使能（bit1=0 时为 1）
-    // printf("new_data:%x\n",new_data);
-    // 写入低字节（若使能）
+    uint8_t low_enable = !(mask & 0x1);
+    uint8_t high_enable = !(mask & 0x2);
     if (low_enable) {
-        new_data = (new_data & 0xFF00) | (wdata & 0x00FF); // 保留高字节，更新低字节
+        new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
     }
 
-    // 写入高字节（若使能）
     if (high_enable) {
-        new_data = (new_data & 0x00FF) | (wdata & 0xFF00); // 保留低字节，更新高字节
+        new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
     }
-    // printf("write uint16 %x to 0x%x\n",new_data,addr);
-    // printf("--------------------------------\n");
-    sdram[addr] = new_data; // 写入最终数据
+
+    sdram[addr] = new_data;
 }
 
 
@@ -137,6 +124,10 @@ uint32_t mem_read(uint32_t addr) {
         return flash[(addr - 0x30000000) >> 2];
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
+    else if(addr >= 0xa0000000 && addr < 0xa2000000){
+        uint32_t * sdram_ = (uint32_t*)sdram;
+        return sdram_[addr];
+    }
     return 0;
 }
 
@@ -146,6 +137,8 @@ bool in_mem(uint32_t addr){
     else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
         return true;
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
+        return true;
+    else if(addr >= 0xa0000000 && addr < 0xa2000000)
         return true;
     return false;
 }
