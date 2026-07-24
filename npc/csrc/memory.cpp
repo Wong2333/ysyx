@@ -95,6 +95,7 @@ extern "C" void psram_write(int32_t addr,char data){
 
 uint16_t sdram [32*1024*1024/2];
 extern "C" void sdram_read(int32_t addr, int16_t* data){
+    printf("dsram:%x\n",addr);
     *data = sdram[addr];
 }
 
