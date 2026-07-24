@@ -56,9 +56,11 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
+    printf("loading images....\n");
     while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
+    printf("loaded\n");
     img_size = idx;
     fclose(fp);
 }
