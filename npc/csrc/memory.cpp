@@ -108,7 +108,7 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
     uint16_t current_data = sdram[addr];
-    uint16_t new_data = current_data; // 保留原值，仅更新目标字节
+    uint16_t new_data = 0; // 保留原值，仅更新目标字节
 
     // 解析 mask：提取低字节/高字节使能状态（1=使能，0=屏蔽）
     uint8_t low_enable = !(mask & 0x1);   // 低字节是否使能（bit0=0 时为 1）
