@@ -14,7 +14,7 @@ SECTIONS {
     *(.FSBL)
   } > flash AT> flash
 
-  . = ORIGIN(psram);
+  . = ORIGIN(sdram);
   _pmem_start = .;
 
   .SSBL : {
