@@ -123,7 +123,7 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     if (high_enable) {
         new_data = (new_data & 0x00FF) | (wdata & 0xFF00); // 保留低字节，更新高字节
     }
-
+    printf("write uint16 %x to 0x%x",new_data,addr);
     sdram[addr] = new_data; // 写入最终数据
 }
 
