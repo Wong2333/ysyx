@@ -95,15 +95,15 @@ extern "C" void psram_write(int32_t addr,char data){
 
 uint16_t sdram [32*1024*1024/2];
 extern "C" void sdram_read(int32_t addr, int16_t* data){
-    printf("dsram:%x\n",addr);
+    //printf("dsram:%x\n",addr);
     *data = sdram[addr];
-    printf("data: %x\n",*data);
+    //printf("data: %x\n",*data);
 }
 
 extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     uint16_t current_data = sdram[addr];
     uint16_t new_data = current_data;
-    printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
+    //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
     uint8_t low_enable = !(mask & 0x1);
     uint8_t high_enable = !(mask & 0x2);

@@ -16,7 +16,7 @@ void first_stage_bootloader(){
     dst++;
     src++; 
   }
-  volatile int32_t wait = 1000;
+  volatile int32_t wait = 10000;
   while(wait-- > 0);
   //memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
 }
