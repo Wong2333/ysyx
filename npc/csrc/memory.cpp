@@ -131,7 +131,7 @@ uint32_t mem_read(uint32_t addr) {
         return psram[(addr - 0x80000000) >> 2];
     else if(addr >= 0xa0000000 && addr < 0xa2000000){
         uint32_t * sdram_ = (uint32_t*)sdram;
-        return sdram_[addr];
+        return sdram_[addr - 0xa0000000];
     }
     return 0;
 }
