@@ -102,8 +102,8 @@ extern "C" void sdram_read(int32_t addr, int16_t* data){
 extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     // 边界检查（可选）
     if (addr < 0 || addr >= 32 * 1024 * 1024 / 2) return;
-    printf("------------------------------\n");
-    printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
+    // printf("------------------------------\n");
+    // printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
     uint16_t current_data = sdram[addr];
     uint16_t new_data = current_data; // 保留原值，仅更新目标字节
@@ -111,7 +111,7 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     // 解析 mask：提取低字节/高字节使能状态（1=使能，0=屏蔽）
     uint8_t low_enable = !(mask & 0x1);   // 低字节是否使能（bit0=0 时为 1）
     uint8_t high_enable = !(mask & 0x2);  // 高字节是否使能（bit1=0 时为 1）
-    printf("new_data:%x\n",new_data);
+    // printf("new_data:%x\n",new_data);
     // 写入低字节（若使能）
     if (low_enable) {
         new_data = (new_data & 0xFF00) | (wdata & 0x00FF); // 保留高字节，更新低字节
@@ -121,8 +121,8 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     if (high_enable) {
         new_data = (new_data & 0x00FF) | (wdata & 0xFF00); // 保留低字节，更新高字节
     }
-    printf("write uint16 %x to 0x%x\n",new_data,addr);
-    printf("--------------------------------\n");
+    // printf("write uint16 %x to 0x%x\n",new_data,addr);
+    // printf("--------------------------------\n");
     sdram[addr] = new_data; // 写入最终数据
 }
 
