@@ -105,6 +105,7 @@ extern "C" void sdram_read(int32_t addr, int16_t* data){
 extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     // 边界检查（可选）
     if (addr < 0 || addr >= 32 * 1024 * 1024 / 2) return;
+    printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
     uint16_t current_data = sdram[addr];
     uint16_t new_data = current_data; // 保留原值，仅更新目标字节
