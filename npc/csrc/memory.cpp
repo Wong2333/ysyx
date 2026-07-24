@@ -113,7 +113,7 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     // 解析 mask：提取低字节/高字节使能状态（1=使能，0=屏蔽）
     uint8_t low_enable = !(mask & 0x1);   // 低字节是否使能（bit0=0 时为 1）
     uint8_t high_enable = !(mask & 0x2);  // 高字节是否使能（bit1=0 时为 1）
-
+    printf("new_data:%x\n",new_data);
     // 写入低字节（若使能）
     if (low_enable) {
         new_data = (new_data & 0xFF00) | (wdata & 0x00FF); // 保留高字节，更新低字节
