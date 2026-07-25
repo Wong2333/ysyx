@@ -67,7 +67,7 @@ extern uint64_t cycle;
 // DPI-C 函数实现
 void ebreak() {
     uint32_t status = read_rf_reg(10);
-    printf("cycle: %x\n",cycle);
+    printf("cycle: %llu\n",cycle);
     if(status == 0){
         printf("\033[32mHIT GOOD TRAP\033[0m\n");
         exit(0);
