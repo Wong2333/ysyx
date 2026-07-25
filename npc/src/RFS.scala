@@ -2,8 +2,12 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.MemControl.sw
-import scala.annotation.varargs
-import _root_.test.Bun
+
+class Commit extends ExtModule{
+    val pc = FlatIO(Input(UInt(32.W)))
+    val valid = FlatIO(Input(Bool()))
+    addResource("/Commit.v")
+}
 
 class RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
@@ -68,16 +72,16 @@ class ReadRegPortBundle extends Bundle{
 
 class ysyx_26030092_RFS extends Module {
   val wbu_in = IO(Flipped(Decoupled(new Bundle {
-    val WriteRegPort = Flipped(new WriteRegPortBundle)
-    val ExceptionPort = Flipped(new ExceptionInfoBundle)
-    val CSRWritePort = Flipped(new CSRWritePortBundle)
-  })))
-  val RFS_ReadPort = IO(new Bundle {
-    val RegReadPort = Flipped(new ReadRegPortBundle)
-    val CSRReadPort = Flipped(new CSRReadPortBundle)
-  })
-  val pc_out = IO(Decoupled(new Bundle{
-      val pc = Output(UInt(32.W))
+      val WriteRegPort = Flipped(new WriteRegPortBundle)
+      val ExceptionPort = Flipped(new ExceptionInfoBundle)
+      val CSRWritePort = Flipped(new CSRWritePortBundle)
+    })))
+    val RFS_ReadPort = IO(new Bundle {
+      val RegReadPort = Flipped(new ReadRegPortBundle)
+      val CSRReadPort = Flipped(new CSRReadPortBundle)
+    })
+    val pc_out = IO(Decoupled(new Bundle{
+        val pc = Output(UInt(32.W))
     }))
 
     wbu_in.ready := false.B
@@ -196,5 +200,20 @@ class ysyx_26030092_RFS extends Module {
       mcause := wbu_in.bits.ExceptionPort.Exception_Code
       PC_reg.io.pc_next := mtvec
       PC_reg.io.pc_we := true.B
+    }
+
+    val commit_reg = RegInit(false.B)
+    val commit_pc_reg = Reg(UInt(32.W))
+    val commit_u = Module(new Commit)
+    commit_u.valid := false.B
+    commit_u.pc := DontCare
+    when(wbu_in.fire){
+      commit_reg := true.B
+      commit_pc_reg := PC_reg.io.pc
+    }
+    when(commit_reg){
+      commit_u.valid := true.B
+      commit_reg := false.B
+      commit_u.pc := commit_pc_reg
     }
 }

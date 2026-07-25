@@ -7,6 +7,7 @@
 #include <difftest.h>
 #include <autoconfig.h>
 #include <trace.h>
+#include <sdb.h>
 
 /* Function pointer types for the REF shared library API */
 typedef void (*ref_difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
@@ -34,8 +35,8 @@ static bool difftest_on = false;
 /* NPC memory and register access */
 extern uint32_t *mem;
 extern uint32_t img_size;
-extern uint32_t mrom[1024];
-extern uint32_t mrom_size;
+extern uint32_t flash[1024];
+extern uint32_t img_size;
 uint32_t read_rf_reg(int addr);
 uint32_t read_pc_reg();
 
@@ -45,12 +46,6 @@ static const char *reg_names[] = {
   "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
-
-static bool is_skip_ref = false;
-
-extern "C" void difftest_skip_ref() {
-  is_skip_ref = true;
-} 
 
 void init_difftest(const char *ref_so_file, long img_sz) {
   assert(ref_so_file != NULL);
@@ -77,14 +72,77 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_init_t ref_difftest_init = (ref_difftest_init_t)dlsym(handle, "difftest_init");
   assert(ref_difftest_init);
 
-  printf("Differential testing: ON\n");
+  printf("\033[32mDifferential testing: ON\033[0m\n");
   fflush(stdout);
 
   ref_difftest_init(0);
 
+  void *img_ptr = (uint8_t *)flash;
+  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
+
+  riscv32_CPU_state dut_state;
+  for (int i = 0; i < 32; i++) {
+    dut_state.gpr[i] = read_rf_reg(i);
+  }
+  dut_state.pc = read_pc_reg();
+  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
+
+  difftest_on = true;
+
 }
 
 void my_assert(bool cond);
+uint32_t mem_read(uint32_t addr);
+bool in_mem(uint32_t addr);
+
+// 假设你提供的读取通用寄存器的函数原型如下（根据你的实际情况可能需要微调）：
+extern uint32_t read_rf_reg(uint32_t reg_idx);
+
+// 辅助函数：对指定位宽的数值进行符号扩展
+static inline int32_t sign_extend(uint32_t val, int bits) {
+    uint32_t sign_bit = 1u << (bits - 1);
+    return (int32_t)((val ^ sign_bit) - sign_bit);
+}
+
+static int get_mem_access_address(uint32_t instr, uint32_t *out_addr) {
+    // 提取低7位操作码
+    uint8_t opcode = instr & 0x7F;
+
+    // 提取基址寄存器 rs1 (指令的第 19-15 位)
+    uint8_t rs1 = (instr >> 15) & 0x1F;
+    
+    // 读取基址寄存器的值
+    uint32_t base_addr = read_rf_reg(rs1);
+    
+    int32_t offset = 0;
+
+    if (opcode == 0x03) {
+        uint32_t imm_11_0 = (instr >> 20) & 0xFFF;
+        offset = sign_extend(imm_11_0, 12);
+    } 
+    else if (opcode == 0x23) { 
+        uint32_t imm_11_5 = (instr >> 25) & 0x7F;
+        uint32_t imm_4_0  = (instr >> 7)  & 0x1F;
+        uint32_t imm_11_0 = (imm_11_5 << 5) | imm_4_0;
+        offset = sign_extend(imm_11_0, 12);
+    } 
+    else {
+        return 0; 
+    }
+    *out_addr = base_addr + offset;
+
+    return 1;
+}
+
+static bool is_skip_ref(uint32_t pc){
+  uint32_t inst = mem_read(pc);
+  uint32_t addr; 
+  if(get_mem_access_address(inst,&addr)){
+    //printf("yes: %x in_mem:%x\n",addr,in_mem(addr));  
+    return !in_mem(addr);
+  }
+  return false;
+}
 
 void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
@@ -95,9 +153,8 @@ void check_difftest(uint32_t pc) {
   }
   dut_state.pc = read_pc_reg();
 
-  if (is_skip_ref) {
+  if (is_skip_ref(pc)) {
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-    is_skip_ref = false;
     return;
   }
   ref_difftest_exec(1);
@@ -141,24 +198,5 @@ extern "C" void difftest_commit(){
 }
 
 extern "C" void difftest_reset(){
-  void *img_ptr = (uint8_t *)mrom;
-  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, mrom_size, DIFFTEST_TO_REF);
 
-  riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
-    dut_state.gpr[i] = read_rf_reg(i);
-  }
-  dut_state.pc = read_pc_reg();
-  ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-
-  difftest_on = true;
-}
-
-void trace_and_difftest(uint32_t current_pc, uint32_t next_pc){
-  if(commit){
-    // printf("difftest current pc: %x next pc %x\n",current_pc,next_pc);
-    // trace_record(current_pc, mem[current_pc >> 2], next_pc);
-    check_difftest(current_pc);
-  }
-  commit = false;
 }

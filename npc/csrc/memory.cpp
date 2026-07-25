@@ -38,31 +38,16 @@ uint32_t img[1024*1024] = {
   0x00000000
 };
 
-uint32_t mrom[1024] = {
-    0x00000513,
-    0x00100073
-};
+uint32_t mrom[1024];
 uint32_t mrom_size = 4*1024;
 
 #define FLASH_SIZE  (16*1024*1024)
-uint32_t flash[FLASH_SIZE / 4] = {
-    0x100007b7,
-    0x04100713,
-    0x00e78023,
-    0x0000006f
-};
-
+uint32_t flash[FLASH_SIZE / 4];
 
 uint32_t img_size = 0;
-uint32_t *mem = img;
+
 void load_img(const char* path){
-    // mem = (uint32_t *)malloc(4ULL * 1024 * 1024 * 1024);
-    // if (!mem) {
-    //     printf("Failed to allocate memory!\n");
-    //     exit(1);
-    // }
-    
-    // memset(mem, 0, 4ULL * 1024 * 1024 * 1024);
+
     uint8_t *pmem_byte = (uint8_t *)flash;
     FILE* fp = fopen(path,"r");
     if(fp == NULL){
@@ -71,79 +56,14 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
+    printf("loading images....\n");
     while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
+    printf("loaded\n");
     img_size = idx;
     fclose(fp);
 }
-
-extern "C" int pmem_read(int addr, int valid, int* error) {
-    if(valid == 0) return -1;
-    *error = false;
-    unsigned long long cpu_time_us;
-    // 将有符号地址转为无符号，防止算术移位问题
-    uint32_t raddr = (uint32_t)addr;
-    // if(addr == RTC_ADDR){
-    //     difftest_skip_ref();
-    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-    //     // 3. 计算纳秒差值
-    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-    //             + (end.tv_nsec - start.tv_nsec) / 1000;
-    //     return (uint32_t)cpu_time_us; 
-    // }else if(addr == RTC_ADDR + 4){
-    //     difftest_skip_ref();
-    //     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-    //     // 3. 计算纳秒差值
-    //     cpu_time_us = (end.tv_sec - start.tv_sec) * 1000000 
-    //             + (end.tv_nsec - start.tv_nsec) / 1000;
-    //     return (uint32_t)(cpu_time_us >> 32);
-    // }
-    if(!in_pmem(raddr)) *error = true;
-    uint32_t data = mem[raddr >> 2];
-
-    record_mtrace(READ_TRACE, raddr, 4, data);
-    return data;
-}
-
-extern "C" int pmem_write(int addr, int data, char mask, int valid) {
-    if(valid == 0) return 0;
-    uint32_t waddr = (uint32_t)addr;
-    uint32_t wdata = (uint32_t)data;
-    uint8_t wmask = (uint8_t)mask & 0xF;
-    uint8_t *pmem_byte = (uint8_t *)mem;
-    waddr = waddr & (~0x3);
-    // if(addr == SERIAL_PORT){
-    //     difftest_skip_ref();
-    //     printf("%c",(char)data);
-    //     fflush(stdout);
-    //     return 0;
-    // }
-    if(!in_pmem(waddr)) return true;
-    if (wmask & 0x1) {
-        pmem_byte[waddr + 0] = (uint8_t)(wdata >> 0);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 0),waddr);
-    }
-    if (wmask & 0x2) {
-        pmem_byte[waddr + 1] = (uint8_t)(wdata >> 8);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 8),waddr+1);
-    }
-    if (wmask & 0x4) {
-        pmem_byte[waddr + 2] = (uint8_t)(wdata >> 16);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 16),waddr+2);
-    }
-    if (wmask & 0x8) {
-        pmem_byte[waddr + 3] = (uint8_t)(wdata >> 24);
-        // printf("write %x to %x\n",(uint8_t)(wdata >> 24),waddr+3);
-    }
-    record_mtrace(WRITE_TRACE, waddr, 4, wdata);
-    return false;
-}
-uint32_t read_pc_reg();
-extern "C" void printCurrentInst(){
-    printf("pc:0x%8x  inst:0x%8x\n",read_pc_reg(),mem[read_pc_reg() >> 2]);
-}
-
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
@@ -171,6 +91,63 @@ extern "C" void psram_write(int32_t addr,char data){
     uint32_t uaddr = addr;
     uint8_t *psram_8bits = (uint8_t*)psram;
     psram_8bits[uaddr] = data;
-    //uint32_t p = (uint32_t)data;
-    //printf("write addr: %x data: %x\n",uaddr,p);
 }
+
+uint16_t sdram_l [32*1024*1024/2];
+uint16_t sdram_h [32*1024*1024/2];
+extern "C" void sdram_read(char high, int32_t addr, int16_t* data){
+    //printf("dsram:%x\n",addr);
+    if(high) *data = sdram_h[addr];
+    else *data = sdram_l[addr];
+    //printf("read: data: %x, addr: %x\n",*data,addr+high*2);
+    //printf("data: %x\n",*data);
+}
+
+extern "C" void sdram_write(char high, int32_t addr, int16_t wdata, char mask) {
+    uint16_t current_data = high? sdram_h[addr] : sdram_l[addr];
+    uint16_t new_data = current_data;
+    //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
+
+    uint8_t low_enable = !(mask & 0x1);
+    uint8_t high_enable = !(mask & 0x2);
+    if (low_enable) {
+        new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
+    }
+
+    if (high_enable) {
+        new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
+    }
+    // printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
+    if(high) sdram_h[addr] = new_data;
+    else sdram_l[addr] = new_data;
+}
+
+
+/* 总的内存访问函数，供 SDB 调用。
+ * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
+ */
+uint32_t mem_read(uint32_t addr) {
+    if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
+        return mrom[(addr - 0x20000000) >> 2];
+    else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
+        return flash[(addr - 0x30000000) >> 2];
+    else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
+        return psram[(addr - 0x80000000) >> 2];
+    else if(addr >= 0xa0000000 && addr < 0xa2000000){
+        return ((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]);
+    }
+    return 0;
+}
+
+bool in_mem(uint32_t addr){
+    if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
+        return true;
+    else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
+        return true;
+    else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
+        return true;
+    else if(addr >= 0xa0000000 && addr < 0xa2000000)     // SDRAM
+        return true;
+    return false;
+}
+

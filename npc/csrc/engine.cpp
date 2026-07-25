@@ -11,8 +11,9 @@
 #include <verilated_fst_c.h>
 #endif
 // #define DEBUG
-#include <difftest.h>
+#include <sdb.h>
 #include <trace.h>
+#include <difftest.h>
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
 static VerilatedFstC* tfp = NULL;
@@ -55,11 +56,7 @@ void eval(){
 
 static void single_cycle() {
     top.clock = ~top.clock;
-    uint32_t current_pc = read_pc_reg();
     eval();
-        
-    uint32_t next_pc = read_pc_reg();
-    trace_and_difftest(current_pc, next_pc);
 
     top.clock = ~top.clock;
     eval();
@@ -69,19 +66,23 @@ static void single_cycle() {
     }
 }
 
+
+
 void cpu_exec(int n){
     STATE = RUNNING;
     if(n > 0){
         for(int i = 0;i<n;i++){
-
-            single_cycle();
-
+            do {
+                single_cycle();
+                if(STATE == STOP) break;
+            } while (!check_commit());
+            printCurrentInst();
             if(STATE == STOP) break;
         }
-        printCurrentInst();
     }else{
         while(1){
             single_cycle();
+            check_commit();
             // cycle++;
             // if(cycle == 20) {tfp->close(); exit(0);}
             if(STATE == STOP) break;

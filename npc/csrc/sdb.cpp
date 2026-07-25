@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <sdb.h>
 #include <autoconfig.h>
+#include <difftest.h>
+#include <disasm.h>
+#include <trace.h>
 
 static int is_batch_mode = false;
 
@@ -15,7 +18,6 @@ static char* rl_gets() {
     free(line_read);
     line_read = NULL;
   }
-
   line_read = readline("(npc) ");
 
   if (line_read && *line_read) {
@@ -45,7 +47,6 @@ static int cmd_si(char *args){
   }else{
     cpu_exec(1);
   }
-
   return 0;
 }
 
@@ -97,7 +98,7 @@ static int cmd_x(char *args) {
   }
 
   for (int i = 0; i < n; i++) {
-    uint32_t word = pmem_read(addr + i * 4);
+    uint32_t word = mem_read(addr + i * 4);
     printf("0x%08x\n", word); 
   }
 
@@ -211,7 +212,43 @@ void sdb_mainloop() {
   }
 }
 
+
+static uint32_t commit_pc;
+static bool has_commit = false;
+
+extern "C" void commit(int pc){
+  commit_pc = pc;
+  has_commit = true;
+}
+
+bool check_commit(){
+  if(has_commit){
+    has_commit = false;
+    check_difftest(commit_pc);
+    trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
+    return true;
+  }
+  return false;
+}
+
+extern "C" void printCurrentInst(){
+    uint32_t pc = commit_pc;
+    uint32_t inst = mem_read(commit_pc);
+    uint8_t code[4] = {
+        (uint8_t)(inst >> 0),
+        (uint8_t)(inst >> 8),
+        (uint8_t)(inst >> 16),
+        (uint8_t)(inst >> 24)
+    };
+    char buf[128];
+    disassemble(buf, sizeof(buf), pc, code, 4);
+    printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
+}
+
+
+
 void init_sdb() {
+  init_disasm();
   init_regex();
   init_wp_pool();
 }

@@ -67,10 +67,10 @@ void isa_reg_display(){
 void ebreak() {
     uint32_t status = read_rf_reg(10);
     if(status == 0){
-        printf("HIT GOOD TRAP\n");
+        printf("\033[32mHIT GOOD TRAP\033[0m\n");
         exit(0);
     }else{
-        printf("HIT BAD TRAP\n");
+        printf("\033[31mHIT BAD TRAP\033[0m\n");
         exit(1);
     }
 }

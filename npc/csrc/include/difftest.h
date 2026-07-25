@@ -11,7 +11,7 @@ extern "C" {
 void init_difftest(const char *ref_so_file, long img_size);
 void check_difftest(uint32_t pc);
 bool difftest_enabled();
-void trace_and_difftest(uint32_t current_pc, uint32_t next_pc);
+
 
 #ifdef __cplusplus
 }
