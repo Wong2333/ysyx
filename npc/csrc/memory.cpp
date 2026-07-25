@@ -99,7 +99,7 @@ extern "C" void sdram_read(char high, int32_t addr, int16_t* data){
     //printf("dsram:%x\n",addr);
     if(high) *data = sdram_h[addr];
     else *data = sdram_l[addr];
-    printf("read: data: %x, addr: %x\n",*data,addr+high*2);
+    //printf("read: data: %x, addr: %x\n",*data,addr+high*2);
     //printf("data: %x\n",*data);
 }
 
