@@ -33,7 +33,7 @@ extern uint32_t *mem;
 extern uint32_t img_size;
 extern "C" void printCurrentInst();
 uint32_t read_pc_reg();
-uint32_t cycle = 0;
+// uint32_t cycle = 0;
 uint64_t dump_time = 0;
 
 void my_assert(bool cond){
@@ -53,7 +53,7 @@ void eval(){
         dump_time++;
     #endif
 }
-
+uint64_t cycle = 0;
 static void single_cycle() {
     top.clock = ~top.clock;
     eval();
@@ -64,6 +64,7 @@ static void single_cycle() {
     if(check_wp()){
         STATE = STOP;
     }
+    cycle++;
 }
 
 
