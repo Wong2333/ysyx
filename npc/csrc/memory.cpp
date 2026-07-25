@@ -93,15 +93,17 @@ extern "C" void psram_write(int32_t addr,char data){
     psram_8bits[uaddr] = data;
 }
 
-uint16_t sdram [32*1024*1024/2];
-extern "C" void sdram_read(int32_t addr, int16_t* data){
+uint16_t sdram_l [32*1024*1024/2];
+uint16_t sdram_h [32*1024*1024/2];
+extern "C" void sdram_read(char high, int32_t addr, int16_t* data){
     //printf("dsram:%x\n",addr);
-    *data = sdram[addr];
+    if(high) *data = sdram_h[addr];
+    else *data = sdram_l[addr];
     //printf("data: %x\n",*data);
 }
 
-extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
-    uint16_t current_data = sdram[addr];
+extern "C" void sdram_write(char high, int32_t addr, int16_t wdata, char mask) {
+    uint16_t current_data = high? sdram_h[addr] : sdram_l[addr];
     uint16_t new_data = current_data;
     //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
@@ -114,8 +116,8 @@ extern "C" void sdram_write(int32_t addr, int16_t wdata, char mask) {
     if (high_enable) {
         new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
     }
-
-    sdram[addr] = new_data;
+    if(high) sdram_h[addr] = new_data;
+    else sdram_l[addr] = new_data;
 }
 
 
@@ -130,8 +132,7 @@ uint32_t mem_read(uint32_t addr) {
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
     else if(addr >= 0xa0000000 && addr < 0xa2000000){
-        uint32_t * sdram_ = (uint32_t*)sdram;
-        return sdram_[addr - 0xa0000000];
+        return ((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]);
     }
     return 0;
 }
@@ -143,7 +144,7 @@ bool in_mem(uint32_t addr){
         return true;
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return true;
-    else if(addr >= 0xa0000000 && addr < 0xa2000000)
+    else if(addr >= 0xa0000000 && addr < 0xa2000000)     // SDRAM
         return true;
     return false;
 }
