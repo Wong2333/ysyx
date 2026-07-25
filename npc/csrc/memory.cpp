@@ -116,6 +116,7 @@ extern "C" void sdram_write(char high, int32_t addr, int16_t wdata, char mask) {
     if (high_enable) {
         new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
     }
+    printf("write %x to %x ,high: %x\n",new_data,addr,high);
     if(high) sdram_h[addr] = new_data;
     else sdram_l[addr] = new_data;
 }
