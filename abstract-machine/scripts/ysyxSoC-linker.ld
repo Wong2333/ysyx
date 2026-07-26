@@ -2,40 +2,55 @@ ENTRY(_start)
 
 MEMORY {
   flash : ORIGIN = 0x30000000, LENGTH = 16M
-  sram : ORIGIN = 0x0f000000, LENGTH = 8K
+  psram : ORIGIN = 0x80000000, LENGTH = 4M
+  sdram : ORIGIN = 0xa0000000, LENGTH = 32M
 }
 
 SECTIONS {
   /* _pmem_start and _entry_offset are defined in LDFLAGS */
   . = ORIGIN(flash);
-  .text : {
+  .text_start : {
     *(entry)
+    *(.FSBL)
+  } > flash AT> flash
+
+  . = ORIGIN(sdram);
+  _pmem_start = .;
+
+  .SSBL : {
+    _SSBL_start = .;
+    *(.SSBL)
+    _SSBL_end = .;
+    _SSBL_lma_start = LOADADDR(.SSBL);
+  } > sdram AT> flash
+
+
+  .text : {
+    _text_vma_start = .;
     *(.text*)
-  } > flash AT> flash
-
-  .rodata : {
     *(.rodata*)
-  } > flash AT> flash
+    _text_vma_end = .;
+  } > sdram AT> flash
+  _text_lma_start = LOADADDR(.text);
 
-  . = ORIGIN(sram);
   .data : {
     _data_vma_start = .;
     *(.data*)
     *(.sdata*)
     _data_vma_end = .;
-    _data_lma_start = LOADADDR(.data);
-  } > sram AT> flash
+  } > sdram AT> flash
+  _data_lma_start = LOADADDR(.data);
 
   .bss : {
-	_bss_start = .;
+	  _bss_start = .;
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sram
+  } > sdram
 
   . = ALIGN(8);
   _heap_start = .;
 
-  _stack_pointer = ORIGIN(sram) + LENGTH(sram);
+  _stack_pointer = ORIGIN(sdram) + LENGTH(sdram);
 
 }
