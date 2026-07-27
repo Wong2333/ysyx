@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "VysyxSoCFull.h"
+#include <utils.h>
 
 uint32_t read_rf_reg(int addr) {
     const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 

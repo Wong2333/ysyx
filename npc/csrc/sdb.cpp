@@ -7,6 +7,7 @@
 #include <difftest.h>
 #include <disasm.h>
 #include <trace.h>
+#include <utils.h>
 
 static int is_batch_mode = false;
 
@@ -221,12 +222,19 @@ extern "C" void commit(int pc){
   has_commit = true;
 }
 
+#define STUCK_THRESHOLD 3000
+static uint32_t stuck_cycle = 0; 
 bool check_commit(){
   if(has_commit){
+    stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
     trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
     return true;
+  }
+  stuck_cycle++;
+  if(stuck_cycle >= STUCK_THRESHOLD){
+    printf("npc has not commited in %d cycle, maybe stuck\r",stuck_cycle);
   }
   return false;
 }

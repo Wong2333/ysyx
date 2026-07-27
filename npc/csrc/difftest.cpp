@@ -8,6 +8,7 @@
 #include <autoconfig.h>
 #include <trace.h>
 #include <sdb.h>
+#include <utils.h>
 
 /* Function pointer types for the REF shared library API */
 typedef void (*ref_difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);

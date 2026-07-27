@@ -21,4 +21,5 @@ bool check_commit();
 uint32_t isa_reg_str2val(const char *s, bool *success);
 void cpu_exec(int n);
 void isa_reg_display();
+
 #endif

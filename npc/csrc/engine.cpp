@@ -36,16 +36,6 @@ uint32_t read_pc_reg();
 // uint32_t cycle = 0;
 uint64_t dump_time = 0;
 
-void my_assert(bool cond){
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if(cond) return;
-    tfp->close();
-#else
-    if(cond) return;
-#endif
-    assert(0);
-}
-
 void eval(){
     top.eval();
     #ifdef CONFIG_ENABLE_FST_TRACE
