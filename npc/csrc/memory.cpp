@@ -71,7 +71,7 @@ uint16_t sdram_h [32*1024*1024/2];
 uint16_t sdram_l_high_addr [32*1024*1024/2];
 uint16_t sdram_h_high_addr [32*1024*1024/2];
 extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* data){
-    printf("addr: %x\n",addr);
+    //printf("addr: %x\n",addr);
     //printf("dsram:%x\n",addr);
     if(high_sdram == 0){
         if(high) *data = sdram_h[addr];
