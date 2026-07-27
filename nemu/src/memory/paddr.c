@@ -27,6 +27,8 @@ static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 
 static uint8_t mrom[CONFIG_MROM_SIZE] = {};
 static uint8_t sram[CONFIG_SRAM_SIZE] = {};
+static uint8_t flash[CONFIG_FLASH_SIZE] = {};
+static uint8_t sdram[CONFIG_SDRAM_SIZE] = {};
 
 uint8_t* guest_to_host(paddr_t paddr) {
   if(in_pmem(paddr))
@@ -36,6 +38,12 @@ uint8_t* guest_to_host(paddr_t paddr) {
   }
   else if(in_sram(paddr)){
     return sram + paddr - CONFIG_SRAM_BASE;
+  }
+  else if(in_flash(paddr)){
+    return flash + paddr - CONFIG_FLASH_BASE;
+  }
+  else if(in_sdram(paddr)){
+    return sdram + paddr - CONFIG_SDRAM_BASE;
   }
   return 0;
 }
@@ -71,7 +79,7 @@ void init_mem() {
 
 
 word_t paddr_read(paddr_t addr, int len) {
-  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr))){
+  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr) || in_flash(addr))){
     record_mtrace(WRITE_TRACE,addr,len, pmem_read(addr, len));
     return pmem_read(addr, len);
   }
@@ -81,7 +89,7 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  if (likely(in_pmem(addr) || in_sram(addr))) {   
+  if (likely(in_pmem(addr) || in_sram(addr)|| in_flash(addr))) {   
     record_mtrace(READ_TRACE,addr,len, data);
     pmem_write(addr, len, data);
     return; 
