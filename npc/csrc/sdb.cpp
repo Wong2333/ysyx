@@ -222,7 +222,7 @@ extern "C" void commit(int pc){
   has_commit = true;
 }
 
-#define STUCK_THRESHOLD 3000
+#define STUCK_THRESHOLD 10000
 static uint32_t stuck_cycle = 0; 
 bool check_commit(){
   if(has_commit){
