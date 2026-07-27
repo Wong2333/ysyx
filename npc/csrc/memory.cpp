@@ -123,7 +123,9 @@ uint32_t mem_read(uint32_t addr) {
         return flash[(addr - 0x30000000) >> 2];
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
-    else if(addr >= 0xa0000000 && addr < 0xa2000000){
+    else if(addr >= 0xa0000000 && addr < 0xa2000000){    // SDRAM
+        printf("mem_read addr: %x\n",addr);
+        printf("read data: %x\n",((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]));
         return ((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]);
     }else if(addr >= 0xa2000000 && addr < 0xa4000000){
         return ((uint32_t)sdram_h_high_addr[addr - 0xa2000000] << 16 | sdram_l_high_addr[addr - 0xa2000000]);
