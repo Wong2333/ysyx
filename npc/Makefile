@@ -6,7 +6,7 @@ KCONFIG_INCLUDE = csrc/include/autoconfig.h
 KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
-VERILATOR_CFLAGS += --threads 4 -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
+VERILATOR_CFLAGS += --threads 2 -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
 				-O1 --x-assign fast --x-initial fast --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush 
 
