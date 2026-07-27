@@ -71,6 +71,7 @@ uint16_t sdram_h [32*1024*1024/2];
 uint16_t sdram_l_high_addr [32*1024*1024/2];
 uint16_t sdram_h_high_addr [32*1024*1024/2];
 extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* data){
+    printf("addr: %x\n",addr);
     //printf("dsram:%x\n",addr);
     if(high_sdram == 0){
         if(high) *data = sdram_h[addr];
@@ -124,8 +125,8 @@ uint32_t mem_read(uint32_t addr) {
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
     else if(addr >= 0xa0000000 && addr < 0xa2000000){    // SDRAM
-        printf("mem_read addr: %x\n",addr);
-        printf("read data: %x\n",((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]));
+        // printf("mem_read addr: %x\n",addr);
+        // printf("read data: %x\n",((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]));
         return ((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]);
     }else if(addr >= 0xa2000000 && addr < 0xa4000000){
         return ((uint32_t)sdram_h_high_addr[addr - 0xa2000000] << 16 | sdram_l_high_addr[addr - 0xa2000000]);
