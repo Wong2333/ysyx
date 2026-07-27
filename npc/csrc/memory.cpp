@@ -95,16 +95,30 @@ extern "C" void psram_write(int32_t addr,char data){
 
 uint16_t sdram_l [32*1024*1024/2];
 uint16_t sdram_h [32*1024*1024/2];
-extern "C" void sdram_read(char high, int32_t addr, int16_t* data){
+
+uint16_t sdram_l_high_addr [32*1024*1024/2];
+uint16_t sdram_h_high_addr [32*1024*1024/2];
+extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* data){
     //printf("dsram:%x\n",addr);
-    if(high) *data = sdram_h[addr];
-    else *data = sdram_l[addr];
+    if(high_sdram == 0){
+        if(high) *data = sdram_h[addr];
+        else *data = sdram_l[addr];
+    }else{
+        if(high) *data = sdram_h_high_addr[addr];
+        else *data = sdram_l_high_addr[addr];
+    }
+
     //printf("read: data: %x, addr: %x\n",*data,addr+high*2);
     //printf("data: %x\n",*data);
 }
 
-extern "C" void sdram_write(char high, int32_t addr, int16_t wdata, char mask) {
-    uint16_t current_data = high? sdram_h[addr] : sdram_l[addr];
+extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wdata, char mask) {
+    uint16_t current_data;
+    if(high_sdram){
+        current_data = high? sdram_h_high_addr[addr] : sdram_l_high_addr[addr];
+    }else{
+        current_data = high? sdram_h[addr] : sdram_l[addr];
+    }
     uint16_t new_data = current_data;
     //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
@@ -118,8 +132,14 @@ extern "C" void sdram_write(char high, int32_t addr, int16_t wdata, char mask) {
         new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
     }
     // printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
-    if(high) sdram_h[addr] = new_data;
-    else sdram_l[addr] = new_data;
+
+    if(high_sdram){
+        if(high) sdram_h_high_addr[addr] = new_data;
+        else sdram_l_high_addr[addr] = new_data;
+    }else{
+        if(high) sdram_h[addr] = new_data;
+        else sdram_l[addr] = new_data;
+    }
 }
 
 
@@ -135,6 +155,8 @@ uint32_t mem_read(uint32_t addr) {
         return psram[(addr - 0x80000000) >> 2];
     else if(addr >= 0xa0000000 && addr < 0xa2000000){
         return ((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]);
+    }else if(addr >= 0xa2000000 && addr < 0xa4000000){
+        return ((uint32_t)sdram_h_high_addr[addr - 0xa2000000] << 16 | sdram_l_high_addr[addr - 0xa2000000]);
     }
     return 0;
 }
@@ -146,7 +168,7 @@ bool in_mem(uint32_t addr){
         return true;
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return true;
-    else if(addr >= 0xa0000000 && addr < 0xa2000000)     // SDRAM
+    else if(addr >= 0xa0000000 && addr < 0xa4000000)     // SDRAM
         return true;
     return false;
 }
