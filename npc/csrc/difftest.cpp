@@ -139,7 +139,7 @@ static bool is_skip_ref(uint32_t pc){
   uint32_t inst = mem_read(pc);
   uint32_t addr; 
   if(get_mem_access_address(inst,&addr)){
-    //printf("yes: %x in_mem:%x\n",addr,in_mem(addr));  
+    printf("addr:=%x\n",addr);
     return !in_mem(addr);
   }
   return false;
