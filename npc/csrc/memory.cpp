@@ -15,9 +15,6 @@ extern struct timespec start, end;
 
 void difftest_skip_ref();
 
-static inline bool in_pmem(uint32_t addr) {
-  return addr - CONFIG_START_ADDR < 0x80000000;
-}
 
 uint32_t img[1024*1024] = {
   0x00c00593, // addi a1, zero, 12

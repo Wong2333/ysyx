@@ -33,6 +33,14 @@ config FLASH_SIZE
   hex "falsh size"
   default 0x1000000
 
+config SDRAM_BASE
+  hex "sdram base address"
+  default 0xa0000000
+
+config SDRAM_SIZE
+  hex "sdram size"
+  default 0x4000000
+
 config PC_RESET_OFFSET
   hex "Offset of reset vector from the base of memory"
   default 0x100000 if ISA_x86
