@@ -116,7 +116,7 @@ static int get_mem_access_address(uint32_t instr, uint32_t *out_addr) {
     uint32_t base_addr = read_rf_reg(rs1);
     
     int32_t offset = 0;
-
+    printf("inst: %x\n",instr);
     if (opcode == 0x03) {
         uint32_t imm_11_0 = (instr >> 20) & 0xFFF;
         offset = sign_extend(imm_11_0, 12);
@@ -139,7 +139,6 @@ static bool is_skip_ref(uint32_t pc){
   uint32_t inst = mem_read(pc);
   uint32_t addr; 
   if(get_mem_access_address(inst,&addr)){
-    printf("addr:=%x\n",addr);
     return !in_mem(addr);
   }
   return false;
