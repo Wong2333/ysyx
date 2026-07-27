@@ -9,31 +9,10 @@
 #include <autoconfig.h>
 #include <trace.h>
 #include <cassert>
-// 假设内存大小为 4MB (1M * 4Bytes)
 
 extern struct timespec start, end;
 
 void difftest_skip_ref();
-
-
-uint32_t img[1024*1024] = {
-  0x00c00593, // addi a1, zero, 12
-  0x00b58633, // add a2, a1, a1
-  0xff160693, // addi a3, a2, -15
-  0x00f68767, // jalr a4, 15(a3)
-  0x02000067, // jalr zero, 32(zero)
-  0x01000067,
-  0x00070067, // jalr zero, 0(a4)
-  0x01000067,
-  0x000027b7, // 32: lui a5,2
-  0x0245a803, // lw a6, 36(a1)
-  0x030585a3, // sb a6 43(a1)
-  0x00100513, // addi a0 zero,1
-  0x00100073, // ebreak
-  0x44332211,
-  0x00000000,
-  0x00000000
-};
 
 uint32_t mrom[1024];
 uint32_t mrom_size = 4*1024;
@@ -53,11 +32,9 @@ void load_img(const char* path){
     }
     size_t len;
     uint32_t idx = 0;
-    printf("loading images....\n");
     while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
-    printf("loaded\n");
     img_size = idx;
     fclose(fp);
 }
@@ -66,8 +43,6 @@ extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
     *data = (int32_t)flash[uaddr >> 2];
 }
-
-
 
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
@@ -105,8 +80,6 @@ extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* da
         else *data = sdram_l_high_addr[addr];
     }
 
-    //printf("read: data: %x, addr: %x\n",*data,addr+high*2);
-    //printf("data: %x\n",*data);
 }
 
 extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wdata, char mask) {
