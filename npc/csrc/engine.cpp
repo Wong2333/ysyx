@@ -31,7 +31,7 @@ typedef enum {
 ENGINE_STATE_TYPE STATE = STOP;
 extern uint32_t *mem;
 extern uint32_t img_size;
-extern "C" void printCurrentInst();
+
 uint32_t read_pc_reg();
 // uint32_t cycle = 0;
 uint64_t dump_time = 0;
@@ -67,7 +67,7 @@ void cpu_exec(int n){
                 single_cycle();
                 if(STATE == STOP) break;
             } while (!check_commit());
-            printCurrentInst();
+            printNextInst();
             if(STATE == STOP) break;
         }
     }else{

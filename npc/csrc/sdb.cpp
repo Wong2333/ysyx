@@ -239,9 +239,8 @@ bool check_commit(){
   return false;
 }
 
-extern "C" void printCurrentInst(){
-    uint32_t pc = commit_pc;
-    uint32_t inst = mem_read(commit_pc);
+void printInst(uint32_t pc){
+    uint32_t inst = mem_read(pc);
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),
@@ -253,7 +252,10 @@ extern "C" void printCurrentInst(){
     printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
 }
 
-
+void printNextInst(){
+  uint32_t pc = read_pc_reg();
+  printInst(pc);
+}
 
 void init_sdb() {
   init_disasm();
