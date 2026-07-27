@@ -16,7 +16,7 @@
 #include <difftest.h>
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
-static VerilatedFstC* tfp = NULL;
+VerilatedFstC* tfp = NULL;
 #endif
 struct timespec start, end;
 bool check_wp();
@@ -191,4 +191,10 @@ void start_engine(){
     while(1) {
         sdb_mainloop();
     }
+}
+
+void close_tfp(){
+#ifdef CONFIG_ENABLE_FST_TRACE
+    tfp->close();
+#endif
 }
