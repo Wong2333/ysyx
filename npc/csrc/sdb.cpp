@@ -230,7 +230,7 @@ bool check_commit(){
     stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
-    trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
+    trace_record(commit_pc,mem_read(commit_pc),read_pc_reg());
     return true;
   }
   stuck_cycle++;
