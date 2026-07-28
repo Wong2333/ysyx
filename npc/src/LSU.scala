@@ -43,9 +43,11 @@ class ysyx_26030092_LSU extends Module{
     val wmask = WireDefault(0.U(4.W))
     dontTouch(wmask)
     dontTouch(rdata)
+
     val mtrace_u = Module(new mtrace)
     mtrace_u.io.valid := false.B
-    List(mtrace_u.io.addr, mtrace_u.io.data, mtrace_u.io.is_write, mtrace_u.io.size).map(_ := 0.U)
+    List( mtrace_u.io.data, mtrace_u.io.is_write, mtrace_u.io.size).map(_ := 0.U)
+    mtrace_u.io.addr := lsu_in_reg.addr
 
     out.bits.rdata := DontCare
 
@@ -109,13 +111,17 @@ class ysyx_26030092_LSU extends Module{
                 AXI4_port.bready := true.B
                 when(AXI4_port.bvalid){
                     status := s_wait_fetch
+                    mtrace_u.io.valid := true.B
+                    mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                
                 when(AXI4_port.rvalid){
                     status := s_wait_fetch
+                    mtrace_u.io.valid := true.B
                     lsu_out_reg.rdata := rdata
+                    mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
                 }
 
@@ -133,28 +139,36 @@ class ysyx_26030092_LSU extends Module{
     switch(lsu_in_reg.mem_ctl){
         is(MemControl.lw){
             rdata := AXI4_port.rdata
+            mtrace_u.io.size := 4.U;
         }
         is(MemControl.lb){
             rdata := Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7, 0))
+            mtrace_u.io.size := 1.U;
         }
         is(MemControl.lbu){
             rdata := Cat(Fill(24,0.U),shifted_rdata(7, 0))
+            mtrace_u.io.size := 1.U;
         }
         is(MemControl.lh){
             rdata := Cat(Fill(16, shifted_rdata(15)), shifted_rdata(15, 0))
+            mtrace_u.io.size := 2.U;
         }
         is(MemControl.lhu){
             rdata := Cat(Fill(16, 0.U), shifted_rdata(15, 0))
+            mtrace_u.io.size := 2.U;
         }
         is(MemControl.sw){
             wmask := "b1111".U;
+            mtrace_u.io.size := 4.U;
             // pmem_unit.port.wdata := lsu_in_reg.wdata
         }
         is(MemControl.sb){
+            mtrace_u.io.size := 1.U;
             wmask := 1.U << lsu_in_reg.addr(1,0)
             // pmem_unit.port.wdata := shifted_wdata
         }
         is(MemControl.sh){
+            mtrace_u.io.size := 2.U;
             wmask := 3.U << lsu_in_reg.addr(1,0)
             // pmem_unit.port.wdata := shifted_wdata
         }

@@ -286,5 +286,5 @@ void init_trace(const char *trace_dir, const char *elf_file) {
 }
 
 extern "C" void mtrace(char is_write, int addr, int data, int size){
-  assert(0);
+  record_mtrace(is_write?WRITE_TRACE:READ_TRACE, addr, size, data);
 }
