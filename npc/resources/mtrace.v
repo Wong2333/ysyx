@@ -7,6 +7,6 @@ module mtrace (
 );
     import "DPI-C" context function void mtrace(input char is_write,input int addr, input int data, input int size);
     always@(*) begin
-        if(invalid) mtrace(is_write, addr, data, size);
+        if(valid) mtrace({7'b0, is_write}, addr, data, {28'd0, size});
     end
 endmodule
