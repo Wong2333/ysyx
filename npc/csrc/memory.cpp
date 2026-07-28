@@ -184,8 +184,7 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
         info.reg  = (instr >> 7) & 0x1F;   /* rd */
         info.type = 1;
 
-        /* mem_read 假定返回以 addr 为起始字节地址的 32 位数据
-         * (若你的总线是按字对齐返回, 请自行在调用端做对齐处理) */
+        printf("info.addr: %x\n",info.addr);
         uint32_t raw = mem_read(info.addr);
 
         switch (funct3) {
