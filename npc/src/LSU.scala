@@ -4,6 +4,17 @@ import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
 
+class mtrace extends ExtModule{
+    val io = FlatIO(new Bundle {
+        val is_write = Input(Bool())
+        val addr = Input(UInt(32.W))
+        val data = Input(UInt(32.W))
+        val size = Input(UInt(4.W))
+        val valid = Input(Bool())
+    })
+    addResource("/mtrace.v")
+}
+
 class LSUBundle extends Bundle{
     val mem_ctl = Output(MemControl())
     val wdata = Output(UInt(32.W))
@@ -32,6 +43,9 @@ class ysyx_26030092_LSU extends Module{
     val wmask = WireDefault(0.U(4.W))
     dontTouch(wmask)
     dontTouch(rdata)
+    val mtrace_u = Module(new mtrace)
+    mtrace_u.io.valid := false.B
+    List(mtrace_u.io.addr, mtrace_u.io.data, mtrace_u.io.is_write, mtrace_u.io.size).map(_ := 0.U)
 
     out.bits.rdata := DontCare
 

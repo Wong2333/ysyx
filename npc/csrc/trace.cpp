@@ -225,13 +225,13 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 
   /* ftrace: always check (guarded inside record_ftrace) */
   record_ftrace(pc, dnpc, inst);
-  printf("pc: %x, inst: %x\n",pc,inst);
-  MemAccessInfo mc_info = get_mem_access_info(inst);
-  if(mc_info.type == 1){
-    record_mtrace(READ_TRACE,mc_info.addr,mc_info.size,mc_info.data);
-  }else if(mc_info.type == 2){
-    record_mtrace(WRITE_TRACE,mc_info.addr,mc_info.size,mc_info.data);
-  }
+  // printf("pc: %x, inst: %x\n",pc,inst);
+  // MemAccessInfo mc_info = get_mem_access_info(inst);
+  // if(mc_info.type == 1){
+  //   record_mtrace(READ_TRACE,mc_info.addr,mc_info.size,mc_info.data);
+  // }else if(mc_info.type == 2){
+  //   record_mtrace(WRITE_TRACE,mc_info.addr,mc_info.size,mc_info.data);
+  // }
 }
 
 void init_trace(const char *trace_dir, const char *elf_file) {
@@ -283,4 +283,8 @@ void init_trace(const char *trace_dir, const char *elf_file) {
     printf("FTrace: found %d functions from %s\n", funcs_count, elf_file);
   }
 #endif
+}
+
+extern "C" void mtrace(char is_write, int addr, int data, int size){
+  assert(0);
 }
