@@ -186,7 +186,7 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
 
         printf("info.addr: %x\n",info.addr);
         uint32_t raw = mem_read(info.addr);
-
+        printf("raw: %x\n",raw);
         switch (funct3) {
             case 0x0: /* LB  */
                 info.size = 1; info.sign_ext = 1;
