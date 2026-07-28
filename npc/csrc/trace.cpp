@@ -225,7 +225,7 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 
   /* ftrace: always check (guarded inside record_ftrace) */
   record_ftrace(pc, dnpc, inst);
-
+  printf("pc: %x, inst: %x\n",pc,inst);
   MemAccessInfo mc_info = get_mem_access_info(inst);
   if(mc_info.type == 1){
     record_mtrace(READ_TRACE,mc_info.addr,mc_info.size,mc_info.data);
