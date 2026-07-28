@@ -104,37 +104,7 @@ static inline int32_t sign_extend(uint32_t val, int bits) {
     uint32_t sign_bit = 1u << (bits - 1);
     return (int32_t)((val ^ sign_bit) - sign_bit);
 }
-
-static int get_mem_access_address(uint32_t instr, uint32_t *out_addr) {
-    // 提取低7位操作码
-    uint8_t opcode = instr & 0x7F;
-
-    // 提取基址寄存器 rs1 (指令的第 19-15 位)
-    uint8_t rs1 = (instr >> 15) & 0x1F;
-    
-    // 读取基址寄存器的值
-    uint32_t base_addr = read_rf_reg(rs1);
-    
-    int32_t offset = 0;
-    printf("inst: %x\n",instr);
-    if (opcode == 0x03) {
-        uint32_t imm_11_0 = (instr >> 20) & 0xFFF;
-        offset = sign_extend(imm_11_0, 12);
-    } 
-    else if (opcode == 0x23) { 
-        uint32_t imm_11_5 = (instr >> 25) & 0x7F;
-        uint32_t imm_4_0  = (instr >> 7)  & 0x1F;
-        uint32_t imm_11_0 = (imm_11_5 << 5) | imm_4_0;
-        offset = sign_extend(imm_11_0, 12);
-    } 
-    else {
-        return 0; 
-    }
-    *out_addr = base_addr + offset;
-
-    return 1;
-}
-
+int get_mem_access_address(uint32_t,uint32_t*);
 static bool is_skip_ref(uint32_t pc){
   uint32_t inst = mem_read(pc);
   uint32_t addr; 

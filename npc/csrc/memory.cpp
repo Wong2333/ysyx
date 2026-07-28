@@ -148,3 +148,95 @@ bool in_mem(uint32_t addr){
     return false;
 }
 
+MemAccessInfo get_mem_access_info(uint32_t instr) {
+    MemAccessInfo info;
+    info.type     = 0;
+    info.addr     = 0;
+    info.size     = 0;
+    info.sign_ext = 0;
+    info.data     = 0;
+    info.reg      = 0;
+    info.funct3   = 0;
+    info.opcode   = 0;
+
+    uint8_t opcode = instr & 0x7F;
+    uint8_t funct3 = (instr >> 12) & 0x7;
+    uint8_t rs1    = (instr >> 15) & 0x1F;
+
+    info.opcode = opcode;
+    info.funct3 = funct3;
+
+    uint32_t base_addr = read_rf_reg(rs1);
+    int32_t  offset    = 0;
+
+    if (opcode == 0x03) {              /* ---- Load ---- */
+        uint32_t imm_11_0 = (instr >> 20) & 0xFFF;
+        offset = sign_extend(imm_11_0, 12);
+        info.addr = base_addr + offset;
+        info.reg  = (instr >> 7) & 0x1F;   /* rd */
+        info.type = 1;
+
+        /* mem_read 假定返回以 addr 为起始字节地址的 32 位数据
+         * (若你的总线是按字对齐返回, 请自行在调用端做对齐处理) */
+        uint32_t raw = mem_read(info.addr);
+
+        switch (funct3) {
+            case 0x0: /* LB  */
+                info.size = 1; info.sign_ext = 1;
+                info.data = (uint32_t)(int32_t)(int8_t)(raw & 0xFF);
+                break;
+            case 0x1: /* LH  */
+                info.size = 2; info.sign_ext = 1;
+                info.data = (uint32_t)(int32_t)(int16_t)(raw & 0xFFFF);
+                break;
+            case 0x2: /* LW  */
+                info.size = 4; info.sign_ext = 0;
+                info.data = raw;
+                break;
+            case 0x4: /* LBU */
+                info.size = 1; info.sign_ext = 0;
+                info.data = raw & 0xFF;
+                break;
+            case 0x5: /* LHU */
+                info.size = 2; info.sign_ext = 0;
+                info.data = raw & 0xFFFF;
+                break;
+            default:                  /* 未知 load */
+                info.type = 0;
+                info.size = 0;
+                info.data = 0;
+                break;
+        }
+    }
+    else if (opcode == 0x23) {         /* ---- Store ---- */
+        uint32_t imm_11_5 = (instr >> 25) & 0x7F;
+        uint32_t imm_4_0  = (instr >> 7)  & 0x1F;
+        uint32_t imm_11_0 = (imm_11_5 << 5) | imm_4_0;
+        offset = sign_extend(imm_11_0, 12);
+        info.addr = base_addr + offset;
+        info.reg  = (instr >> 20) & 0x1F;   /* rs2 */
+        info.type = 2;
+        info.sign_ext = 0;
+        info.data = read_rf_reg(info.reg);  /* 待写入内存的数据 */
+
+        switch (funct3) {
+            case 0x0: /* SB */
+                info.size = 1; info.data = info.data & 0xFF;
+                break;
+            case 0x1: /* SH */
+                info.size = 2; info.data = info.data & 0xFFFF;
+                break;
+            case 0x2: /* SW */
+                info.size = 4;
+                break;
+            default:                  /* 未知 store */
+                info.type = 0;
+                info.size = 0;
+                info.data = 0;
+                break;
+        }
+    }
+    /* 其它 opcode: info.type 保持为 0, 表示非内存访问指令 */
+
+    return info;
+}

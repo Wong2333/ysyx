@@ -76,6 +76,7 @@ void cpu_exec(int n){
             single_cycle();
             if(check_commit() && check_wp()){
                 STATE = STOP;
+                printNextInst();
             }
             if(STATE == STOP) break;
         }

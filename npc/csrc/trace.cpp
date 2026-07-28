@@ -7,6 +7,7 @@
 #include <autoconfig.h>
 #include "trace.h"
 #include "disasm.h"
+#include <npc-memory.h>
 
 
 #ifdef CONFIG_ENABLE_ITRACE
@@ -224,6 +225,13 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
 
   /* ftrace: always check (guarded inside record_ftrace) */
   record_ftrace(pc, dnpc, inst);
+
+  MemAccessInfo mc_info = get_mem_access_info(inst);
+  if(mc_info.type == 1){
+    record_mtrace(READ_TRACE,mc_info.addr,mc_info.size,mc_info.data);
+  }else if(mc_info.type == 2){
+    record_mtrace(WRITE_TRACE,mc_info.addr,mc_info.size,mc_info.data);
+  }
 }
 
 void init_trace(const char *trace_dir, const char *elf_file) {
