@@ -79,7 +79,7 @@ extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* da
     }else{
         if(high) *data = sdram_h_high_addr[addr];
         else *data = sdram_l_high_addr[addr];
-        printf("read %x from %x\n",*data, addr);
+        //printf("read %x from %x\n",*data, addr);
     }
 
 }
@@ -106,7 +106,7 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
     // printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
 
     if(high_sdram){
-        printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
+        //printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
         if(high) sdram_h_high_addr[addr] = new_data;
         else sdram_l_high_addr[addr] = new_data;
     }else{
@@ -131,8 +131,6 @@ uint32_t mem_read(uint32_t addr) {
         // printf("read data: %x\n",((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]));
         return ((uint32_t)sdram_h[(addr - 0xa0000000)>>2] << 16 | sdram_l[(addr - 0xa0000000)>>2]);
     }else if(addr >= 0xa2000000 && addr < 0xa4000000){
-        printf("addr: %x\n",addr);
-        printf("idx: %x\n",(addr - 0xa2000000)>>2);
         return ((uint32_t)sdram_h_high_addr[((addr >> 2) & 0xffffff)] << 16 | sdram_l_high_addr[((addr >> 2) & 0xffffff)]);
     }
     return 0;
