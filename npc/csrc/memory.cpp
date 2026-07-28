@@ -79,6 +79,7 @@ extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* da
     }else{
         if(high) *data = sdram_h_high_addr[addr];
         else *data = sdram_l_high_addr[addr];
+        printf("read %x from %x\n",*data, addr);
     }
 
 }
