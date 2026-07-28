@@ -189,6 +189,7 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
         printf("base_addr (rs1 value): 0x%08x\n", base_addr);
         printf("offset: %d (0x%08x)\n", offset, offset);
         printf("info.addr: %x\n",info.addr);
+        printf("read_rf_reg(14): %x\n",read_rf_reg(14));
         uint32_t raw = mem_read(info.addr);
         printf("raw: %x\n",raw);
         switch (funct3) {
