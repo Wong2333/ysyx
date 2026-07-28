@@ -254,6 +254,7 @@ void printInst(uint32_t pc){
 }
 
 void printNextInst(){
+  printf("next instruction: ");
   uint32_t pc = read_pc_reg();
   printInst(pc);
 }
