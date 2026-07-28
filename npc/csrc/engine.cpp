@@ -16,7 +16,7 @@
 #include <difftest.h>
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
-static VerilatedFstC* tfp = NULL;
+VerilatedFstC* tfp = NULL;
 #endif
 struct timespec start, end;
 bool check_wp();
@@ -31,20 +31,10 @@ typedef enum {
 ENGINE_STATE_TYPE STATE = STOP;
 extern uint32_t *mem;
 extern uint32_t img_size;
-extern "C" void printCurrentInst();
-uint32_t read_pc_reg();
-uint32_t cycle = 0;
-uint64_t dump_time = 0;
 
-void my_assert(bool cond){
-#ifdef CONFIG_ENABLE_FST_TRACE
-    if(cond) return;
-    tfp->close();
-#else
-    if(cond) return;
-#endif
-    assert(0);
-}
+uint32_t read_pc_reg();
+// uint32_t cycle = 0;
+uint64_t dump_time = 0;
 
 void eval(){
     top.eval();
@@ -53,7 +43,7 @@ void eval(){
         dump_time++;
     #endif
 }
-
+uint64_t cycle = 0;
 static void single_cycle() {
     top.clock = ~top.clock;
     eval();
@@ -61,9 +51,8 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     //nvboard_update();
-    if(check_wp()){
-        STATE = STOP;
-    }
+
+    cycle++;
 }
 
 
@@ -76,15 +65,19 @@ void cpu_exec(int n){
                 single_cycle();
                 if(STATE == STOP) break;
             } while (!check_commit());
-            printCurrentInst();
+            if(check_wp()){
+                STATE = STOP;
+            }
+            printNextInst();
             if(STATE == STOP) break;
         }
     }else{
         while(1){
             single_cycle();
-            check_commit();
-            // cycle++;
-            // if(cycle == 20) {tfp->close(); exit(0);}
+            if(check_commit() && check_wp()){
+                STATE = STOP;
+                printNextInst();
+            }
             if(STATE == STOP) break;
         }
     }
@@ -200,4 +193,10 @@ void start_engine(){
     while(1) {
         sdb_mainloop();
     }
+}
+
+void close_tfp(){
+#ifdef CONFIG_ENABLE_FST_TRACE
+    tfp->close();
+#endif
 }

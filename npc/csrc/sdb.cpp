@@ -7,6 +7,7 @@
 #include <difftest.h>
 #include <disasm.h>
 #include <trace.h>
+#include <utils.h>
 
 static int is_batch_mode = false;
 
@@ -184,6 +185,7 @@ void sdb_mainloop() {
     cmd_c(NULL);
     return;
   }
+  printNextInst();
 
   for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);
@@ -221,19 +223,25 @@ extern "C" void commit(int pc){
   has_commit = true;
 }
 
+#define STUCK_THRESHOLD 10000
+static uint32_t stuck_cycle = 0; 
 bool check_commit(){
   if(has_commit){
+    stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
-    trace_record(commit_pc,mem_read(commit_pc),commit_pc + 4);
+    trace_record(commit_pc,mem_read(commit_pc),read_pc_reg());
     return true;
+  }
+  stuck_cycle++;
+  if(stuck_cycle >= STUCK_THRESHOLD){
+    printf("npc has not commited in %d cycle, maybe stuck\r",stuck_cycle);
   }
   return false;
 }
 
-extern "C" void printCurrentInst(){
-    uint32_t pc = commit_pc;
-    uint32_t inst = mem_read(commit_pc);
+void printInst(uint32_t pc){
+    uint32_t inst = mem_read(pc);
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),
@@ -245,7 +253,11 @@ extern "C" void printCurrentInst(){
     printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
 }
 
-
+void printNextInst(){
+  printf("next instruction: ");
+  uint32_t pc = read_pc_reg();
+  printInst(pc);
+}
 
 void init_sdb() {
   init_disasm();
