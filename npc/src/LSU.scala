@@ -112,6 +112,7 @@ class ysyx_26030092_LSU extends Module{
                 when(AXI4_port.bvalid){
                     status := s_wait_fetch
                     mtrace_u.io.valid := true.B
+                    mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
                 }
@@ -120,6 +121,7 @@ class ysyx_26030092_LSU extends Module{
                 when(AXI4_port.rvalid){
                     status := s_wait_fetch
                     mtrace_u.io.valid := true.B
+                    mtrace_u.io.is_write := false.B
                     lsu_out_reg.rdata := rdata
                     mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
