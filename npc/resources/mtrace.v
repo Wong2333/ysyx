@@ -1,4 +1,4 @@
-module InvalidInstructionBlackBox (
+module mtrace (
     input is_write,
     input [31:0] addr,
     input [31:0] data,
