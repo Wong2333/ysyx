@@ -51,9 +51,7 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     //nvboard_update();
-    if(check_wp()){
-        STATE = STOP;
-    }
+
     cycle++;
 }
 
@@ -67,6 +65,9 @@ void cpu_exec(int n){
                 single_cycle();
                 if(STATE == STOP) break;
             } while (!check_commit());
+            if(check_wp()){
+                STATE = STOP;
+            }
             printNextInst();
             if(STATE == STOP) break;
         }
@@ -74,8 +75,9 @@ void cpu_exec(int n){
         while(1){
             single_cycle();
             check_commit();
-            // cycle++;
-            // if(cycle == 20) {tfp->close(); exit(0);}
+            if(check_wp()){
+                STATE = STOP;
+            }
             if(STATE == STOP) break;
         }
     }
