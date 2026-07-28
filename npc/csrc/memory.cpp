@@ -9,6 +9,7 @@
 #include <autoconfig.h>
 #include <trace.h>
 #include <cassert>
+#include <npc-memory.h>
 
 extern struct timespec start, end;
 
@@ -146,6 +147,13 @@ bool in_mem(uint32_t addr){
     else if(addr >= 0xa0000000 && addr < 0xa4000000)     // SDRAM
         return true;
     return false;
+}
+uint32_t read_rf_reg(int addr);
+
+// 辅助函数：对指定位宽的数值进行符号扩展
+static inline int32_t sign_extend(uint32_t val, int bits) {
+    uint32_t sign_bit = 1u << (bits - 1);
+    return (int32_t)((val ^ sign_bit) - sign_bit);
 }
 
 MemAccessInfo get_mem_access_info(uint32_t instr) {

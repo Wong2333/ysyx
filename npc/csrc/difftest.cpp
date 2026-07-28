@@ -95,22 +95,13 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 void my_assert(bool cond);
 uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
+#include<npc-memory.h>
 
-// 假设你提供的读取通用寄存器的函数原型如下（根据你的实际情况可能需要微调）：
-extern uint32_t read_rf_reg(uint32_t reg_idx);
-
-// 辅助函数：对指定位宽的数值进行符号扩展
-static inline int32_t sign_extend(uint32_t val, int bits) {
-    uint32_t sign_bit = 1u << (bits - 1);
-    return (int32_t)((val ^ sign_bit) - sign_bit);
-}
-int get_mem_access_address(uint32_t,uint32_t*);
 static bool is_skip_ref(uint32_t pc){
   uint32_t inst = mem_read(pc);
-  uint32_t addr; 
-  printf("addr: %x\n",pc);
-  if(get_mem_access_address(inst,&addr)){
-    return !in_mem(addr);
+  MemAccessInfo mc_info = get_mem_access_info(inst);
+  if(mc_info.type){
+    return !in_mem(mc_info.addr);
   }
   return false;
 }
