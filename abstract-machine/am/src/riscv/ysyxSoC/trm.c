@@ -44,6 +44,15 @@ extern uint32_t _data_lma_start;
 extern uint32_t _data_vma_start;
 extern uint32_t _data_vma_end;
 
+void show_id_in_seg(uint32_t marchid){
+  uint32_t seg = 0;
+  while(marchid > 0){
+    seg = (seg << 4) | (marchid % 10);
+    marchid /= 10;
+  }
+  outl(GPIO_SEG, marchid);
+}
+
 void _trm_init() {
   uart_init();
   char mvendorid[5];
@@ -54,7 +63,7 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
-  outl(GPIO_SEG, marchid);
+  show_id_in_seg(marchid);
   int ret = main(mainargs);
   halt(ret);
 }
