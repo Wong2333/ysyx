@@ -47,7 +47,7 @@ extern uint32_t _data_vma_end;
 void show_id_in_seg(uint32_t marchid){
   uint32_t seg = 0;
   while(marchid > 0){
-    seg = (seg << 4) | (marchid % 10);
+    seg = (seg >> 4) | (marchid % 10) << 28;
     marchid /= 10;
   }
   outl(GPIO_SEG, seg);
