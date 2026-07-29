@@ -54,9 +54,7 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
-  printf("_data_lma_start: %x\n",&_data_lma_start);
-  printf("data_vma_start: %x\n",&_data_vma_start);
-  printf("_data_vma_end: %x\n", &_data_vma_end);
+  outl(GPIO_SEG, marchid);
   int ret = main(mainargs);
   halt(ret);
 }
