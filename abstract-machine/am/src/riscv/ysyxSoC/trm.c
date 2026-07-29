@@ -31,7 +31,7 @@ void uart_init() {
 
   // 2. 设置除数 (波特率)
   // 在仿真环境中，简单设置为 1 即可 (DLL=1, DLM=0)
-  outb(UART_BASE + UART_REG_DL1, 0x2); // 除数低字节
+  outb(UART_BASE + UART_REG_DL1, 0x1); // 除数低字节
   outb(UART_BASE + UART_REG_DL2, 0x00); // 除数高字节
 
   // 3. 设置通信格式 (8N1: 8位数据, 无校验, 1停止位) 并关闭 DLAB
