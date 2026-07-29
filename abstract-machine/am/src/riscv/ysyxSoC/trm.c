@@ -50,7 +50,7 @@ void show_id_in_seg(uint32_t marchid){
     seg = (seg << 4) | (marchid % 10);
     marchid /= 10;
   }
-  outl(GPIO_SEG, marchid);
+  outl(GPIO_SEG, seg);
 }
 
 void _trm_init() {
