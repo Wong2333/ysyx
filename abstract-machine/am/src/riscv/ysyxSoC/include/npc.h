@@ -13,7 +13,7 @@
 #define UART_REG_LS  0x5  // 线路状态寄存器
 
 #define UART_LS_THRE 0x20 // Bit 5: Transmitter Holding Register Empty
-#define UART_LS_DR 0x0 // bit 0: Data Ready (DR) indicator 
+#define UART_LS_DR 0x1 // bit 0: Data Ready (DR) indicator 
 
 #define RTC_ADDR         (0x02000000 + 0XBFF8)
 
