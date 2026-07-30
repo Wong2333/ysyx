@@ -22,7 +22,7 @@ void __am_uart_rx(AM_UART_RX_T *uart_rx){
     if((inb(UART_BASE + UART_REG_LS) & UART_LS_DR) == 0){
         uart_rx->data = 0xff;
     }else uart_rx->data = inb(UART_BASE + UART_REG_XR);
-    printf("rx: %c\n",uart_rx->data);
+    printf("rx: %x\n",uart_rx->data);
     // uint8_t data = inb(UART_BASE + UART_REG_XR);
     // if(data == 0){
     //     uart_rx->data = 0xff;
