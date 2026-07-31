@@ -22,4 +22,5 @@
 #define GPIO_SW (GPIO_BASE + 0x4)
 #define GPIO_SEG (GPIO_BASE + 0x8)
 
+#define KEYBOARD (0x10011000)
 #endif
