@@ -78,18 +78,22 @@ int scancode_to_am_key(uint8_t scancode, int is_extended) {
 void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
   uint8_t code = inb(KEYBOARD);
   if(code == 0xf0){
+    kbd->keydown = 0;
+    while(!(code = inb(KEYBOARD)));
+    kbd->keycode = scancode_to_am_key(code, 0);
+  }else if(code == 0xe0){
     kbd->keydown = 1;
     while(!(code = inb(KEYBOARD)));
-    if(code == 0xe0){
+    if(code == 0xf0){
       while(!(code = inb(KEYBOARD)));
+      kbd->keydown = 0;
       kbd->keycode = scancode_to_am_key(code, 1);
-    }else kbd->keycode = scancode_to_am_key(code, 1);
-  }else if(code == 0xe0){
-    kbd->keydown = 0;
-    while(!(code = inb(KEYBOARD)));
+    }else{
+      kbd->keycode = scancode_to_am_key(code, 1);
+    }
     kbd->keycode = scancode_to_am_key(code, 1);
   }else{
-    kbd->keydown = 0;
+    kbd->keydown = 1;
     kbd->keycode = scancode_to_am_key(code, 0);
   }
 }
