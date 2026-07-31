@@ -21,7 +21,7 @@ static const int set2_normal_map[256] = {
     // 字母键第一排 QWERTY...
     [0x0D] AM_KEY_TAB, 
     [0x15] AM_KEY_Q, [0x1D] AM_KEY_W, [0x24] AM_KEY_E, [0x2D] AM_KEY_R, [0x2C] AM_KEY_T,
-    [0x35] AM_KEY_Y, [0x3C] AM_KEY_U, [0x43] AM_KEY_I, [0x44] AM_KEY_O, [0x4B] AM_KEY_P,
+    [0x35] AM_KEY_Y, [0x3C] AM_KEY_U, [0x43] AM_KEY_I, [0x44] AM_KEY_O, [0x4D] AM_KEY_P,
     [0x54] AM_KEY_LEFTBRACKET, [0x5B] AM_KEY_RIGHTBRACKET, [0x5D] AM_KEY_BACKSLASH,
 
     // 字母键第二排 A...
