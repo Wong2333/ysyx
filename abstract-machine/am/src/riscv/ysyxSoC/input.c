@@ -86,6 +86,7 @@ void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
     }else kbd->keycode = scancode_to_am_key(code, 1);
   }else if(code == 0xe0){
     kbd->keydown = 0;
+    while(!(code = inb(KEYBOARD)));
     kbd->keycode = scancode_to_am_key(code, 1);
   }else{
     kbd->keydown = 0;
