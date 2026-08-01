@@ -23,4 +23,6 @@
 #define GPIO_SEG (GPIO_BASE + 0x8)
 
 #define KEYBOARD (0x10011000)
+
+#define VGA_BASE (0x21000000)
 #endif
