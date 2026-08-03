@@ -87,6 +87,7 @@ class ysyx_26030092_LSU extends Module{
                 when(!wdata_ready){
                     AXI4_port.wdata := shifted_wdata
                     AXI4_port.wstrb := wmask
+                    AXI4_port.wlast := true.B
                     AXI4_port.wvalid := true.B
                     when(AXI4_port.wready){
                         wdata_ready := true.B
