@@ -22,8 +22,10 @@ module PCBlackBox(
             end
         end
     end
+`ifndef SYNTHESIS
     export "DPI-C" task read_pc;
     task read_pc(output int data);
         data = PC;
     endtask
+`endif
 endmodule

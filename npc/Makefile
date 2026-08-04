@@ -106,7 +106,10 @@ sim:
 DESIGN = ysyxSoCASIC
 
 # 指定 RTL 文件（可以使用通配符，也可以显式列出）
-RTL_FILES = $(wildcard build/*.sv) $(YSYX_SoC_HOME)/build/ysyxSoCFull.v $(YSYX_SoC_HOME)/perip/amba/apb_delayer.v
+RTL_FILES = $(wildcard build/*.sv) $(YSYX_SoC_HOME)/build/ysyxSoCFull.v $(YSYX_SoC_HOME)/perip/amba/apb_delayer.v $(RESOURCES)
+
+# yosys 读取 RTL 时需要的 include 路径（resources 里有 `include "autoconfig.svh"）
+export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
 
 # (可选) 如果有自己的约束文件
 # SDC_FILE = ./constraint.sdc
