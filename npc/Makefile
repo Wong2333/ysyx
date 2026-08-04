@@ -103,10 +103,10 @@ sim:
 
 -include ../Makefile
 
-DESIGN = top
+DESIGN = ysyxSoCASIC
 
 # 指定 RTL 文件（可以使用通配符，也可以显式列出）
-RTL_FILES = $(wildcard build/*.sv)
+RTL_FILES = $(wildcard build/*.sv) $(YSYX_SoC_HOME)/build/ysyxSoCFull.v $(YSYX_SoC_HOME)/perip/amba/apb_delayer.v
 
 # (可选) 如果有自己的约束文件
 # SDC_FILE = ./constraint.sdc
