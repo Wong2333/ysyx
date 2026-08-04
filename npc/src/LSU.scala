@@ -79,6 +79,9 @@ class ysyx_26030092_LSU extends Module{
             when(is_write){
                 when(!waddr_ready){
                     AXI4_port.awaddr := lsu_in_reg.addr
+                    AXI4_port.awsize := MuxLookup(lsu_in_reg.mem_ctl, 2.U)(Seq(
+                        MemControl.sh -> 1.U,
+                        MemControl.sb -> 0.U))
                     AXI4_port.awvalid := true.B
                     when(AXI4_port.awready){
                         waddr_ready := true.B
@@ -100,6 +103,11 @@ class ysyx_26030092_LSU extends Module{
                 }
 
             }.otherwise{
+                AXI4_port.arsize := MuxLookup(lsu_in_reg.mem_ctl, 2.U)(Seq(
+                    MemControl.lh -> 1.U,
+                    MemControl.lhu -> 1.U,
+                    MemControl.lb -> 0.U,
+                    MemControl.lbu -> 0.U))
                 AXI4_port.arvalid := true.B
                 when(AXI4_port.arready){
                     status := s_wait_mem_resp
