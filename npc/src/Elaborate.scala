@@ -1,7 +1,7 @@
 object Elaborate extends App {
   val firtoolOptions = Array(
     "--default-layer-specialization=enable",
-    "--verification-flavor=immediate",
+    "--verification-flavor=if-else-fatal",
     "--lowering-options=" + List(
       // make yosys happy
       // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
