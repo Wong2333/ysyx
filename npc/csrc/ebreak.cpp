@@ -65,10 +65,11 @@ void isa_reg_display(){
     printf("pc   %x\n",read_pc_reg());
 }
 extern uint64_t cycle;
+extern u_int64_t inst_counter;
 // DPI-C 函数实现
 void ebreak() {
     uint32_t status = read_rf_reg(10);
-    printf("cycle: %llu\n",cycle);
+    printf("cycle: %llu, InstCounter: %llu, IPC: %f\n",cycle, 1.0 * inst_counter / cycle);
     if(status == 0){
         printf("\033[32mHIT GOOD TRAP\033[0m\n");
         exit(0);

@@ -103,19 +103,10 @@ sim:
 
 -include ../Makefile
 
-DESIGN = ysyxSoCASIC
+DESIGN = ysyx_26030092
 
 # 指定 RTL 文件（可以使用通配符，也可以显式列出）
-RTL_FILES = $(wildcard build/*.sv) $(YSYX_SoC_HOME)/build/ysyxSoCFull.v \
-	$(RESOURCES) \
-	$(YSYX_SoC_HOME)/perip/amba/apb_delayer.v \
-	$(wildcard $(YSYX_SoC_HOME)/perip/uart16550/rtl/*.v) \
-	$(wildcard $(YSYX_SoC_HOME)/perip/spi/rtl/*.v) \
-	$(YSYX_SoC_HOME)/perip/psram/psram_top_apb.v \
-	$(YSYX_SoC_HOME)/perip/psram/efabless/EF_PSRAM_CTRL_wb.v \
-	$(YSYX_SoC_HOME)/perip/psram/efabless/EF_PSRAM_CTRL.v \
-	$(YSYX_SoC_HOME)/perip/sdram/sdram_top_apb.v \
-	$(YSYX_SoC_HOME)/perip/sdram/core_sdram_axi4/sdram_axi_core.v
+RTL_FILES = $(wildcard build/*.sv) $(RESOURCES)
 
 # yosys 读取 RTL 时需要的 include 路径（resources 里有 `include "autoconfig.svh"）
 export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
@@ -127,7 +118,7 @@ export CLK_PORT_NAME = clock
 # SDC_FILE = ./constraint.sdc
 
 # (可选) 指定不同的时钟频率
-CLK_FREQ_MHZ = 500
+CLK_FREQ_MHZ = 1200
 
 include /home/wjm/yosys-sta/Makefile.common
 
