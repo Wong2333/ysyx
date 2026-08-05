@@ -21,6 +21,12 @@ class PerfCounter extends ExtModule{
             id := PerfName.none
             cnt := 0.U
         }
+
+        def inc(targetId :PerfName, delta : UInt) = {
+            valid := true.B 
+            id := targetId 
+            cnt := delta         
+        }
     })
     addResource("/perf.v")
 }

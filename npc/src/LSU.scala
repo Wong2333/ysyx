@@ -3,6 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
+import npc.PMU._
 
 class mtrace extends ExtModule{
     val io = FlatIO(new Bundle {
@@ -29,6 +30,9 @@ class ysyx_26030092_LSU extends Module{
     }))
 
     val AXI4_port = IO(new AXI4Bundle)
+
+    val perf_cnt = Module(new PerfCounter)
+    perf_cnt.io.init()
     
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
@@ -124,6 +128,9 @@ class ysyx_26030092_LSU extends Module{
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
+                    perf_cnt.io.valid := true.B
+                    perf_cnt.io.id := PerfName.LSU_get_data
+                    perf_cnt.io.cnt := 1.U
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                
@@ -134,6 +141,9 @@ class ysyx_26030092_LSU extends Module{
                     lsu_out_reg.rdata := rdata
                     mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
+                    perf_cnt.io.valid := true.B
+                    perf_cnt.io.id := PerfName.LSU_get_data
+                    perf_cnt.io.cnt := 1.U
                 }
 
             }

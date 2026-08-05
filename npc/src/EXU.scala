@@ -3,6 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
+import npc.PMU.PerfCounter
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -72,6 +73,9 @@ class ysyx_26030092_EXU extends Module{
         val rdata = Input(UInt(32.W))
         val error = Input(Bool())
     })))
+    
+    val perf_cnt = Module(new PerfCounter)
+    perf_cnt.io.init()
 
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
