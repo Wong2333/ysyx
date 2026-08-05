@@ -3,6 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
+import npc.PMU._
 
 class ysyx_26030092_IFU extends Module{
 
@@ -13,6 +14,8 @@ class ysyx_26030092_IFU extends Module{
         val inst = UInt(32.W)
         val pc = UInt(32.W)
     }))
+
+    val perf_cnt = Module(new PerfCounter)
 
     val AXI4_port = IO(new AXI4Bundle)
 
@@ -52,6 +55,9 @@ class ysyx_26030092_IFU extends Module{
                 inst_reg := AXI4_port.rdata
                 error_reg := AXI4_port.rresp
                 status := s_wait_fetch
+                perf_cnt.io.valid := true.B
+                perf_cnt.io.id := PerfName.IFU_fetch_instruction
+                perf_cnt.io.cnt := 1.U
             }
         }
         is(s_wait_fetch){
