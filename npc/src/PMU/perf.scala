@@ -22,7 +22,7 @@ class PerfCounter extends ExtModule{
             cnt := 0.U
         }
 
-        def inc(targetId :PerfName, delta : UInt) = {
+        def inc(targetId :PerfName.Type, delta : UInt) = {
             valid := true.B 
             id := targetId 
             cnt := delta         
