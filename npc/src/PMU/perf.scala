@@ -13,7 +13,7 @@ object PerfName extends ChiselEnum{
 class PerfCounter extends ExtModule{
     val io = FlatIO(new Bundle{
         val valid = Input(Bool())
-        val id = Input(UInt(32.W))
+        val id = Input(PerfName())
         val cnt = Input(UInt(32.W))
     })
     addResource("/perf.v")
