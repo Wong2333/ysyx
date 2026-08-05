@@ -15,6 +15,12 @@ class PerfCounter extends ExtModule{
         val valid = Input(Bool())
         val id = Input(PerfName())
         val cnt = Input(UInt(32.W))
+
+        def init() = {
+            valid := false.B
+            id := PerfName.none
+            cnt := 0.U
+        }
     })
     addResource("/perf.v")
 }

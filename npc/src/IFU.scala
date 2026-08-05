@@ -16,9 +16,7 @@ class ysyx_26030092_IFU extends Module{
     }))
 
     val perf_cnt = Module(new PerfCounter)
-    perf_cnt.io.valid := false.B
-    perf_cnt.io.id := PerfName.none
-    perf_cnt.io.cnt := 0.U
+    perf_cnt.io.init()
 
     val AXI4_port = IO(new AXI4Bundle)
 
