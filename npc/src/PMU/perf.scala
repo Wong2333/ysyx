@@ -6,8 +6,7 @@ object PerfName extends ChiselEnum{
     val IFU_fetch_instruction,
     LSU_get_data,
     EXU_finished,
-    IDU_load_instruction,
-    none = Value(0xffffffff.U(32.W))
+    IDU_load_instruction = Value
 }
 
 class PerfCounter extends ExtModule{
