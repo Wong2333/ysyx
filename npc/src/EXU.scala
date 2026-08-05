@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import npc.EXUs._
 import npc.PMU.PerfCounter
+import npc.PMU.PerfName
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -135,6 +136,7 @@ class ysyx_26030092_EXU extends Module{
             invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(wbu_in.ready){
                 status := s_idle
+                perf_cnt.io.inc(PerfName.EXU_finished, 1.U)
             }
         }
     }

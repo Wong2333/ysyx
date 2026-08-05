@@ -128,9 +128,7 @@ class ysyx_26030092_LSU extends Module{
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
-                    perf_cnt.io.valid := true.B
-                    perf_cnt.io.id := PerfName.LSU_get_data
-                    perf_cnt.io.cnt := 1.U
+                    perf_cnt.io.inc(PerfName.LSU_get_data, 1.U)
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                

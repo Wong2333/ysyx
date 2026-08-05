@@ -56,9 +56,7 @@ class ysyx_26030092_IFU extends Module{
                 inst_reg := AXI4_port.rdata
                 error_reg := AXI4_port.rresp
                 status := s_wait_fetch
-                perf_cnt.io.valid := true.B
-                perf_cnt.io.id := PerfName.IFU_fetch_instruction
-                perf_cnt.io.cnt := 1.U
+                perf_cnt.io.inc(PerfName.IFU_fetch_instruction, 1.U)
             }
         }
         is(s_wait_fetch){
