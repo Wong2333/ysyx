@@ -12,7 +12,12 @@ char *perf_name[128] = {
     "IDU load instruction",
     "IDU calculate instruction",
     "IDU csr instruction",
-    "IDU store instruction"
+    "IDU store instruction",
+    "IFU wait mem cycles",
+    "LSU wait free cycles",
+    "LSU wait resp cycles",
+    "PIPE idle cycles",
+    "WBU commit instruction"
 };
 
 extern "C" void perf_inc(int id, int cnt){
@@ -21,7 +26,7 @@ extern "C" void perf_inc(int id, int cnt){
 }
 
 void printPMU(){
-    for(int id = 0; id<7;id ++){
+    for(int id = 0; id<15;id ++){
         printf("[PERF] id: %d %s counter:   %llu\n", id, perf_name[id] ,perf[id]);
     }
 }

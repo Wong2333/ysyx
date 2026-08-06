@@ -12,7 +12,12 @@ object PerfName extends ChiselEnum{
     IDU_load_instruction,
     IDU_calculate_instruction,
     IDU_csr_instruction,
-    IDU_store_instruction = Value
+    IDU_store_instruction,
+    IFU_wait_mem_cycles,
+    LSU_wait_free_cycles,
+    LSU_wait_resp_cycles,
+    PIPE_idle_cycles,
+    WBU_commit_instruction = Value
     val none = Value(0x0fffffff.U(32.W))
 }
 

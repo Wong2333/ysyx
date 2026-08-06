@@ -75,6 +75,12 @@ class ysyx_26030092_LSU extends Module{
     when(lsu_accessing_mem){
         perf_cnt.io.inc(PerfName.LSU_access_mem_latency, 1.U)
     }
+    when(status === s_wait_mem_free){
+        perf_cnt.io.inc(PerfName.LSU_wait_free_cycles, 1.U)
+    }
+    when(status === s_wait_mem_resp){
+        perf_cnt.io.inc(PerfName.LSU_wait_resp_cycles, 1.U)
+    }
 
     switch(status){
         is(s_idle){

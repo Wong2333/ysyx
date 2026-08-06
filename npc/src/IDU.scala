@@ -70,6 +70,10 @@ class ysyx_26030092_IDU extends Module{
     out.valid := in.valid
     out.bits.decode.inst := in.bits.inst
 
+    when(!in.valid){
+        perf_cnt.io.inc(PerfName.PIPE_idle_cycles, 1.U)
+    }
+
     val trap = RegInit(false.B)
     val invalid = WireDefault(true.B)
     out.bits.decode.invalid := invalid
