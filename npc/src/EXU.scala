@@ -75,8 +75,8 @@ class ysyx_26030092_EXU extends Module{
         val error = Input(Bool())
     })))
     
-    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W)))
-    perf_events := 0.U
+    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
+    perf_events.foreach(_ := false.B)
 
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{

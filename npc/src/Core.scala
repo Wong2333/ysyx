@@ -28,7 +28,8 @@ class ysyx_26030092 extends Module{
     val perf_u = Module(new PerfCounterArray)
     perf_u.io.clock := clock
     perf_u.io.reset := reset
-    perf_u.io.events := IFU_u.perf_events | IDU_u.perf_events | EXU_u.perf_events | LSU_u.perf_events | WBU_u.perf_events
+    perf_u.io.events := VecInit((0 until PerfEvent.numEvents).map(i =>
+        IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
     // val Arbiter_u = Module(new Arbiter(2))
     // val Xbar_u = Module(new Xbar(3,area))
     // // val MemUnit_u = Module(new MemUnit())
