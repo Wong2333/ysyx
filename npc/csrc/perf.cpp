@@ -5,6 +5,7 @@ std::unordered_map<int, int> perf;
 char *perf_name[128] = {
     "IFU fetch instruction",
     "LSU get data",
+    "LSU access mem latency",
     "EXU finished",
     "IDU load instruction",
     "IDU calculate instruction",

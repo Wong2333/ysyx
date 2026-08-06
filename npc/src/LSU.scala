@@ -71,6 +71,11 @@ class ysyx_26030092_LSU extends Module{
     val waddr_ready = RegInit(false.B)
     val wdata_ready = RegInit(false.B)
 
+    val lsu_accessing_mem = status === s_wait_mem_free || status === s_wait_mem_resp
+    when(lsu_accessing_mem){
+        perf_cnt.io.inc(PerfName.LSU_access_mem_latency, 1.U)
+    }
+
     switch(status){
         is(s_idle){
             in.ready := true.B

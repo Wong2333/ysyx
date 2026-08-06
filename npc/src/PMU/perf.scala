@@ -5,6 +5,7 @@ import chisel3._
 object PerfName extends ChiselEnum{
     val IFU_fetch_instruction,
     LSU_get_data,
+    LSU_access_mem_latency,
     EXU_finished,
     IDU_load_instruction,
     IDU_calculate_instruction,
