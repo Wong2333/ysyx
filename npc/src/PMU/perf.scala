@@ -7,6 +7,8 @@ object PerfName extends ChiselEnum{
     LSU_get_data,
     LSU_access_mem_latency,
     EXU_finished,
+    IDU_jump_instruction,
+    IDU_brench_instruction,
     IDU_load_instruction,
     IDU_calculate_instruction,
     IDU_csr_instruction,

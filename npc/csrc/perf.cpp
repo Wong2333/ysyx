@@ -7,6 +7,8 @@ char *perf_name[128] = {
     "LSU get data",
     "LSU access mem latency",
     "EXU finished",
+    "IDU jump instruction",
+    "IDU brench instruction",
     "IDU load instruction",
     "IDU calculate instruction",
     "IDU csr instruction",

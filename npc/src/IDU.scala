@@ -147,6 +147,9 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1100111".U){
+            when(out.fire){
+                perf_cnt.io.inc(PerfName.IDU_jump_instruction, 1.U)
+            }
             out.bits.exu_ctl.ALU_Op := ALUOp.IType
             out.bits.decode.imm := inst.immI
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
@@ -312,6 +315,9 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1101111".U){// jal
+            when(out.fire){
+                perf_cnt.io.inc(PerfName.IDU_jump_instruction, 1.U)
+            }
             out.bits.exu_ctl.ALU_Op := ALUOp.JType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
@@ -322,6 +328,9 @@ class ysyx_26030092_IDU extends Module{
         }
 
         is("b1100011".U){// beq
+            when(out.fire){
+                perf_cnt.io.inc(PerfName.IDU_brench_instruction, 1.U)
+            }
             out.bits.exu_ctl.ALU_Op := ALUOp.BType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
