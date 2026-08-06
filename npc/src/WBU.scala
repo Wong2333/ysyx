@@ -29,7 +29,7 @@ class ysyx_26030092_WBU extends Module{
         val ExceptionPort = new ExceptionInfoBundle
     }))
 
-    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W))
+    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W)))
     perf_events := 0.U
     when(out.fire){
         perf_events(PerfEvent.WBU_commit_instruction) := true.B

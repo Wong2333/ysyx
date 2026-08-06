@@ -15,7 +15,7 @@ class ysyx_26030092_IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W))
+    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W)))
     perf_events := 0.U
 
     val AXI4_port = IO(new AXI4Bundle)
