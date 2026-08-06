@@ -63,7 +63,7 @@ class ysyx_26030092_IDU extends Module{
     })))
 
     val out = IO(Decoupled(new IDUBundle))
-    val perf_events = Output(UInt(PerfEvent.numEvents.W))
+    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W))
     perf_events := 0.U
 
     in.ready := out.ready

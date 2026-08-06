@@ -31,7 +31,7 @@ class ysyx_26030092_LSU extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
 
-    val perf_events = Output(UInt(PerfEvent.numEvents.W))
+    val perf_events = IO(Output(UInt(PerfEvent.numEvents.W))
     perf_events := 0.U
 
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
