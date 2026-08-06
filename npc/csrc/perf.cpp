@@ -18,7 +18,7 @@ extern "C" void perf_inc(int id, int cnt){
 }
 
 void printPMU(){
-    for (const auto& [id, count] : perf) {
-        printf("[PERF] id: %d %s counter:   %llu\n", id, perf_name[id] ,count);
+    for(int id = 0; id<7;id ++){
+        printf("[PERF] id: %d %s counter:   %llu\n", id, perf_name[id] ,perf[id]);
     }
 }
