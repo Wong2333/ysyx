@@ -1,19 +1,19 @@
 module PerfCounterArray(
-    input clock,
-    input reset,
-    input [14:0] events
+    input io_clock,
+    input io_reset,
+    input [14:0] io_events
 );
 `ifndef SYNTHESIS
     reg [63:0] counters [0:14];
     integer i;
 
-    always @(posedge clock) begin
-        if (reset) begin
+    always @(posedge io_clock) begin
+        if (io_reset) begin
             for (i = 0; i < 15; i = i + 1) counters[i] <= 64'h0;
         end
         else begin
             for (i = 0; i < 15; i = i + 1) begin
-                if (events[i]) counters[i] <= counters[i] + 64'h1;
+                if (io_events[i]) counters[i] <= counters[i] + 64'h1;
             end
         end
     end
