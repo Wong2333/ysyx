@@ -3,7 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
-import npc.PMU.PerfCounter
+import npc.PMU.PerfEvent
 import npc.PMU.PerfEvent
 
 class InstDecode extends Bundle{
