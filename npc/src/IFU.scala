@@ -15,8 +15,8 @@ class ysyx_26030092_IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    val perf_cnt = Module(new PerfCounter)
-    perf_cnt.io.init()
+    val perf_events = Output(UInt(PerfEvent.numEvents.W))
+    perf_events := 0.U
 
     val AXI4_port = IO(new AXI4Bundle)
 
@@ -37,7 +37,7 @@ class ysyx_26030092_IFU extends Module{
     val status = RegInit(s_idle)
 
     when(status === s_wait_mem_free || status === s_wait_mem_data){
-        perf_cnt.io.inc(PerfName.IFU_wait_mem_cycles, 1.U)
+        perf_events(PerfEvent.IFU_wait_mem_cycles) := true.B
     }
 
     switch(status){
@@ -60,7 +60,7 @@ class ysyx_26030092_IFU extends Module{
                 inst_reg := AXI4_port.rdata
                 error_reg := AXI4_port.rresp
                 status := s_wait_fetch
-                perf_cnt.io.inc(PerfName.IFU_fetch_instruction, 1.U)
+                perf_events(PerfEvent.IFU_fetch_instruction) := true.B
             }
         }
         is(s_wait_fetch){

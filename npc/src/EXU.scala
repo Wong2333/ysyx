@@ -3,8 +3,8 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
-import npc.PMU.PerfCounter
-import npc.PMU.PerfName
+import npc.PMU.PerfEvent
+
 
 object ALUOp extends ChiselEnum{
     val RType,
@@ -75,8 +75,8 @@ class ysyx_26030092_EXU extends Module{
         val error = Input(Bool())
     })))
     
-    val perf_cnt = Module(new PerfCounter)
-    perf_cnt.io.init()
+    val perf_events = Output(UInt(PerfEvent.numEvents.W))
+    perf_events := 0.U
 
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
@@ -136,7 +136,7 @@ class ysyx_26030092_EXU extends Module{
             invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(wbu_in.ready){
                 status := s_idle
-                perf_cnt.io.inc(PerfName.EXU_finished, 1.U)
+                perf_events(PerfEvent.EXU_finished) := true.B
             }
         }
     }

@@ -4,6 +4,7 @@ import chisel3._
 import npc.AXI._
 // import npc.Xbar.{Arbiter,Xbar}
 import npc.device._
+import npc.PMU._
 
 class ysyx_26030092 extends Module{
 
@@ -24,6 +25,10 @@ class ysyx_26030092 extends Module{
     val IDU_u = Module(new ysyx_26030092_IDU())
     val EXU_u = Module(new ysyx_26030092_EXU())
     val WBU_u = Module(new ysyx_26030092_WBU())
+    val perf_u = Module(new PerfCounterArray)
+    perf_u.io.clock := clock
+    perf_u.io.reset := reset
+    perf_u.io.events := IFU_u.perf_events | IDU_u.perf_events | EXU_u.perf_events | LSU_u.perf_events | WBU_u.perf_events
     // val Arbiter_u = Module(new Arbiter(2))
     // val Xbar_u = Module(new Xbar(3,area))
     // // val MemUnit_u = Module(new MemUnit())

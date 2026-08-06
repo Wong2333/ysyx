@@ -31,9 +31,9 @@ class ysyx_26030092_LSU extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
 
-    val perf_cnt = Module(new PerfCounter)
-    perf_cnt.io.init()
-    
+    val perf_events = Output(UInt(PerfEvent.numEvents.W))
+    perf_events := 0.U
+
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
         val rdata = Output(UInt(32.W))
@@ -73,13 +73,13 @@ class ysyx_26030092_LSU extends Module{
 
     val lsu_accessing_mem = status === s_wait_mem_free || status === s_wait_mem_resp
     when(lsu_accessing_mem){
-        perf_cnt.io.inc(PerfName.LSU_access_mem_latency, 1.U)
+        perf_events(PerfEvent.LSU_access_mem_latency) := true.B
     }
     when(status === s_wait_mem_free){
-        perf_cnt.io.inc(PerfName.LSU_wait_free_cycles, 1.U)
+        perf_events(PerfEvent.LSU_wait_free_cycles) := true.B
     }
     when(status === s_wait_mem_resp){
-        perf_cnt.io.inc(PerfName.LSU_wait_resp_cycles, 1.U)
+        perf_events(PerfEvent.LSU_wait_resp_cycles) := true.B
     }
 
     switch(status){
@@ -139,7 +139,7 @@ class ysyx_26030092_LSU extends Module{
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
-                    perf_cnt.io.inc(PerfName.LSU_get_data, 1.U)
+                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                
@@ -150,9 +150,7 @@ class ysyx_26030092_LSU extends Module{
                     lsu_out_reg.rdata := rdata
                     mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
-                    perf_cnt.io.valid := true.B
-                    perf_cnt.io.id := PerfName.LSU_get_data
-                    perf_cnt.io.cnt := 1.U
+                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
 
             }
