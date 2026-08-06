@@ -7,6 +7,9 @@ char *perf_name[128] = {
     "LSU get data",
     "EXU finished",
     "IDU load instruction"
+    "IDU calculate instruction",
+    "IDU csr instruction",
+    "IDU store instruction"
 };
 
 extern "C" void perf_inc(int id, int cnt){

@@ -6,7 +6,10 @@ object PerfName extends ChiselEnum{
     val IFU_fetch_instruction,
     LSU_get_data,
     EXU_finished,
-    IDU_load_instruction = Value
+    IDU_load_instruction,
+    IDU_calculate_instruction,
+    IDU_csr_instruction,
+    IDU_store_instruction = Value
     val none = Value(0x0fffffff.U(32.W))
 }
 

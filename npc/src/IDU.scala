@@ -3,6 +3,8 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
+import npc.PMU.PerfCounter
+import npc.PMU.PerfName
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
@@ -61,6 +63,8 @@ class ysyx_26030092_IDU extends Module{
     })))
 
     val out = IO(Decoupled(new IDUBundle))
+    val perf_cnt = Module(new PerfCounter)
+    perf_cnt.io.init()
 
     in.ready := out.ready
     out.valid := in.valid
@@ -98,6 +102,7 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.exu_ctl.ALUWrite2Reg := true.B
+            perf_cnt.io.inc(PerfName.IDU_calculate_instruction, 1.U)
             when(inst.funct3 === "b000".U){// addi
                 out.bits.exu_ctl.ALU_Control := ALUContorl.add
                 invalid := false.B
@@ -151,6 +156,7 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1110011".U){
+            perf_cnt.io.inc(PerfName.IDU_csr_instruction, 1.U)
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
@@ -183,6 +189,7 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b0110011".U){
+            perf_cnt.io.inc(PerfName.IDU_calculate_instruction, 1.U)
             out.bits.exu_ctl.ALU_Op := ALUOp.RType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.rs2
@@ -257,7 +264,7 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.decode.imm := inst.immI
             out.bits.exu_ctl.ALU_Control := ALUContorl.add
-            
+            perf_cnt.io.inc(PerfName.IDU_load_instruction, 1.U)
             when(inst.funct3 === "b010".U){//lw
                 out.bits.exu_ctl.Mem_Control := MemControl.lw
                 invalid := false.B
@@ -281,6 +288,7 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.decode.imm := inst.immS
             out.bits.exu_ctl.ALU_Control := ALUContorl.add
+            perf_cnt.io.inc(PerfName.IDU_store_instruction, 1.U)
             when(inst.funct3 === "b010".U){// sw
                 out.bits.exu_ctl.Mem_Control := MemControl.sw
                 invalid := false.B
