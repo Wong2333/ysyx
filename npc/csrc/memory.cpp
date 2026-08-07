@@ -42,14 +42,20 @@ void load_img(const char* path){
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
+    if (uaddr >= FLASH_SIZE) {
+        printf("Error: flash_read out of range: addr=0x%08x\n", addr);
+        assert(0);
+    }
     *data = (int32_t)flash[uaddr >> 2];
 }
 
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
-    uint32_t uaddr = addr;
-    uaddr = uaddr - 0x20000000;
+    uint32_t uaddr = addr - 0x20000000;
+    if (uaddr >= sizeof(mrom)) {
+        printf("Error: mrom_read out of range: addr=0x%08x\n", addr);
+        assert(0);
+    }
     *data = (int32_t)mrom[uaddr >> 2];
-    // data = mrom[addr >> 2];
 }
 
 uint32_t psram[1024*1024];
@@ -125,9 +131,12 @@ uint32_t mem_read(uint32_t addr) {
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return mrom[(addr - 0x20000000) >> 2];
     else if (addr >= 0x30000000 && addr < 0x40000000) {  // Flash XIP
-        printf("DBG mem_read flash: addr=%08x off=%08x\n",
-               addr, (addr - 0x30000000) >> 2);
-        return flash[(addr - 0x30000000) >> 2];
+        uint32_t off = (addr - 0x30000000) >> 2;
+        if (off >= FLASH_SIZE / 4) {
+            printf("Error: mem_read out of range: addr=0x%08x\n", addr);
+            assert(0);
+        }
+        return flash[off];
     }
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
