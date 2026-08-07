@@ -1,6 +1,4 @@
 #include <dlfcn.h>
-#include "svdpi.h"
-#include "VysyxSoCFull__Dpi.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,29 +99,13 @@ uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
 #include<npc-memory.h>
 
-// 读取 RTL 提交指令的访存信息（Commit 黑盒，执行时刻的真实地址）
-static bool read_difftest_mem_info(int *valid, uint32_t *addr) {
-  const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.commit_u";
-  svScope scope = svGetScopeFromName(scope_name);
-  if (!scope) {
-    printf("Error: DPI Scope '%s' not found!\n", scope_name);
-    return false;
-  }
-  svSetScope(scope);
-  int v = 0;
-  int a = 0;
-  difftest_mem_info(&v, &a);
-  *valid = v;
-  *addr = (uint32_t)a;
-  return true;
-}
+// commit 附带访存信息（sdb.cpp 的 commit() 设置）
+extern int commit_mem_valid;
+extern uint32_t commit_mem_addr;
 
 static bool is_skip_ref(uint32_t pc){
-  int valid = 0;
-  uint32_t addr = 0;
-  if (!read_difftest_mem_info(&valid, &addr)) return false;
-  if (!valid) return false;
-  return !in_mem(addr);
+  if (!commit_mem_valid) return false;
+  return !in_mem(commit_mem_addr);
 }
 
 void check_difftest(uint32_t pc) {
@@ -175,10 +157,10 @@ bool difftest_enabled() {
   return difftest_on;
 }
 
-static bool commit = false;
+static bool commit_flag = false;
 
 extern "C" void difftest_commit(){
-  commit = true;
+  commit_flag = true;
 }
 
 extern "C" void difftest_reset(){
