@@ -107,7 +107,7 @@ PERF_ARCH ?= riscv32e-ysyxSoC
 PERF_MAINARGS ?= test
 perf:
 	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=$(PERF_MAINARGS) run 2>&1 | tee $(BUILD_DIR)/perf_result.txt
-	python3 $(abspath scripts/perf_summary.py) $(BUILD_DIR)/perf_result.txt
+	python3 $(abspath scripts/perf_summary.py) $(BUILD_DIR)/perf_result.txt perf_result.csv
 
 -include ../Makefile
 
