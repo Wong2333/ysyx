@@ -14,11 +14,13 @@ module RegBlackBox(
     assign rdata2 = (raddr2 == 5'b0) ? 32'b0 : rf[raddr2];
 
     // 时钟使能实现：D 端直连 wdata，写选择放在 CE 引脚（比 D 端 mux 路径短）
+    // one-hot 译码显式写出，便于综合器优化译码器结构（公共前缀共享）
+    wire [31:0] wsel = 32'h1 << waddr;
     genvar gi;
     generate
       for (gi = 0; gi < 32; gi = gi + 1) begin : rf_ce
         always @(posedge clock) begin
-          if (wen && waddr == gi[4:0]) rf[gi] <= wdata;
+          if (wen && wsel[gi]) rf[gi] <= wdata;
         end
       end
     endgenerate
