@@ -33,7 +33,7 @@ module Commit(
 
     export "DPI-C" task difftest_mem_info;
     task difftest_mem_info(output int valid, output int addr);
-        valid = mem_valid_r;
+        valid = {31'b0, mem_valid_r};
         addr = mem_addr_r;
     endtask
 `endif
