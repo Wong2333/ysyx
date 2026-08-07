@@ -42,7 +42,6 @@ class ysyx_26030092_WBU extends Module{
         perf_events(PerfEvent.WBU_commit_instruction) := true.B
     }
 
-    // 提交指令信息转发（EXU → RFS）
     val commit_info = IO(Input(new CommitInfoBundle))
     val commit_info_out = IO(Output(new CommitInfoBundle))
     commit_info_out := commit_info
