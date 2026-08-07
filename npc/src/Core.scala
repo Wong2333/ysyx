@@ -30,6 +30,12 @@ class ysyx_26030092 extends Module{
     perf_u.io.reset := reset
     perf_u.io.events := VecInit((0 until PerfEvent.numEvents).map(i =>
         IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
+
+    val difftest_helper_u = Module(new DifftestHelper)
+    difftest_helper_u.io.clock := clock
+    difftest_helper_u.io.reset := reset
+    difftest_helper_u.io.mem_commit := EXU_u.mem_commit
+    difftest_helper_u.io.mem_addr := LSU_u.mem_addr
     // val Arbiter_u = Module(new Arbiter(2))
     // val Xbar_u = Module(new Xbar(3,area))
     // // val MemUnit_u = Module(new MemUnit())

@@ -78,6 +78,10 @@ class ysyx_26030092_EXU extends Module{
     val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
     perf_events.foreach(_ := false.B)
 
+    // difftest: 提交且当前指令为访存（供 is_skip_ref 判断是否跳过 NEMU）
+    val mem_commit = IO(Output(Bool()))
+    mem_commit := false.B
+
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
         val rdata = UInt(32.W)
@@ -137,6 +141,7 @@ class ysyx_26030092_EXU extends Module{
             when(wbu_in.ready){
                 status := s_idle
                 perf_events(PerfEvent.EXU_finished) := true.B
+                mem_commit := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
             }
         }
     }

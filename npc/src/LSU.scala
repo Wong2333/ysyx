@@ -34,6 +34,10 @@ class ysyx_26030092_LSU extends Module{
     val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
     perf_events.foreach(_ := false.B)
 
+    // difftest: 当前访存指令的地址（执行时刻锁存）
+    val mem_addr = IO(Output(UInt(32.W)))
+    mem_addr := lsu_in_reg.addr
+
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
         val rdata = Output(UInt(32.W))

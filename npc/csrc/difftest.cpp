@@ -1,4 +1,6 @@
 #include <dlfcn.h>
+#include "svdpi.h"
+#include "VysyxSoCFull__Dpi.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,14 +101,29 @@ uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
 #include<npc-memory.h>
 
-static bool is_skip_ref(uint32_t pc){
-  uint32_t inst = mem_read(pc);
-  fprintf(stderr, "DBG is_skip_ref: pc=%08x inst=%08x\n", pc, inst);
-  MemAccessInfo mc_info = get_mem_access_info(inst);
-  if(mc_info.type){
-    return !in_mem(mc_info.addr);
+// 读取 RTL 提交指令的访存信息（DifftestHelper 黑盒，执行时刻的真实地址）
+static bool read_difftest_mem_info(int *valid, uint32_t *addr) {
+  const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.difftest_helper_u";
+  svScope scope = svGetScopeFromName(scope_name);
+  if (!scope) {
+    printf("Error: DPI Scope '%s' not found!\n", scope_name);
+    return false;
   }
-  return false;
+  svSetScope(scope);
+  int v = 0;
+  int a = 0;
+  difftest_mem_info(&v, &a);
+  *valid = v;
+  *addr = (uint32_t)a;
+  return true;
+}
+
+static bool is_skip_ref(uint32_t pc){
+  int valid = 0;
+  uint32_t addr = 0;
+  if (!read_difftest_mem_info(&valid, &addr)) return false;
+  if (!valid) return false;
+  return !in_mem(addr);
 }
 
 void check_difftest(uint32_t pc) {
