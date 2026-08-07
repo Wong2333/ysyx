@@ -2,6 +2,7 @@ package npc
 
 import chisel3._
 import chisel3.util._
+import npc.PMU._
 
 class WriteBackPortBundle extends Bundle{
     val PCNext = Output(UInt(32.W))
@@ -27,6 +28,13 @@ class ysyx_26030092_WBU extends Module{
         val CSRWritePort = new CSRWritePortBundle
         val ExceptionPort = new ExceptionInfoBundle
     }))
+
+    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
+    perf_events.foreach(_ := false.B)
+    when(out.fire){
+        perf_events(PerfEvent.WBU_commit_instruction) := true.B
+    }
+
     out.valid := in.valid
     in.ready := out.ready
 

@@ -6,6 +6,8 @@ AM_SRCS := riscv/ysyxSoC/start.S \
            riscv/ysyxSoC/cte.c \
            riscv/ysyxSoC/trap.S \
            riscv/ysyxSoC/bootloader.c \
+           riscv/ysyxSoC/uart.c \
+           riscv/ysyxSoC/gpu.c \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 

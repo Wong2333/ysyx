@@ -96,23 +96,35 @@ rebuild:
 
 .PHONY: bin test verilog help reformat checkformat clean
 
-sim: 
+sim:
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
+# 性能评估：运行 microbench train 规模（性能数据从运行输出中记录）
+PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
+PERF_ARCH ?= riscv32e-ysyxSoC
+perf:
+	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=train run
+
 -include ../Makefile
 
-DESIGN = top
+DESIGN = ysyx_26030092
 
 # 指定 RTL 文件（可以使用通配符，也可以显式列出）
-RTL_FILES = $(wildcard build/*.sv)
+RTL_FILES = $(wildcard build/*.sv) $(RESOURCES)
+
+# yosys 读取 RTL 时需要的 include 路径（resources 里有 `include "autoconfig.svh"）
+export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
+
+# 顶层时钟端口名（Chisel 默认叫 clock）
+export CLK_PORT_NAME = clock
 
 # (可选) 如果有自己的约束文件
 # SDC_FILE = ./constraint.sdc
 
 # (可选) 指定不同的时钟频率
-CLK_FREQ_MHZ = 500
+CLK_FREQ_MHZ = 1200
 
 include /home/wjm/yosys-sta/Makefile.common
 

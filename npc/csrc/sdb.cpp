@@ -224,13 +224,15 @@ extern "C" void commit(int pc){
 }
 
 #define STUCK_THRESHOLD 10000
-static uint32_t stuck_cycle = 0; 
+static uint32_t stuck_cycle = 0;
+uint64_t inst_counter = 0; 
 bool check_commit(){
   if(has_commit){
     stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
     trace_record(commit_pc,mem_read(commit_pc),read_pc_reg());
+    inst_counter ++;
     return true;
   }
   stuck_cycle++;

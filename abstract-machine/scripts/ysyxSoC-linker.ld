@@ -3,7 +3,7 @@ ENTRY(_start)
 MEMORY {
   flash : ORIGIN = 0x30000000, LENGTH = 16M
   psram : ORIGIN = 0x80000000, LENGTH = 4M
-  sdram : ORIGIN = 0xa0000000, LENGTH = 32M
+  sdram : ORIGIN = 0xa0000000, LENGTH = 64M
 }
 
 SECTIONS {

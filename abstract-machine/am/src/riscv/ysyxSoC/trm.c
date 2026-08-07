@@ -25,24 +25,20 @@ void halt(int code) {
 }
 
 
-void uart_init() {
-  // 1. 设置 LCR 的第 7 位 (DLAB) 为 1，开启除数寄存器访问
-  outb(UART_BASE + UART_REG_LC, 0x80);
 
-  // 2. 设置除数 (波特率)
-  // 在仿真环境中，简单设置为 1 即可 (DLL=1, DLM=0)
-  outb(UART_BASE + UART_REG_DL1, 0x10); // 除数低字节
-  outb(UART_BASE + UART_REG_DL2, 0x00); // 除数高字节
-
-  // 3. 设置通信格式 (8N1: 8位数据, 无校验, 1停止位) 并关闭 DLAB
-  // 0x03 = 0000_0011b
-  // bit 7 (DLAB) = 0 (访问正常寄存器)
-  // bit 1-0 = 11 (8位数据长度)
-  outb(UART_BASE + UART_REG_LC, 0x03);
-}
 extern uint32_t _data_lma_start;
 extern uint32_t _data_vma_start;
 extern uint32_t _data_vma_end;
+
+void show_id_in_seg(uint32_t marchid){
+  uint32_t seg = 0;
+  while(marchid > 0){
+    seg = (seg >> 4) | (marchid % 10) << 28;
+    marchid /= 10;
+  }
+  outl(GPIO_SEG, seg);
+}
+void uart_init();
 
 void _trm_init() {
   uart_init();
@@ -54,9 +50,7 @@ void _trm_init() {
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
   printf("%u\n",marchid);
-  printf("_data_lma_start: %x\n",&_data_lma_start);
-  printf("data_vma_start: %x\n",&_data_vma_start);
-  printf("_data_vma_end: %x\n", &_data_vma_end);
+  show_id_in_seg(marchid);
   int ret = main(mainargs);
   halt(ret);
 }

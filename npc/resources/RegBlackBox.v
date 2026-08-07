@@ -19,9 +19,11 @@ module RegBlackBox(
         end
     end
 
+`ifndef SYNTHESIS
     // DPI-C 必须和 rf 在同一个 module 作用域下！
     export "DPI-C" task read_reg;
     task read_reg(input int addr, output int data);
         data = rf[addr[4:0]];
     endtask
+`endif
 endmodule

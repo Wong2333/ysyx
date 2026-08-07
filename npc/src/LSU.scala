@@ -3,6 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
+import npc.PMU._
 
 class mtrace extends ExtModule{
     val io = FlatIO(new Bundle {
@@ -29,7 +30,10 @@ class ysyx_26030092_LSU extends Module{
     }))
 
     val AXI4_port = IO(new AXI4Bundle)
-    
+
+    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
+    perf_events.foreach(_ := false.B)
+
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
         val rdata = Output(UInt(32.W))
@@ -67,6 +71,17 @@ class ysyx_26030092_LSU extends Module{
     val waddr_ready = RegInit(false.B)
     val wdata_ready = RegInit(false.B)
 
+    val lsu_accessing_mem = status === s_wait_mem_free || status === s_wait_mem_resp
+    when(lsu_accessing_mem){
+        perf_events(PerfEvent.LSU_access_mem_latency) := true.B
+    }
+    when(status === s_wait_mem_free){
+        perf_events(PerfEvent.LSU_wait_free_cycles) := true.B
+    }
+    when(status === s_wait_mem_resp){
+        perf_events(PerfEvent.LSU_wait_resp_cycles) := true.B
+    }
+
     switch(status){
         is(s_idle){
             in.ready := true.B
@@ -79,6 +94,9 @@ class ysyx_26030092_LSU extends Module{
             when(is_write){
                 when(!waddr_ready){
                     AXI4_port.awaddr := lsu_in_reg.addr
+                    AXI4_port.awsize := MuxLookup(lsu_in_reg.mem_ctl, 2.U)(Seq(
+                        MemControl.sh -> 1.U,
+                        MemControl.sb -> 0.U))
                     AXI4_port.awvalid := true.B
                     when(AXI4_port.awready){
                         waddr_ready := true.B
@@ -87,6 +105,7 @@ class ysyx_26030092_LSU extends Module{
                 when(!wdata_ready){
                     AXI4_port.wdata := shifted_wdata
                     AXI4_port.wstrb := wmask
+                    AXI4_port.wlast := true.B
                     AXI4_port.wvalid := true.B
                     when(AXI4_port.wready){
                         wdata_ready := true.B
@@ -99,6 +118,11 @@ class ysyx_26030092_LSU extends Module{
                 }
 
             }.otherwise{
+                AXI4_port.arsize := MuxLookup(lsu_in_reg.mem_ctl, 2.U)(Seq(
+                    MemControl.lh -> 1.U,
+                    MemControl.lhu -> 1.U,
+                    MemControl.lb -> 0.U,
+                    MemControl.lbu -> 0.U))
                 AXI4_port.arvalid := true.B
                 when(AXI4_port.arready){
                     status := s_wait_mem_resp
@@ -115,6 +139,7 @@ class ysyx_26030092_LSU extends Module{
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
+                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                
@@ -125,6 +150,7 @@ class ysyx_26030092_LSU extends Module{
                     lsu_out_reg.rdata := rdata
                     mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
+                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
 
             }
