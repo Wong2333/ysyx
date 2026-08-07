@@ -123,8 +123,11 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
 uint32_t mem_read(uint32_t addr) {
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return mrom[(addr - 0x20000000) >> 2];
-    else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
+    else if (addr >= 0x30000000 && addr < 0x40000000) {  // Flash XIP
+        printf("DBG mem_read flash: addr=%08x off=%08x\n",
+               addr, (addr - 0x30000000) >> 2);
         return flash[(addr - 0x30000000) >> 2];
+    }
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
     else if(addr >= 0xa0000000 && addr < 0xa2000000){    // SDRAM
