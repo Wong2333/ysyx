@@ -29,10 +29,10 @@ class WriteBackPortBundle extends Bundle{
 
 // WBU → IFU 的 PC 更新端口：commit 脉冲 + 跳转/trap 事件
 class PCUpdatePortBundle extends Bundle {
-  val valid   = Output(Bool())     // 本拍 commit（= in.fire），IFU 更新 PC 并开始取指
-  val pc_we   = Output(Bool())     // 需要改变 PC（跳转 或 trap）
-  val is_trap = Output(Bool())     // trap（IFU 需用 mtvec 作为目标）
-  val pc_next = Output(UInt(32.W)) // 非 trap 跳转目标（分支/jal）
+  val valid   = Output(Bool()) 
+  val pc_we   = Output(Bool())
+  val is_trap = Output(Bool())
+  val pc_next = Output(UInt(32.W))
 }
 
 class Commit extends ExtModule{
