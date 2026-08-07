@@ -124,7 +124,7 @@ export CLK_PORT_NAME = clock
 # SDC_FILE = ./constraint.sdc
 
 # (可选) 指定不同的时钟频率
-CLK_FREQ_MHZ = 1200
+CLK_FREQ_MHZ = 1000
 
 include /home/wjm/yosys-sta/Makefile.common
 
