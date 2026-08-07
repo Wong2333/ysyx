@@ -104,8 +104,9 @@ sim:
 # 性能评估：编译运行 microbench 并输出可复现的性能数据（git checkout 对应 commit 后 make perf 复现）
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
 PERF_ARCH ?= riscv32e-ysyxSoC
+PERF_MAINARGS ?= test
 perf:
-	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) run 2>&1 | tee $(BUILD_DIR)/perf_result.txt
+	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=$(PERF_MAINARGS) run 2>&1 | tee $(BUILD_DIR)/perf_result.txt
 	python3 $(abspath scripts/perf_summary.py) $(BUILD_DIR)/perf_result.txt
 
 -include ../Makefile
