@@ -4,6 +4,8 @@ import chisel3.util._
 import npc.MemControl.sw
 
 class Commit extends ExtModule{
+    val clock = FlatIO(Input(Clock()))
+    val reset = FlatIO(Input(Bool()))
     val pc = FlatIO(Input(UInt(32.W)))
     val valid = FlatIO(Input(Bool()))
     val mem_commit = FlatIO(Input(Bool()))
@@ -212,6 +214,8 @@ class ysyx_26030092_RFS extends Module {
     val commit_mem_reg = RegInit(false.B)
     val commit_mem_addr_reg = Reg(UInt(32.W))
     val commit_u = Module(new Commit)
+    commit_u.clock := clock
+    commit_u.reset := reset
     commit_u.valid := false.B
     commit_u.pc := DontCare
     commit_u.mem_commit := commit_mem_reg
