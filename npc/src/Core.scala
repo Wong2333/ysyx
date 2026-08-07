@@ -35,11 +35,6 @@ class ysyx_26030092 extends Module{
     WBU_u.commit_info := EXU_u.commit_info
     RFS_u.commit_info := WBU_u.commit_info_out
 
-    val difftest_helper_u = Module(new DifftestHelper)
-    difftest_helper_u.io.clock := clock
-    difftest_helper_u.io.reset := reset
-    difftest_helper_u.io.mem_commit := EXU_u.mem_commit
-    difftest_helper_u.io.mem_addr := LSU_u.mem_addr
     // val Arbiter_u = Module(new Arbiter(2))
     // val Xbar_u = Module(new Xbar(3,area))
     // // val MemUnit_u = Module(new MemUnit())
