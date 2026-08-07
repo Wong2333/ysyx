@@ -82,7 +82,9 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
 
   riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
+  // RV32E: RTL 只有 16 个寄存器，高 16 个清零且不再更新（软件不写 x16-x31）
+  memset(&dut_state, 0, sizeof(dut_state));
+  for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.pc = read_pc_reg();
@@ -110,7 +112,9 @@ void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
+  // RV32E: 只读低 16 个寄存器，高 16 个保持 0
+  memset(&dut_state, 0, sizeof(dut_state));
+  for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.pc = read_pc_reg();
