@@ -101,7 +101,7 @@ bool in_mem(uint32_t addr);
 
 static bool is_skip_ref(uint32_t pc){
   uint32_t inst = mem_read(pc);
-  printf("DBG is_skip_ref: pc=%08x inst=%08x\n", pc, inst);
+  fprintf(stderr, "DBG is_skip_ref: pc=%08x inst=%08x\n", pc, inst);
   MemAccessInfo mc_info = get_mem_access_info(inst);
   if(mc_info.type){
     return !in_mem(mc_info.addr);
