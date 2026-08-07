@@ -31,6 +31,10 @@ class ysyx_26030092 extends Module{
     perf_u.io.events := VecInit((0 until PerfEvent.numEvents).map(i =>
         IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
 
+    // commit 数据通路：EXU → WBU → RFS（commit 通知在 RFS 内部）
+    WBU_u.commit_info := EXU_u.commit_info
+    RFS_u.commit_info := WBU_u.commit_info_out
+
     val difftest_helper_u = Module(new DifftestHelper)
     difftest_helper_u.io.clock := clock
     difftest_helper_u.io.reset := reset

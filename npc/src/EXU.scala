@@ -78,9 +78,11 @@ class ysyx_26030092_EXU extends Module{
     val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
     perf_events.foreach(_ := false.B)
 
-    // difftest: 提交且当前指令为访存（供 is_skip_ref 判断是否跳过 NEMU）
-    val mem_commit = IO(Output(Bool()))
-    mem_commit := false.B
+    // 提交指令信息（PC / 是否访存 / 访存地址），沿流水线交给 WBU → RFS
+    val commit_info = IO(Output(new CommitInfoBundle))
+    commit_info.pc := idu_out_reg.decode.pc
+    commit_info.mem := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
+    commit_info.mem_addr := lsu_in.bits.addr
 
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
@@ -141,7 +143,6 @@ class ysyx_26030092_EXU extends Module{
             when(wbu_in.ready){
                 status := s_idle
                 perf_events(PerfEvent.EXU_finished) := true.B
-                mem_commit := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
             }
         }
     }

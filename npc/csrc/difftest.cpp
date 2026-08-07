@@ -101,9 +101,9 @@ uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
 #include<npc-memory.h>
 
-// 读取 RTL 提交指令的访存信息（DifftestHelper 黑盒，执行时刻的真实地址）
+// 读取 RTL 提交指令的访存信息（Commit 黑盒，执行时刻的真实地址）
 static bool read_difftest_mem_info(int *valid, uint32_t *addr) {
-  const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.difftest_helper_u";
+  const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.commit_u";
   svScope scope = svGetScopeFromName(scope_name);
   if (!scope) {
     printf("Error: DPI Scope '%s' not found!\n", scope_name);
