@@ -39,7 +39,7 @@ class ysyx_26030092_ALU extends Module{
     out := DontCare
     switch(in.ctl){
         is(ALUContorl.add){
-            out := in.src1 - in.src2
+            out := in.src1 + in.src2
         }
         is(ALUContorl.sub){
             out := in.src1 - in.src2
