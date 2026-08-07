@@ -80,9 +80,6 @@ class ysyx_26030092_EXU extends Module{
 
     // 提交指令信息（PC / 是否访存 / 访存地址），沿流水线交给 WBU → RFS
     val commit_info = IO(Output(new CommitInfoBundle))
-    commit_info.pc := idu_out_reg.decode.pc
-    commit_info.mem := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
-    commit_info.mem_addr := lsu_in.bits.addr
 
     val idu_out_reg = Reg(new IDUBundle)
     val lsu_out_reg = Reg(new Bundle{
@@ -110,6 +107,11 @@ class ysyx_26030092_EXU extends Module{
     val s_idle :: s_wait_lsu_free :: s_wait_lsu_valid :: s_write_back :: Nil = Enum(4)
     val status = RegInit(s_idle)
     val is_mem = idu_out.bits.exu_ctl.Mem_Control =/= MemControl.none
+
+    // 提交指令信息：PC / 是否访存 / 访存地址（沿流水线交给 WBU → RFS）
+    commit_info.pc := idu_out_reg.decode.pc
+    commit_info.mem := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
+    commit_info.mem_addr := lsu_in.bits.addr
 
     switch(status){
         is(s_idle){
