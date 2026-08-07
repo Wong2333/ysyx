@@ -82,7 +82,9 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
 
   riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
+  // RV32E: RTL 只有 16 个寄存器，高 16 个清零且不再更新（软件不写 x16-x31）
+  memset(&dut_state, 0, sizeof(dut_state));
+  for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.pc = read_pc_reg();
@@ -97,20 +99,22 @@ uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
 #include<npc-memory.h>
 
+// commit 附带访存信息（sdb.cpp 的 commit() 设置）
+extern int commit_mem_valid;
+extern uint32_t commit_mem_addr;
+
 static bool is_skip_ref(uint32_t pc){
-  uint32_t inst = mem_read(pc);
-  MemAccessInfo mc_info = get_mem_access_info(inst);
-  if(mc_info.type){
-    return !in_mem(mc_info.addr);
-  }
-  return false;
+  if (!commit_mem_valid) return false;
+  return !in_mem(commit_mem_addr);
 }
 
 void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   riscv32_CPU_state dut_state;
-  for (int i = 0; i < 32; i++) {
+  // RV32E: 只读低 16 个寄存器，高 16 个保持 0
+  memset(&dut_state, 0, sizeof(dut_state));
+  for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.pc = read_pc_reg();
@@ -153,10 +157,10 @@ bool difftest_enabled() {
   return difftest_on;
 }
 
-static bool commit = false;
+static bool commit_flag = false;
 
 extern "C" void difftest_commit(){
-  commit = true;
+  commit_flag = true;
 }
 
 extern "C" void difftest_reset(){

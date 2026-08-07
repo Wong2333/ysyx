@@ -217,10 +217,15 @@ void sdb_mainloop() {
 
 static uint32_t commit_pc;
 static bool has_commit = false;
+// commit 附带的访存信息（供 difftest 判断是否跳过 NEMU）
+int commit_mem_valid = 0;
+uint32_t commit_mem_addr = 0;
 
-extern "C" void commit(int pc){
+extern "C" void commit(int pc, int mem_commit, int mem_addr){
   commit_pc = pc;
   has_commit = true;
+  commit_mem_valid = mem_commit;
+  commit_mem_addr = (uint32_t)mem_addr;
 }
 
 #define STUCK_THRESHOLD 10000

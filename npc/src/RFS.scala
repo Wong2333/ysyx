@@ -4,8 +4,12 @@ import chisel3.util._
 import npc.MemControl.sw
 
 class Commit extends ExtModule{
+    val clock = FlatIO(Input(Clock()))
+    val reset = FlatIO(Input(Bool()))
     val pc = FlatIO(Input(UInt(32.W)))
     val valid = FlatIO(Input(Bool()))
+    val mem_commit = FlatIO(Input(Bool()))
+    val mem_addr = FlatIO(Input(UInt(32.W)))
     addResource("/Commit.v")
 }
 
@@ -80,6 +84,8 @@ class ysyx_26030092_RFS extends Module {
       val RegReadPort = Flipped(new ReadRegPortBundle)
       val CSRReadPort = Flipped(new CSRReadPortBundle)
     })
+    // commit 数据（EXU → WBU → RFS）
+    val commit_info = IO(Input(new CommitInfoBundle))
     val pc_out = IO(Decoupled(new Bundle{
         val pc = Output(UInt(32.W))
     }))
@@ -202,18 +208,28 @@ class ysyx_26030092_RFS extends Module {
       PC_reg.io.pc_we := true.B
     }
 
+    // 提交通知：锁存一拍后发出（供 difftest/trace 等消费）
     val commit_reg = RegInit(false.B)
     val commit_pc_reg = Reg(UInt(32.W))
+    val commit_mem_reg = RegInit(false.B)
+    val commit_mem_addr_reg = Reg(UInt(32.W))
     val commit_u = Module(new Commit)
+    commit_u.clock := clock
+    commit_u.reset := reset
     commit_u.valid := false.B
     commit_u.pc := DontCare
+    commit_u.mem_commit := commit_mem_reg
+    commit_u.mem_addr := commit_mem_addr_reg
     when(wbu_in.fire){
       commit_reg := true.B
-      commit_pc_reg := PC_reg.io.pc
+      commit_pc_reg := commit_info.pc
+      commit_mem_reg := commit_info.mem
+      commit_mem_addr_reg := commit_info.mem_addr
     }
     when(commit_reg){
       commit_u.valid := true.B
       commit_reg := false.B
+      commit_mem_reg := false.B
       commit_u.pc := commit_pc_reg
     }
 }

@@ -4,6 +4,13 @@ import chisel3._
 import chisel3.util._
 import npc.PMU._
 
+// 提交指令信息：PC / 是否访存 / 访存地址（沿流水线 EXU → WBU → RFS）
+class CommitInfoBundle extends Bundle {
+  val pc = Output(UInt(32.W))
+  val mem = Output(Bool())
+  val mem_addr = Output(UInt(32.W))
+}
+
 class WriteBackPortBundle extends Bundle{
     val PCNext = Output(UInt(32.W))
     val PCWrite = Output(Bool())
@@ -34,6 +41,10 @@ class ysyx_26030092_WBU extends Module{
     when(out.fire){
         perf_events(PerfEvent.WBU_commit_instruction) := true.B
     }
+
+    val commit_info = IO(Input(new CommitInfoBundle))
+    val commit_info_out = IO(Output(new CommitInfoBundle))
+    commit_info_out := commit_info
 
     out.valid := in.valid
     in.ready := out.ready
