@@ -1,59 +1,18 @@
 package npc
 import chisel3._
 import chisel3.util._
-import npc.MemControl.sw
-
-class Commit extends ExtModule{
-    val clock = FlatIO(Input(Clock()))
-    val reset = FlatIO(Input(Bool()))
-    val pc = FlatIO(Input(UInt(32.W)))
-    val valid = FlatIO(Input(Bool()))
-    val mem_commit = FlatIO(Input(Bool()))
-    val mem_addr = FlatIO(Input(UInt(32.W)))
-    addResource("/Commit.v")
-}
-
-class RegBlackBox extends ExtModule{
-  val io = FlatIO(new Bundle {
-    val clock = Input(Clock())
-    val wdata  = Input(UInt(32.W))
-    val waddr  = Input(UInt(5.W))
-    val wen    = Input(Bool())
-    val raddr1 = Input(UInt(5.W))
-    val rdata1 = Output(UInt(32.W))
-    val raddr2 = Input(UInt(5.W))
-    val rdata2 = Output(UInt(32.W))
-  })
-  addResource("/RegBlackBox.v")
-}
-
-class PCBlackBox extends ExtModule{
-    val io = FlatIO(new Bundle {
-        val clock = Input(Clock())
-        val reset = Input(Reset())
-        val pc_next = Input(UInt(32.W))
-        val pc_we = Input(Bool())
-        val pc_4 = Input(Bool())
-        val pc = Output(UInt(32.W))
-    })
-    addResource("/PCBlackBox.v")
-}
-
 
 class WriteRegPortBundle extends Bundle{
     val wdata  = Output(UInt(32.W))
     val waddr  = Output(UInt(5.W))
     val wen    = Output(Bool())
-
-    val PCNext = Output(UInt(32.W))
-    val PCWrite = Output(Bool())
 }
 
 class CSRWritePortBundle extends Bundle{
     val CSRWAddr = Output(UInt(12.W))
     val CSRWData = Output(UInt(32.W))
     val CSRWrite = Output(Bool())
-  
+
 }
 class CSRReadPortBundle extends Bundle{
     val CSRRAddr = Output(UInt(12.W))
@@ -74,74 +33,42 @@ class ReadRegPortBundle extends Bundle{
     val rdata2 = Input(UInt(32.W))
 }
 
+class RegBlackBox extends ExtModule{
+  val io = FlatIO(new Bundle {
+    val clock = Input(Clock())
+    val wdata  = Input(UInt(32.W))
+    val waddr  = Input(UInt(5.W))
+    val wen    = Input(Bool())
+    val raddr1 = Input(UInt(5.W))
+    val rdata1 = Output(UInt(32.W))
+    val raddr2 = Input(UInt(5.W))
+    val rdata2 = Output(UInt(32.W))
+  })
+  addResource("/RegBlackBox.v")
+}
+
 class ysyx_26030092_RFS extends Module {
-  val wbu_in = IO(Flipped(Decoupled(new Bundle {
-      val WriteRegPort = Flipped(new WriteRegPortBundle)
-      val ExceptionPort = Flipped(new ExceptionInfoBundle)
-      val CSRWritePort = Flipped(new CSRWritePortBundle)
-    })))
+    // 读端口（EXU 使用，组合读）
     val RFS_ReadPort = IO(new Bundle {
-      val RegReadPort = Flipped(new ReadRegPortBundle)
-      val CSRReadPort = Flipped(new CSRReadPortBundle)
+        val RegReadPort = Flipped(new ReadRegPortBundle)
+        val CSRReadPort = Flipped(new CSRReadPortBundle)
     })
-    // commit 数据（EXU → WBU → RFS）
-    val commit_info = IO(Input(new CommitInfoBundle))
-    val pc_out = IO(Decoupled(new Bundle{
-        val pc = Output(UInt(32.W))
-    }))
+    // 写端口（WBU 驱动，仅在写回拍有效）
+    val WriteRegPort = IO(Input(new WriteRegPortBundle))
+    val CSRWritePort = IO(Input(new CSRWritePortBundle))
+    val ExceptionPort = IO(Input(new ExceptionInfoBundle))
+    // trap 跳转目标，供 IFU 读取（PC 在 IFU，mtvec 存储在 RFS）
+    val mtvec_out = IO(Output(UInt(32.W)))
 
-    wbu_in.ready := false.B
-    pc_out.valid := false.B
-    
-    val s_idle :: s_wait_write_back :: Nil = Enum(2)
-    val status = RegInit(s_idle)
-    // printf("Instance path: %m\n")
-
-    switch(status){
-      is(s_idle){
-        pc_out.valid := true.B
-        when(pc_out.ready){
-          status := s_wait_write_back
-        }
-      }
-      is(s_wait_write_back){
-        wbu_in.ready := true.B
-        when(wbu_in.fire){
-          status := s_idle
-        }
-      }
-    }
-
-    val PC_reg = Module(new PCBlackBox())
-    PC_reg.io.clock := clock
-    PC_reg.io.reset := reset
-    pc_out.bits.pc := PC_reg.io.pc
-    PC_reg.io.pc_next := DontCare
-    PC_reg.io.pc_we := false.B
-    PC_reg.io.pc_4 := false.B
-
-    when(wbu_in.fire){
-      PC_reg.io.pc_next := wbu_in.bits.WriteRegPort.PCNext
-      PC_reg.io.pc_we := wbu_in.bits.WriteRegPort.PCWrite
-      PC_reg.io.pc_4 := !wbu_in.bits.WriteRegPort.PCWrite
-    }
-
-  
     val Reg_u = Module(new RegBlackBox())
     Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
     Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
     RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1
     RFS_ReadPort.RegReadPort.rdata2 := Reg_u.io.rdata2
-    Reg_u.io.wdata := wbu_in.bits.WriteRegPort.wdata
-    Reg_u.io.waddr := wbu_in.bits.WriteRegPort.waddr
-    Reg_u.io.wen := false.B
+    Reg_u.io.wdata := WriteRegPort.wdata
+    Reg_u.io.waddr := WriteRegPort.waddr
+    Reg_u.io.wen := WriteRegPort.wen
     Reg_u.io.clock := clock
-
-    when(wbu_in.fire){
-      Reg_u.io.wen := wbu_in.bits.WriteRegPort.wen
-    }
-
-
 
     val mcycle = RegInit(0.U(64.W))
     mcycle := mcycle + 1.U
@@ -149,6 +76,8 @@ class ysyx_26030092_RFS extends Module {
     val mcause = Reg(UInt(32.W))
     val mtvec = Reg(UInt(32.W))
     val mstatus = RegInit("h1800".U(32.W))
+
+    mtvec_out := mtvec
 
     RFS_ReadPort.CSRReadPort.CSRRData := 0.U
     switch(RFS_ReadPort.CSRReadPort.CSRRAddr){
@@ -177,59 +106,32 @@ class ysyx_26030092_RFS extends Module {
         RFS_ReadPort.CSRReadPort.CSRRData := mcause
       }
     }
-    
-    when(wbu_in.bits.CSRWritePort.CSRWrite && wbu_in.fire){
-      switch(wbu_in.bits.CSRWritePort.CSRWAddr){//mcycle
+
+    when(CSRWritePort.CSRWrite){
+      switch(CSRWritePort.CSRWAddr){//mcycle
         is("hB00".U){
-          mcycle := Cat(mcycle(63,32),wbu_in.bits.CSRWritePort.CSRWData)
+          mcycle := Cat(mcycle(63,32),CSRWritePort.CSRWData)
         }
         is("hB80".U){
-          mcycle := Cat(wbu_in.bits.CSRWritePort.CSRWData,mcycle(31,0))
+          mcycle := Cat(CSRWritePort.CSRWData,mcycle(31,0))
         }
         is("h305".U){
-          mtvec := wbu_in.bits.CSRWritePort.CSRWData
+          mtvec := CSRWritePort.CSRWData
         }
         is("h300".U){
-          mstatus := wbu_in.bits.CSRWritePort.CSRWData
+          mstatus := CSRWritePort.CSRWData
         }
         is("h341".U){
-          mepc := wbu_in.bits.CSRWritePort.CSRWData
+          mepc := CSRWritePort.CSRWData
         }
         is("h342".U){
-          mcause := wbu_in.bits.CSRWritePort.CSRWData
+          mcause := CSRWritePort.CSRWData
         }
       }
     }
 
-    when(wbu_in.bits.ExceptionPort.isTrap && wbu_in.fire){
-      mepc := wbu_in.bits.ExceptionPort.PC
-      mcause := wbu_in.bits.ExceptionPort.Exception_Code
-      PC_reg.io.pc_next := mtvec
-      PC_reg.io.pc_we := true.B
-    }
-
-    // 提交通知：锁存一拍后发出（供 difftest/trace 等消费）
-    val commit_reg = RegInit(false.B)
-    val commit_pc_reg = Reg(UInt(32.W))
-    val commit_mem_reg = RegInit(false.B)
-    val commit_mem_addr_reg = Reg(UInt(32.W))
-    val commit_u = Module(new Commit)
-    commit_u.clock := clock
-    commit_u.reset := reset
-    commit_u.valid := false.B
-    commit_u.pc := DontCare
-    commit_u.mem_commit := commit_mem_reg
-    commit_u.mem_addr := commit_mem_addr_reg
-    when(wbu_in.fire){
-      commit_reg := true.B
-      commit_pc_reg := commit_info.pc
-      commit_mem_reg := commit_info.mem
-      commit_mem_addr_reg := commit_info.mem_addr
-    }
-    when(commit_reg){
-      commit_u.valid := true.B
-      commit_reg := false.B
-      commit_mem_reg := false.B
-      commit_u.pc := commit_pc_reg
+    when(ExceptionPort.isTrap){
+      mepc := ExceptionPort.PC
+      mcause := ExceptionPort.Exception_Code
     }
 }
