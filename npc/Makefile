@@ -105,7 +105,7 @@ sim:
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
 PERF_ARCH ?= riscv32e-ysyxSoC
 perf:
-	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=test run
+	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=train run
 
 -include ../Makefile
 

@@ -12,6 +12,7 @@
 !.scalafmt.conf
 !README.md
 build/
+result
 
 # mill
 !*.mill
