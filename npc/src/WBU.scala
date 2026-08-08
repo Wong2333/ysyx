@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import npc.PMU._
 
-// 提交指令信息：PC / 是否访存 / 访存地址（沿流水线 EXU → WBU → RFS）
+// 提交指令信息：PC / 是否访存 / 访存地址（沿流水线 EXU → WBU）
 class CommitInfoBundle extends Bundle {
   val pc = Output(UInt(32.W))
   val mem = Output(Bool())
@@ -27,40 +27,88 @@ class WriteBackPortBundle extends Bundle{
     val Exception_Code = Output(UInt(32.W))
 }
 
+// WBU → IFU 的 PC 更新端口：commit 脉冲 + 跳转/trap 事件
+class PCUpdatePortBundle extends Bundle {
+  val valid   = Output(Bool()) 
+  val pc_we   = Output(Bool())
+  val is_trap = Output(Bool())
+  val pc_next = Output(UInt(32.W))
+}
+
+class Commit extends ExtModule{
+    val clock = FlatIO(Input(Clock()))
+    val reset = FlatIO(Input(Bool()))
+    val pc = FlatIO(Input(UInt(32.W)))
+    val valid = FlatIO(Input(Bool()))
+    val mem_commit = FlatIO(Input(Bool()))
+    val mem_addr = FlatIO(Input(UInt(32.W)))
+    addResource("/Commit.v")
+}
+
 class ysyx_26030092_WBU extends Module{
     val in = IO(Flipped(Decoupled(new WriteBackPortBundle)))
 
-    val out = IO(Decoupled(new Bundle {
-        val WriteRegPort = Output(new WriteRegPortBundle)
-        val CSRWritePort = new CSRWritePortBundle
-        val ExceptionPort = new ExceptionInfoBundle
-    }))
+    val WriteRegPort = IO(Output(new WriteRegPortBundle))
+    val CSRWritePort = IO(Output(new CSRWritePortBundle))
+    val ExceptionPort = IO(Output(new ExceptionInfoBundle))
+    val PCUpdatePort = IO(Output(new PCUpdatePortBundle))
+
+    val commit_info = IO(Input(new CommitInfoBundle))
 
     val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
     perf_events.foreach(_ := false.B)
-    when(out.fire){
+
+    // EXU 只在结果就绪时拉 valid，WBU 始终接受写回
+    in.ready := true.B
+
+    WriteRegPort := 0.U.asTypeOf(new WriteRegPortBundle)
+    CSRWritePort := 0.U.asTypeOf(new CSRWritePortBundle)
+    ExceptionPort := 0.U.asTypeOf(new ExceptionInfoBundle)
+    PCUpdatePort := 0.U.asTypeOf(new PCUpdatePortBundle)
+
+    when(in.fire){
+        WriteRegPort.waddr := in.bits.RegWaddr
+        WriteRegPort.wdata := in.bits.RegWdata
+        WriteRegPort.wen := in.bits.RegWrite
+
+        CSRWritePort.CSRWAddr := in.bits.CSRAddr
+        CSRWritePort.CSRWData := in.bits.CSRData
+        CSRWritePort.CSRWrite := in.bits.CSRWrite
+
+        ExceptionPort.isTrap := in.bits.isTrap
+        ExceptionPort.PC := in.bits.PC
+        ExceptionPort.Exception_Code := in.bits.Exception_Code
+
+        PCUpdatePort.valid := true.B
+        PCUpdatePort.pc_we := in.bits.PCWrite || in.bits.isTrap
+        PCUpdatePort.is_trap := in.bits.isTrap
+        PCUpdatePort.pc_next := in.bits.PCNext
+
         perf_events(PerfEvent.WBU_commit_instruction) := true.B
     }
 
-    val commit_info = IO(Input(new CommitInfoBundle))
-    val commit_info_out = IO(Output(new CommitInfoBundle))
-    commit_info_out := commit_info
-
-    out.valid := in.valid
-    in.ready := out.ready
-
-    out.bits.WriteRegPort.waddr := in.bits.RegWaddr
-    out.bits.WriteRegPort.wdata := in.bits.RegWdata
-    out.bits.WriteRegPort.wen := in.bits.RegWrite
-    out.bits.WriteRegPort.PCWrite := in.bits.PCWrite
-    out.bits.WriteRegPort.PCNext := in.bits.PCNext
-
-    out.bits.CSRWritePort.CSRWAddr := in.bits.CSRAddr
-    out.bits.CSRWritePort.CSRWData := in.bits.CSRData
-    out.bits.CSRWritePort.CSRWrite := in.bits.CSRWrite
-
-    out.bits.ExceptionPort.isTrap := in.bits.isTrap
-    out.bits.ExceptionPort.PC := in.bits.PC
-    out.bits.ExceptionPort.Exception_Code := in.bits.Exception_Code
- 
+    // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）
+    val commit_reg = RegInit(false.B)
+    val commit_pc_reg = Reg(UInt(32.W))
+    val commit_mem_reg = RegInit(false.B)
+    val commit_mem_addr_reg = Reg(UInt(32.W))
+    val commit_u = Module(new Commit)
+    commit_u.clock := clock
+    commit_u.reset := reset
+    commit_u.valid := false.B
+    commit_u.pc := DontCare
+    commit_u.mem_commit := commit_mem_reg
+    commit_u.mem_addr := commit_mem_addr_reg
+    when(in.fire){
+        commit_reg := true.B
+        commit_pc_reg := commit_info.pc
+        commit_mem_reg := commit_info.mem
+        commit_mem_addr_reg := commit_info.mem_addr
+    }
+    when(commit_reg){
+        commit_u.valid := true.B
+        commit_reg := false.B
+        commit_mem_reg := false.B
+        commit_u.pc := commit_pc_reg
+    }
 }

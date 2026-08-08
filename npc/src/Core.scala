@@ -31,9 +31,8 @@ class ysyx_26030092 extends Module{
     perf_u.io.events := VecInit((0 until PerfEvent.numEvents).map(i =>
         IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
 
-    // commit 数据通路：EXU → WBU → RFS（commit 通知在 RFS 内部）
+    // commit 数据通路：EXU → WBU（commit 通知在 WBU 内部）
     WBU_u.commit_info := EXU_u.commit_info
-    RFS_u.commit_info := WBU_u.commit_info_out
 
     // val Arbiter_u = Module(new Arbiter(2))
     // val Xbar_u = Module(new Xbar(3,area))
@@ -44,9 +43,9 @@ class ysyx_26030092 extends Module{
     val AXI4Arbiter_u = Module(new ysyx_26030092_AXI4Arbiter(2))
     io.slave.initSlave()
     
-    IFU_u.in <> RFS_u.pc_out
-    // io.pc := RFS_u.pc_out.bits.pc
-    // io.inst := IFU_u.out.bits.inst
+    // PC 更新（commit 事件）：WBU → IFU；trap 目标 mtvec：RFS → IFU
+    IFU_u.PCUpdatePort := WBU_u.PCUpdatePort
+    IFU_u.mtvec := RFS_u.mtvec_out
 
     IDU_u.in <> IFU_u.out
 
@@ -54,12 +53,15 @@ class ysyx_26030092 extends Module{
 
     EXU_u.lsu_in <> LSU_u.in
     EXU_u.lsu_out <> LSU_u.out
-    
+
     EXU_u.wbu_in <> WBU_u.in
 
     EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
-    WBU_u.out <> RFS_u.wbu_in
+    // 写回：WBU 驱动 RFS 写端口
+    RFS_u.WriteRegPort := WBU_u.WriteRegPort
+    RFS_u.CSRWritePort := WBU_u.CSRWritePort
+    RFS_u.ExceptionPort := WBU_u.ExceptionPort
     IFU_u.AXI4_port <> AXI4Arbiter_u.in(0)
     LSU_u.AXI4_port <> CLINT_AXI4Router_u.in
     CLINT_AXI4Router_u.toSoC <> AXI4Arbiter_u.in(1)
