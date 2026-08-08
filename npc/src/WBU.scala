@@ -56,7 +56,7 @@ class ysyx_26030092_WBU extends Module{
     val CSRWritePort = IO(Output(new CSRWritePortBundle))
     val ExceptionPort = IO(Output(new ExceptionInfoBundle))
     val PCUpdatePort = IO(Output(new PCUpdatePortBundle))
-    val MemWrite = IO(Output(Decoupled(new LSUWritePort)))
+    val MemWrite = IO(Decoupled(new LSUWritePort))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
