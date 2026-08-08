@@ -51,14 +51,15 @@ class ysyx_26030092 extends Module{
 
     EXU_u.idu_out <> IDU_u.out
 
-    EXU_u.lsu_in <> LSU_u.in
-    EXU_u.lsu_out <> LSU_u.out
+    EXU_u.lsu_in <> LSU_u.read_port
+    EXU_u.lsu_out <> LSU_u.read_resp
 
     EXU_u.wbu_in <> WBU_u.in
 
     EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
     // 写回：WBU 驱动 RFS 写端口
+    LSU_u.write_port <> WBU_u.MemWrite
     RFS_u.WriteRegPort := WBU_u.WriteRegPort
     RFS_u.CSRWritePort := WBU_u.CSRWritePort
     RFS_u.ExceptionPort := WBU_u.ExceptionPort

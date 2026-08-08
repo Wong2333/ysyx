@@ -69,7 +69,7 @@ class ysyx_26030092_EXU extends Module{
     val idu_out = IO(Flipped(Decoupled(new IDUBundle)))
     val wbu_in = IO(Decoupled(new WriteBackPortBundle))
 
-    val lsu_in = IO(Decoupled(new LSUBundle))
+    val lsu_in = IO(Decoupled(new LSUReadPort))
     val lsu_out = IO(Flipped(Decoupled(new Bundle {
         val rdata = Input(UInt(32.W))
         val error = Input(Bool())
@@ -249,7 +249,7 @@ class ysyx_26030092_EXU extends Module{
         wbu_in.bits.RegWrite := false.B
     }
 
-    lsu_in.bits := 0.U.asTypeOf(new LSUBundle)
+    lsu_in.bits := 0.U.asTypeOf(new LSUReadPort)
 
     when(idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.lb,MemControl.lbu,MemControl.lh,
         MemControl.lhu,MemControl.lw)){
@@ -257,10 +257,6 @@ class ysyx_26030092_EXU extends Module{
         wbu_in.bits.RegWaddr := idu_out_reg.decode.rd
         wbu_in.bits.RegWrite := true.B
         wbu_in.bits.RegWdata := lsu_out_reg.rdata
-    }.elsewhen(idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
-        lsu_in.bits.addr := AluResult
-        RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
-        lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
     lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
     
