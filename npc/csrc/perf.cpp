@@ -13,11 +13,12 @@ char *perf_name[128] = {
     "IDU calculate instruction",
     "IDU csr instruction",
     "IDU store instruction",
-    "IFU wait mem cycles",
+    "IFU get inst cycles",
     "LSU wait free cycles",
     "LSU wait resp cycles",
     "PIPE idle cycles",
-    "WBU commit instruction"
+    "WBU commit instruction",
+    "icache hit"
 };
 
 // 从 RTL 的 PerfCounterArray 一次性读出所有计数器（DPI-C export task perf_read）

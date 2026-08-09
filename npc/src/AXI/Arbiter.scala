@@ -15,15 +15,15 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
     // ================= 读通道仲裁 (AR / R) =================
     val r_idle :: r_busy :: Nil = Enum(2)
-    val r_status = RegInit(r_idle)
+    val r_state = RegInit(r_idle)
     val r_sel = RegInit(0.U(log2Ceil(n_in).W))
 
-    switch(r_status){
+    switch(r_state){
         is(r_idle){
             val ar_reqs = VecInit(in.map(_.arvalid)).asUInt
             when(ar_reqs =/= 0.U){
                 r_sel := PriorityEncoder(ar_reqs)
-                r_status := r_busy
+                r_state := r_busy
             }
         }
         is(r_busy){
@@ -35,7 +35,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
             // 🌟 关键：只有当读数据最后一拍握手完成，才释放总线
             when(out.rvalid && out.rready && out.rlast){
-                r_status := r_idle
+                r_state := r_idle
                 when(out.rresp =/= 0.U){
                     printf("Access Fault!\n")
                     assert(false.B)
@@ -46,15 +46,15 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
     // ================= 写通道仲裁 (AW / W / B) =================
     val w_idle :: w_busy :: Nil = Enum(2)
-    val w_status = RegInit(w_idle)
+    val w_state = RegInit(w_idle)
     val w_sel = RegInit(0.U(log2Ceil(n_in).W)) // 记录当前选中的 Master
 
-    switch(w_status){
+    switch(w_state){
         is(w_idle){
             val aw_reqs = VecInit(in.map(_.awvalid)).asUInt
             when(aw_reqs =/= 0.U){
                 w_sel := PriorityEncoder(aw_reqs)
-                w_status := w_busy
+                w_state := w_busy
             }
         }
         is(w_busy){
@@ -69,7 +69,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
             // 🌟 关键：只有当写响应握手完成，才释放总线
             when(out.bvalid && out.bready){
-                w_status := w_idle
+                w_state := w_idle
                 when(out.bresp =/= 0.U){
                     printf("Access Fault!\n")
                     assert(false.B)
