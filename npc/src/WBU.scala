@@ -25,10 +25,6 @@ class WriteBackPortBundle extends Bundle{
     val isTrap = Output(Bool())
     val PC = Output(UInt(32.W))
     val Exception_Code = Output(UInt(32.W))
-
-    val write_mem_ctl = Output(MemControl())
-    val mem_waddr = Output(UInt(32.W))
-    val mem_wdata = Output(UInt(32.W))
 }
 
 // WBU → IFU 的 PC 更新端口：commit 脉冲 + 跳转/trap 事件
@@ -56,25 +52,19 @@ class ysyx_26030092_WBU extends Module{
     val CSRWritePort = IO(Output(new CSRWritePortBundle))
     val ExceptionPort = IO(Output(new ExceptionInfoBundle))
     val PCUpdatePort = IO(Output(new PCUpdatePortBundle))
-    val MemWrite = IO(Decoupled(new LSUWritePort))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
     val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
     perf_events.foreach(_ := false.B)
 
-    in.ready := MemWrite.ready
-    MemWrite.valid := in.valid
-    MemWrite.bits.addr := in.bits.mem_waddr
-    MemWrite.bits.wdata := in.bits.mem_wdata
-    MemWrite.bits.mem_ctl := in.bits.write_mem_ctl
-
+    // EXU 只在结果就绪时拉 valid，WBU 始终接受写回
+    in.ready := true.B
 
     WriteRegPort := 0.U.asTypeOf(new WriteRegPortBundle)
     CSRWritePort := 0.U.asTypeOf(new CSRWritePortBundle)
     ExceptionPort := 0.U.asTypeOf(new ExceptionInfoBundle)
     PCUpdatePort := 0.U.asTypeOf(new PCUpdatePortBundle)
-    
 
     when(in.fire){
         WriteRegPort.waddr := in.bits.RegWaddr
