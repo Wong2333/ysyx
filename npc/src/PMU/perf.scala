@@ -22,13 +22,13 @@ class PerfCounterArray extends ExtModule {
 object PerfCounter {
   private val usedNames = scala.collection.mutable.Set[String]()
 
-  def apply(name: String)(implicit clock: Clock, reset: Reset): Bool = {
+  def apply(name: String): Bool = {
     require(!usedNames.contains(name), s"PerfCounter: duplicate name '$name'")
     usedNames += name
     val u = Module(new PerfCounterArray)
     u.suggestName(name)
-    u.io.clock := clock
-    u.io.reset := reset.asBool
+    u.io.clock := Module.clock
+    u.io.reset := Module.reset.asBool
     u.io.event
   }
 }
