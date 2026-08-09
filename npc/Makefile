@@ -23,6 +23,7 @@ BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 CORE = $(BUILD_DIR)/ysyx_26030092.sv
+PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
 default: 
 	make bin
@@ -46,7 +47,7 @@ RESOURCES = $(shell find $(abspath ./resources) -name "*.v")
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # rules for verilator
-INCFLAGS = $(addprefix -I, $(INC_PATH))
+INCFLAGS = $(addprefix -I, $(INC_PATH)) -I$(abspath $(BUILD_DIR))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 IMG=
@@ -55,7 +56,7 @@ ELF=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE) \
@@ -66,11 +67,15 @@ $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR
 test:
 	mill -i test
 
-verilog: $(CORE)
+verilog: $(CORE) $(PERF_NAMES_H)
 $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+
+# 从生成的 Verilog 提取 PerfCounterArray 实例路径（名称唯一来源：RTL 的 PerfCounter 声明）
+$(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
+	python3 scripts/gen_perf_names.py $(BUILD_DIR) $@
 
 help:
 	mill -i runMain Elaborate --help
