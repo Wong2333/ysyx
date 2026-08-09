@@ -19,8 +19,7 @@ object PerfEvent {
   val LSU_wait_resp_cycles = 12
   val PIPE_idle_cycles = 13
   val WBU_commit_instruction = 14
-  val icache_hit = 15
-  val numEvents = 16
+  val numEvents = 15
 }
 
 // 计数器阵列：每个事件一根 valid 线，独立 64 位计数器并行累加（同一周期可多事件同时发生）。
