@@ -32,7 +32,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     resp.valid := req_valid_s1 && icache.resp.hit
     resp.rdata := icache.resp.data
 
-    PerfCounter("icache_hit") := resp.valid
+    PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss_s1 = req_valid_s1 && !icache.resp.hit
     PerfCounter("icache_miss") := miss_s1
     val refill_unit = Module(new icacheRefillUnit(4))
