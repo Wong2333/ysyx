@@ -128,6 +128,10 @@ CLK_FREQ_MHZ = 550
 
 include /home/wjm/yosys-sta/Makefile.common
 
+# B 阶段面积评估使用 yosys-sta 默认的 nangate45 工艺（讲义 B4 面积限制的口径）
+# 注意：必须在 include Makefile.common 之后覆盖
+PDK_NAME = nangate45
+
 
 $(KCONFIG_INCLUDE): .config
 	python3 scripts/kconfig.py \
