@@ -30,11 +30,6 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     resp.valid := req_valid_s1 && icache.resp.hit
     resp.rdata := icache.resp.data
-    val hit_cnt = RegInit(0.U(32.W))
-    hit_cnt := Mux(req_valid_s1 && icache.resp.hit, hit_cnt + 1.U, hit_cnt)
-    when(req_valid_s1 && icache.resp.hit){
-        printf("icache hit counter:%x\n",hit_cnt)
-    }
 
     val miss_s1 = req_valid_s1 && !icache.resp.hit
     val refill_unit = Module(new icacheRefillUnit(4))
