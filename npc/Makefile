@@ -111,24 +111,17 @@ perf:
 
 DESIGN = ysyx_26030092
 
-# 指定 RTL 文件（可以使用通配符，也可以显式列出）
 RTL_FILES = $(wildcard build/*.sv) $(RESOURCES)
 
-# yosys 读取 RTL 时需要的 include 路径（resources 里有 `include "autoconfig.svh"）
 export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
 
-# 顶层时钟端口名（Chisel 默认叫 clock）
 export CLK_PORT_NAME = clock
 
-# (可选) 如果有自己的约束文件
-# SDC_FILE = ./constraint.sdc
 
-# (可选) 指定不同的时钟频率
 CLK_FREQ_MHZ = 550
 
 include /home/wjm/yosys-sta/Makefile.common
 
-# B 阶段面积评估使用 yosys-sta 默认的 nangate45 工艺（讲义 B4 面积限制的口径）
 # 注意：必须在 include Makefile.common 之后覆盖
 PDK_NAME = nangate45
 
