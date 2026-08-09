@@ -14,6 +14,8 @@ class icacheRefillUnit(block_size :Int) extends Module{
         val block = Output(UInt((block_size*8).W))
         val valid = Output(Bool())
     })
+    resp.block := DontCare
+    resp.valid := false.B
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port.initMaster()
