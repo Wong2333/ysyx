@@ -31,7 +31,7 @@ void printPMU(){
     }
     svSetScope(scope);
 
-    for (int id = 0; id < 15; id++) {
+    for (int id = 0; id < 16; id++) {
         long long data = 0;
         perf_read(id, &data);
         printf("[PERF] id: %d %s counter:   %llu\n", id, perf_name[id], (unsigned long long)data);

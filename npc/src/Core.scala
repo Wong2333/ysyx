@@ -29,7 +29,7 @@ class ysyx_26030092 extends Module{
     perf_u.io.clock := clock
     perf_u.io.reset := reset
     perf_u.io.events := VecInit((0 until PerfEvent.numEvents).map(i =>
-        IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
+        IFU_u.icache_main_pipe.perf_events(i) | IFU_u.perf_events(i) | IDU_u.perf_events(i) | EXU_u.perf_events(i) | LSU_u.perf_events(i) | WBU_u.perf_events(i))).asUInt
 
     // commit 数据通路：EXU → WBU（commit 通知在 WBU 内部）
     WBU_u.commit_info := EXU_u.commit_info
