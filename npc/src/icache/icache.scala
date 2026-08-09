@@ -10,7 +10,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val index_bits = log2Ceil(block_num)
     val tag_bits = 32 - offset_bits - index_bits
     val tag_array = SyncReadMem(block_num, UInt(tag_bits.W))
-    val state_array = RegInit(Vec(block_num,false.B))
+    val state_array = RegInit(VecInit(Seq.fill(block_num)(false.B)))
 
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
