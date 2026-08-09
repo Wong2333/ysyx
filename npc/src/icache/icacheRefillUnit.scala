@@ -18,7 +18,7 @@ class icacheRefillUnit(block_size :Int) extends Module{
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port.initMaster()
 
-    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: Nil = Enum(4)
+    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: Nil = Enum(3)
     val state = RegInit(s_idle)
     val req_addr_reg = Reg(UInt(32.W))
 
