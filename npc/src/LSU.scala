@@ -66,27 +66,27 @@ class ysyx_26030092_LSU extends Module{
     AXI4_port.wstrb := wmask
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_resp :: s_wait_fetch :: Nil = Enum(4)
-    val status = RegInit(s_idle)
+    val state = RegInit(s_idle)
 
     val waddr_ready = RegInit(false.B)
     val wdata_ready = RegInit(false.B)
 
-    val lsu_accessing_mem = status === s_wait_mem_free || status === s_wait_mem_resp
+    val lsu_accessing_mem = state === s_wait_mem_free || state === s_wait_mem_resp
     when(lsu_accessing_mem){
         perf_events(PerfEvent.LSU_access_mem_latency) := true.B
     }
-    when(status === s_wait_mem_free){
+    when(state === s_wait_mem_free){
         perf_events(PerfEvent.LSU_wait_free_cycles) := true.B
     }
-    when(status === s_wait_mem_resp){
+    when(state === s_wait_mem_resp){
         perf_events(PerfEvent.LSU_wait_resp_cycles) := true.B
     }
 
-    switch(status){
+    switch(state){
         is(s_idle){
             in.ready := true.B
             when(in.fire){
-                status := s_wait_mem_free
+                state := s_wait_mem_free
                 lsu_in_reg := in.bits
             }
         }
@@ -112,7 +112,7 @@ class ysyx_26030092_LSU extends Module{
                     }
                 }
                 when(waddr_ready && wdata_ready){
-                    status := s_wait_mem_resp
+                    state := s_wait_mem_resp
                     waddr_ready := false.B
                     wdata_ready := false.B
                 }
@@ -125,7 +125,7 @@ class ysyx_26030092_LSU extends Module{
                     MemControl.lbu -> 0.U))
                 AXI4_port.arvalid := true.B
                 when(AXI4_port.arready){
-                    status := s_wait_mem_resp
+                    state := s_wait_mem_resp
                 }
 
             }
@@ -134,7 +134,7 @@ class ysyx_26030092_LSU extends Module{
             when(is_write){
                 AXI4_port.bready := true.B
                 when(AXI4_port.bvalid){
-                    status := s_wait_fetch
+                    state := s_wait_fetch
                     mtrace_u.io.valid := true.B
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
@@ -144,7 +144,7 @@ class ysyx_26030092_LSU extends Module{
             }.otherwise{
                 AXI4_port.rready := true.B                
                 when(AXI4_port.rvalid){
-                    status := s_wait_fetch
+                    state := s_wait_fetch
                     mtrace_u.io.valid := true.B
                     mtrace_u.io.is_write := false.B
                     lsu_out_reg.rdata := rdata
@@ -158,7 +158,7 @@ class ysyx_26030092_LSU extends Module{
         is(s_wait_fetch){
             out.valid := true.B
             when(out.fire){
-                status := s_idle
+                state := s_idle
             }
         }
     }
