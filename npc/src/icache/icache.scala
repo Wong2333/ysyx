@@ -31,8 +31,10 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val index = req_addr(offset_bits + index_bits-1, offset_bits)
     val tag = req_addr(31, offset_bits + index_bits)
 
-    val block = cache.read(Cat(tag, index))
+    val block = cache.read(index)
+    val taget_tag = cache.read(index)
     resp.data := (block >> offset)(31,0)
+    resp.hit := tag === taget_tag
 
     when(refill.valid){
         cache.write(refill.index, refill.block)

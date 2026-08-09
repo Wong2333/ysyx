@@ -8,6 +8,11 @@ import chisel3.simulator.PeekPokeAPI.TestableData
 class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val icache = Module(new icache(4, 16))
+    icache.refill.valid := false.B
+    icache.refill.index := DontCare
+    icache.refill.tag := DontCare
+    icache.refill.block := DontCare
+
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
@@ -17,7 +22,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         val rdata = Output(UInt(32.W))
         val valid = Output(Bool())
     })
-    
+
     val req_addr_s1 = RegNext(req.addr)
     val req_valid_s1 = RegNext(req.valid, false.B)
 
