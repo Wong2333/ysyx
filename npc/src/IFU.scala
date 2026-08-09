@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
-import npc.icache.icacheMainPipe
 
 class PCBlackBox extends ExtModule{
     val io = FlatIO(new Bundle {
@@ -53,44 +52,46 @@ class ysyx_26030092_IFU extends Module{
 
     out.valid := false.B
 
+    AXI4_port.initMaster()
+    AXI4_port.araddr := PC_reg.io.pc
+
     out.bits.pc := PC_reg.io.pc
     out.bits.inst := inst_reg
 
-    val s_idle :: s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(4)
+    val s_idle :: s_wait_mem_free :: s_wait_mem_data :: s_wait_fetch :: Nil = Enum(4)
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
-    val state = RegInit(s_req_inst)
+    val status = RegInit(s_wait_mem_free)
 
-    when(state === s_req_inst || state === s_wait_resp){
-        perf_events(PerfEvent.IFU_get_inst_cycles) := true.B
+    when(status === s_wait_mem_free || status === s_wait_mem_data){
+        perf_events(PerfEvent.IFU_wait_mem_cycles) := true.B
     }
 
-    val icache_main_pipe = Module(new icacheMainPipe(4,16))
-    icache_main_pipe.AXI4_port <> AXI4_port
-    icache_main_pipe.req.valid := false.B
-    icache_main_pipe.req.addr := DontCare
-
-    switch(state){
+    switch(status){
         is(s_idle){
             // 等待 WBU 写回：commit 时 PC 已更新，开始取下一条
             when(PCUpdatePort.valid){
-                state := s_req_inst
+                status := s_wait_mem_free
             }
         }
-        is(s_req_inst){
-            icache_main_pipe.req.addr := PC_reg.io.pc
-            icache_main_pipe.req.valid := true.B
-            state := s_wait_resp
+        is(s_wait_mem_free){
+            AXI4_port.arvalid := true.B
+            when(AXI4_port.arready){
+                status := s_wait_mem_data
+            }
         }
-        is(s_wait_resp){
-            when(icache_main_pipe.resp.valid){
-                inst_reg := icache_main_pipe.resp.rdata
-                state := s_wait_fetch
+        is(s_wait_mem_data){
+            AXI4_port.rready := true.B
+            when(AXI4_port.rvalid){
+                inst_reg := AXI4_port.rdata
+                error_reg := AXI4_port.rresp
+                status := s_wait_fetch
+                perf_events(PerfEvent.IFU_fetch_instruction) := true.B
             }
         }
         is(s_wait_fetch){
             out.valid := true.B
             when(out.ready){
-                state := s_idle
+                status := s_idle
             }
         }
     }
