@@ -35,7 +35,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val offset_bits = log2Ceil(block_size)
     val index_bits = log2Ceil(block_num)
     val tag_bits = 32 - offset_bits - index_bits
-    val offset_s1 = req_addr_s1(offset_bits-1,2)
+    val offset_s1 = if(offset_bits <= 2) 0.U(1.W) else req_addr_s1(offset_bits-1,2)
     val index_s1 = req_addr_s1(offset_bits + index_bits-1, offset_bits)
     val tag_s1 = req_addr_s1(31, offset_bits + index_bits)
 
