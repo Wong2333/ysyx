@@ -14,7 +14,7 @@ object PerfEvent {
   val IDU_calculate_instruction = 7
   val IDU_csr_instruction = 8
   val IDU_store_instruction = 9
-  val IFU_wait_mem_cycles = 10
+  val IFU_get_inst_cycles = 10
   val LSU_wait_free_cycles = 11
   val LSU_wait_resp_cycles = 12
   val PIPE_idle_cycles = 13

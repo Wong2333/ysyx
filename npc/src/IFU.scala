@@ -60,9 +60,9 @@ class ysyx_26030092_IFU extends Module{
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
     val state = RegInit(s_req_inst)
 
-    // when(state === s_wait_mem_free || state === s_wait_mem_data){
-    //     perf_events(PerfEvent.IFU_wait_mem_cycles) := true.B
-    // }
+    when(state === s_req_inst || state === s_wait_resp){
+        perf_events(PerfEvent.IFU_get_inst_cycles) := true.B
+    }
 
     val icache_main_pipe = Module(new icacheMainPipe(4,16))
     icache_main_pipe.AXI4_port <> AXI4_port
