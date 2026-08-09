@@ -3,87 +3,62 @@ import chisel3._
 import chisel3.util._
 import npc.AXI._
 import dataclass.data
+import chisel3.simulator.PeekPokeAPI.TestableData
 
 class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
-    val cache = SyncReadMem(block_size*block_num, UInt(32.W))
+
+    val icache = Module(new icache(4, 16))
+    val req = IO(new Bundle {
+        val addr = Input(UInt(32.W))
+        val valid = Input(Bool())
+    })
+
+    val resp = IO(new Bundle {
+        val rdata = Output(UInt(32.W))
+        val valid = Output(Bool())
+    })
+    
+    val req_addr_s1 = RegNext(req.addr)
+    val req_valid_s1 = RegNext(req.valid, false.B)
+
+    icache.req.addr := req.addr
+
+    resp.valid := req_valid_s1 && icache.resp.hit
+    resp.rdata := icache.resp.data
+
+    val miss_s1 = req_valid_s1 && !icache.resp.hit
+    val refill_unit = Module(new icacheRefillUnit(4))
+    refill_unit.req.addr := req_addr_s1
+    refill_unit.req.valid := miss_s1
+
+
     val offset_bits = log2Ceil(block_size)
     val index_bits = log2Ceil(block_num)
     val tag_bits = 32 - offset_bits - index_bits
-    val tag_array = SyncReadMem(block_size, UInt(tag_bits.W))
-    val state_array = RegInit(Vec(block_num,false.B))
+    val offset_s1 = req_addr_s1(offset_bits-1,2)
+    val index_s1 = req_addr_s1(offset_bits + index_bits-1, offset_bits)
+    val tag_s1 = req_addr_s1(31, offset_bits + index_bits)
 
-    val req = IO(Decoupled(new Bundle {
-        val addr = Input(UInt(32.W))
-    }))
-    // val refill_resp = IO(Decoupled(new Bundle {
-    //     val 
-    // }))
-    // val refill 
-    val resp = IO(Decoupled(new Bundle {
-        val rdata = Output(UInt(32.W))
-    }))
-    resp.valid := false.B
-    req.ready := false.B
-    val AXI4_port = IO(new AXI4Bundle)
-    AXI4_port.initMaster()
+    val miss_offset = Reg(UInt(offset_bits.W))
+    val refill_tag = Reg(UInt(tag_bits.W))
+    val refill_index = Reg(UInt(index_bits.W))
 
-    val addr_reg = Reg(UInt(32.W))
-    val data_reg = Reg(UInt(32.W))
-
-    val req_addr = Mux(req.fire, req.bits.addr, addr_reg)
-    val offset = req_addr(offset_bits-1,0)
-    val index = req_addr(offset_bits + index_bits-1, offset_bits)
-    val tag = req_addr(31, offset_bits + index_bits)
-
-    val s_idle :: s_check :: s_mem_req :: s_mem_resp :: s_ready :: Nil = Enum(5)
-    val state = RegInit(s_idle)
-
-    val self_hit = tag_array.read(index) === tag && state_array(index)
-    val sram_addr = Cat(index, offset)(index_bits + offset_bits - 1, 2)
-    resp.bits.rdata := cache.read(sram_addr)
-
-    switch(state){
-        is(s_idle){
-            req.ready := true.B
-            when(req.valid){
-                addr_reg := req.bits.addr
-                state := s_check
-            }
-        }
-        is(s_check){
-            when(self_hit){
-                resp.valid := true.B
-                data_reg := cache.read(sram_addr)
-                state := Mux(resp.fire, s_idle, s_ready)
-            }.otherwise{
-                state := s_mem_req
-            }
-        }
-        is(s_ready){
-            resp.valid := true.B
-            resp.bits.rdata := data_reg
-            when(resp.fire){
-                state := s_idle
-            }
-        }
-        is(s_mem_req){
-            AXI4_port.araddr := req_addr
-            AXI4_port.arvalid := true.B
-            when(AXI4_port.arready){
-                state := s_mem_resp
-            }
-        }
-        is(s_mem_resp){
-            AXI4_port.rready := true.B
-            when(AXI4_port.rvalid){
-                data_reg := AXI4_port.rdata
-                state := s_ready
-                cache.write(sram_addr, AXI4_port.rdata)
-                state(index) := true.B
-                resp.valid := true.B
-                resp.bits.rdata := AXI4_port.rdata
-                data_reg := AXI4_port.rdata
-            }
-        }
+    when(miss_s1){
+        refill_tag := tag_s1
+        refill_index := index_s1
+        miss_offset := offset_s1
     }
+
+    when(refill_unit.resp.valid){
+        val refill_block = refill_unit.resp.block
+        icache.refill.valid := true.B
+        icache.refill.tag := refill_tag
+        icache.refill.index := refill_index
+        icache.refill.block := refill_block
+        resp.valid := true.B
+        resp.rdata := (refill_block >> miss_offset)(31,0)
+    }
+
+    val AXI4_port = IO(new AXI4Bundle)
+    AXI4_port <> refill_unit.AXI4_port
 }

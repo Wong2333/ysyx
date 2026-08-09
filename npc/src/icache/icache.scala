@@ -2,6 +2,7 @@ package npc.icache
 
 import chisel3._
 import chisel3.util._
+import os.Source.WritableSource
 
 class icache(block_size :Int, block_num :Int) extends Module{
     val cache = SyncReadMem(block_num, UInt((block_size*8).W))
@@ -19,9 +20,10 @@ class icache(block_size :Int, block_num :Int) extends Module{
         val hit = Output(Bool())
     })
     val refill = IO(new Bundle {
-        val data = Input(UInt((block_size*8).W))
+        val block = Input(UInt((block_size*8).W))
         val tag = Input(UInt(tag_bits.W))
         val index = Input(UInt(index_bits.W))
+        val valid = Input(Bool())
     })
 
     val req_addr = req.addr
@@ -31,4 +33,10 @@ class icache(block_size :Int, block_num :Int) extends Module{
 
     val block = cache.read(Cat(tag, index))
     resp.data := (block >> offset)(31,0)
+
+    when(refill.valid){
+        cache.write(refill.index, refill.block)
+        tag_array.write(refill.index, refill.tag)
+        state_array(index) := true.B
+    }
 }
