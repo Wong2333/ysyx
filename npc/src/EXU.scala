@@ -3,7 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
-import npc.PMU.PerfEvent
+import npc.PMU._
 
 
 object ALUOp extends ChiselEnum{
@@ -75,9 +75,6 @@ class ysyx_26030092_EXU extends Module{
         val error = Input(Bool())
     })))
     
-    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
-    perf_events.foreach(_ := false.B)
-
     // 提交指令信息（PC / 是否访存 / 访存地址），沿流水线交给 WBU → RFS
     val commit_info = IO(Output(new CommitInfoBundle))
 
@@ -144,7 +141,6 @@ class ysyx_26030092_EXU extends Module{
             invalid_instruction.io.invalid := idu_out_reg.decode.invalid
             when(wbu_in.ready){
                 status := s_idle
-                perf_events(PerfEvent.EXU_finished) := true.B
             }
         }
     }
@@ -263,5 +259,6 @@ class ysyx_26030092_EXU extends Module{
         lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
     lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
-    
+
+    PerfCounter("EXU_finished") := (status === s_write_back && wbu_in.ready)
 }
