@@ -27,7 +27,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     })
 
     val req_addr = req.addr
-    val offset = req_addr(offset_bits-1,2)
+    val offset = if(offset_bits <=2 ) 0.U(1.W) else req_addr(offset_bits-1,2)
     val index = req_addr(offset_bits + index_bits-1, offset_bits)
     val tag = req_addr(31, offset_bits + index_bits)
 
