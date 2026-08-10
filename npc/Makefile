@@ -123,7 +123,7 @@ export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
 export CLK_PORT_NAME = clock
 
 
-CLK_FREQ_MHZ = 550
+CLK_FREQ_MHZ = 800
 
 include /home/wjm/yosys-sta/Makefile.common
 
