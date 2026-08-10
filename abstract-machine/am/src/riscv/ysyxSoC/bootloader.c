@@ -1,4 +1,5 @@
 #include <riscv/riscv.h>
+#include <am.h>
 
 extern uint32_t _SSBL_lma_start;
 extern uint32_t _SSBL_start;
@@ -16,6 +17,7 @@ void first_stage_bootloader(){
     dst++;
     src++; 
   }
+  halt(0);
   //volatile int32_t wait = 10000;
   //while(wait-- > 0);
   //memcpy(&_bootloader_start,&_bootloader_lma_start,data_size);
