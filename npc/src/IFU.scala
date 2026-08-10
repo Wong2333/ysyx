@@ -30,9 +30,6 @@ class ysyx_26030092_IFU extends Module{
     // trap 跳转目标（mtvec 存储在 RFS，IFU 直接读）
     val mtvec = IO(Input(UInt(32.W)))
 
-    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
-    perf_events.foreach(_ := false.B)
-
     val AXI4_port = IO(new AXI4Bundle)
 
     // PC 寄存器（架构 PC = 取指 PC，串行流水线下两者合一）
@@ -60,9 +57,7 @@ class ysyx_26030092_IFU extends Module{
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
     val state = RegInit(s_req_inst)
 
-    when(state === s_req_inst || state === s_wait_resp){
-        perf_events(PerfEvent.IFU_get_inst_cycles) := true.B
-    }
+    PerfCounter("IFU_get_inst_cycles") := (state === s_req_inst || state === s_wait_resp)
 
     val icache_main_pipe = Module(new icacheMainPipe(4,16))
     icache_main_pipe.AXI4_port <> AXI4_port

@@ -1,38 +1,26 @@
 #include "svdpi.h"
 #include "VysyxSoCFull__Dpi.h"
+#include "perf_names.h"
 #include <stdio.h>
+#include <string.h>
 
-char *perf_name[128] = {
-    "IFU fetch instruction",
-    "LSU get data",
-    "LSU access mem latency",
-    "EXU finished",
-    "IDU jump instruction",
-    "IDU brench instruction",
-    "IDU load instruction",
-    "IDU calculate instruction",
-    "IDU csr instruction",
-    "IDU store instruction",
-    "IFU wait mem cycles",
-    "LSU wait free cycles",
-    "LSU wait resp cycles",
-    "PIPE idle cycles",
-    "WBU commit instruction"
-};
-
-// 从 RTL 的 PerfCounterArray 一次性读出所有计数器（DPI-C export task perf_read）
+// 性能计数器列表由 RTL 的 PerfCounter 声明自动生成（build/perf_names.h，见 scripts/gen_perf_names.py），
+// 这里只需要按 scope 逐个读出打印。
 void printPMU(){
-    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.perf_u";
-    svScope scope = svGetScopeFromName(scope_name);
-    if (!scope) {
-        printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
-        return;
-    }
-    svSetScope(scope);
+    for (int i = 0; i < PERF_COUNT; i++) {
+        char scope[256];
+        snprintf(scope, sizeof(scope), "%s%s", PERF_PREFIX, perf_scope_names[i]);
+        svScope s = svGetScopeFromName(scope);
+        if (!s) {
+            printf("Error: DPI Scope '%s' not found!\n", scope);
+            continue;
+        }
+        svSetScope(s);
 
-    for (int id = 0; id < 15; id++) {
         long long data = 0;
-        perf_read(id, &data);
-        printf("[PERF] id: %d %s counter:   %llu\n", id, perf_name[id], (unsigned long long)data);
+        perf_read(&data);
+        const char* name = strrchr(perf_scope_names[i], '.');
+        name = name ? name + 1 : perf_scope_names[i];
+        printf("[PERF] %s: %llu\n", name, (unsigned long long)data);
     }
 }

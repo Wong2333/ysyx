@@ -2,6 +2,7 @@ package npc.icache
 import chisel3._
 import chisel3.util._
 import npc.AXI._
+import npc.PMU._
 import dataclass.data
 import chisel3.simulator.PeekPokeAPI.TestableData
 
@@ -31,7 +32,9 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     resp.valid := req_valid_s1 && icache.resp.hit
     resp.rdata := icache.resp.data
 
+    PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss_s1 = req_valid_s1 && !icache.resp.hit
+    PerfCounter("icache_miss") := miss_s1
     val refill_unit = Module(new icacheRefillUnit(4))
     refill_unit.req.addr := req_addr_s1
     refill_unit.req.valid := miss_s1

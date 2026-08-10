@@ -31,9 +31,6 @@ class ysyx_26030092_LSU extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
 
-    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
-    perf_events.foreach(_ := false.B)
-
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
     val lsu_out_reg = Reg(new Bundle {
         val rdata = Output(UInt(32.W))
@@ -71,16 +68,9 @@ class ysyx_26030092_LSU extends Module{
     val waddr_ready = RegInit(false.B)
     val wdata_ready = RegInit(false.B)
 
-    val lsu_accessing_mem = state === s_wait_mem_free || state === s_wait_mem_resp
-    when(lsu_accessing_mem){
-        perf_events(PerfEvent.LSU_access_mem_latency) := true.B
-    }
-    when(state === s_wait_mem_free){
-        perf_events(PerfEvent.LSU_wait_free_cycles) := true.B
-    }
-    when(state === s_wait_mem_resp){
-        perf_events(PerfEvent.LSU_wait_resp_cycles) := true.B
-    }
+    PerfCounter("LSU_access_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp)
+    PerfCounter("LSU_wait_free") := (state === s_wait_mem_free)
+    PerfCounter("LSU_wait_resp") := (state === s_wait_mem_resp)
 
     switch(state){
         is(s_idle){
@@ -139,7 +129,6 @@ class ysyx_26030092_LSU extends Module{
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
-                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                
@@ -150,7 +139,6 @@ class ysyx_26030092_LSU extends Module{
                     lsu_out_reg.rdata := rdata
                     mtrace_u.io.data := rdata
                     lsu_out_reg.error := AXI4_port.rresp
-                    perf_events(PerfEvent.LSU_get_data) := true.B
                 }
 
             }
@@ -201,4 +189,7 @@ class ysyx_26030092_LSU extends Module{
             // pmem_unit.port.wdata := shifted_wdata
         }
     }
+
+    PerfCounter("LSU_get_data") := (is_write && AXI4_port.bvalid && AXI4_port.bready) ||
+                                   (!is_write && AXI4_port.rvalid && AXI4_port.rready)
 }

@@ -55,9 +55,6 @@ class ysyx_26030092_WBU extends Module{
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
-    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
-    perf_events.foreach(_ := false.B)
-
     // EXU 只在结果就绪时拉 valid，WBU 始终接受写回
     in.ready := true.B
 
@@ -83,9 +80,8 @@ class ysyx_26030092_WBU extends Module{
         PCUpdatePort.pc_we := in.bits.PCWrite || in.bits.isTrap
         PCUpdatePort.is_trap := in.bits.isTrap
         PCUpdatePort.pc_next := in.bits.PCNext
-
-        perf_events(PerfEvent.WBU_commit_instruction) := true.B
     }
+    PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）
     val commit_reg = RegInit(false.B)

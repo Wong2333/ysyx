@@ -3,8 +3,7 @@ package npc
 import chisel3._
 import chisel3.util._
 import npc.EXUs._
-import npc.PMU.PerfEvent
-import npc.PMU.PerfEvent
+import npc.PMU._
 
 class InstDecode extends Bundle{
     val inst = UInt(32.W)
@@ -63,16 +62,12 @@ class ysyx_26030092_IDU extends Module{
     })))
 
     val out = IO(Decoupled(new IDUBundle))
-    val perf_events = IO(Output(Vec(PerfEvent.numEvents, Bool())))
-    perf_events.foreach(_ := false.B)
 
     in.ready := out.ready
     out.valid := in.valid
     out.bits.decode.inst := in.bits.inst
 
-    when(!in.valid){
-        perf_events(PerfEvent.PIPE_idle_cycles) := true.B
-    }
+    PerfCounter("IDU_pipe_idle") := !in.valid
 
     val trap = RegInit(false.B)
     val invalid = WireDefault(true.B)
@@ -106,9 +101,6 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.exu_ctl.ALUWrite2Reg := true.B
-            when(out.fire){
-                perf_events(PerfEvent.IDU_calculate_instruction) := true.B
-            }
             when(inst.funct3 === "b000".U){// addi
                 out.bits.exu_ctl.ALU_Control := ALUContorl.add
                 invalid := false.B
@@ -151,9 +143,6 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1100111".U){
-            when(out.fire){
-                perf_events(PerfEvent.IDU_jump_instruction) := true.B
-            }
             out.bits.exu_ctl.ALU_Op := ALUOp.IType
             out.bits.decode.imm := inst.immI
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
@@ -165,9 +154,6 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1110011".U){
-            when(out.fire){
-                perf_events(PerfEvent.IDU_csr_instruction) := true.B
-            }
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
@@ -200,9 +186,6 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b0110011".U){
-            when(out.fire){
-                perf_events(PerfEvent.IDU_calculate_instruction) := true.B
-            }
             out.bits.exu_ctl.ALU_Op := ALUOp.RType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.rs2
@@ -277,9 +260,6 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.decode.imm := inst.immI
             out.bits.exu_ctl.ALU_Control := ALUContorl.add
-            when(out.fire){
-                perf_events(PerfEvent.IDU_load_instruction) := true.B
-            }
             when(inst.funct3 === "b010".U){//lw
                 out.bits.exu_ctl.Mem_Control := MemControl.lw
                 invalid := false.B
@@ -303,9 +283,6 @@ class ysyx_26030092_IDU extends Module{
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out.bits.decode.imm := inst.immS
             out.bits.exu_ctl.ALU_Control := ALUContorl.add
-            when(out.fire){
-                perf_events(PerfEvent.IDU_store_instruction) := true.B
-            }
             when(inst.funct3 === "b010".U){// sw
                 out.bits.exu_ctl.Mem_Control := MemControl.sw
                 invalid := false.B
@@ -319,9 +296,6 @@ class ysyx_26030092_IDU extends Module{
             }
         }
         is("b1101111".U){// jal
-            when(out.fire){
-                perf_events(PerfEvent.IDU_jump_instruction) := true.B
-            }
             out.bits.exu_ctl.ALU_Op := ALUOp.JType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
@@ -332,9 +306,6 @@ class ysyx_26030092_IDU extends Module{
         }
 
         is("b1100011".U){// beq
-            when(out.fire){
-                perf_events(PerfEvent.IDU_brench_instruction) := true.B
-            }
             out.bits.exu_ctl.ALU_Op := ALUOp.BType
             out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
@@ -363,10 +334,18 @@ class ysyx_26030092_IDU extends Module{
                 }
                 is("b111".U){
                     out.bits.exu_ctl.Branch_Control := BranchControl.bgeu
-                    invalid := false.B                    
+                    invalid := false.B
                 }
             }
         }
 
     }
+
+    // 指令分类计数（原 switch 分支内 out.fire 触发，统一在此按 opcode 判断）
+    PerfCounter("IDU_calc") := (inst.opcode === "b0010011".U || inst.opcode === "b0110011".U) && out.fire
+    PerfCounter("IDU_jump") := (inst.opcode === "b1100111".U || inst.opcode === "b1101111".U) && out.fire
+    PerfCounter("IDU_csr") := (inst.opcode === "b1110011".U) && out.fire
+    PerfCounter("IDU_load") := (inst.opcode === "b0000011".U) && out.fire
+    PerfCounter("IDU_store") := (inst.opcode === "b0100011".U) && out.fire
+    PerfCounter("IDU_branch") := (inst.opcode === "b1100011".U) && out.fire
 }

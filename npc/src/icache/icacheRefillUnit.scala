@@ -3,6 +3,7 @@ package npc.icache
 import chisel3._
 import chisel3.util._
 import npc.AXI._
+import npc.PMU._
 
 class icacheRefillUnit(block_size :Int) extends Module{
     val req = IO(new Bundle {
@@ -22,6 +23,7 @@ class icacheRefillUnit(block_size :Int) extends Module{
 
     val s_idle :: s_wait_mem_free :: s_wait_mem_data :: Nil = Enum(3)
     val state = RegInit(s_idle)
+    PerfCounter("icache_refill_busy") := (state =/= s_idle)
     val req_addr_reg = Reg(UInt(32.W))
 
     val block_bits = log2Ceil(block_size)
