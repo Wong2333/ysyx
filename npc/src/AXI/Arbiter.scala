@@ -33,7 +33,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
             // --- 接通 R 通道 (Slave -> Arbiter -> Master) ---
             out.connectRFrom(in(r_sel), true.B)
 
-            // 🌟 关键：只有当读数据最后一拍握手完成，才释放总线
+            // 关键：只有当读数据最后一拍握手完成，才释放总线
             when(out.rvalid && out.rready && out.rlast){
                 r_state := r_idle
                 when(out.rresp =/= 0.U){
@@ -67,7 +67,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
             // --- 接通 B 通道 ---
             out.connectBFrom(in(w_sel), true.B)
 
-            // 🌟 关键：只有当写响应握手完成，才释放总线
+            // 关键：只有当写响应握手完成，才释放总线
             when(out.bvalid && out.bready){
                 w_state := w_idle
                 when(out.bresp =/= 0.U){
