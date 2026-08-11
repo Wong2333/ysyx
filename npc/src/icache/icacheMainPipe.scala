@@ -8,7 +8,7 @@ import chisel3.simulator.PeekPokeAPI.TestableData
 
 class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
-    val icache = Module(new icache(4, 16))
+    val icache = Module(new icache(block_size, block_num))
     icache.refill.valid := false.B
     icache.refill.index := DontCare
     icache.refill.tag := DontCare
@@ -35,7 +35,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss_s1 = req_valid_s1 && !icache.resp.hit
     PerfCounter("icache_miss") := miss_s1
-    val refill_unit = Module(new icacheRefillUnit(4))
+    val refill_unit = Module(new icacheRefillUnit(block_size))
     refill_unit.req.addr := req_addr_s1
     refill_unit.req.valid := miss_s1
 
@@ -64,7 +64,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         icache.refill.index := refill_index
         icache.refill.block := refill_block
         resp.valid := true.B
-        resp.rdata := (refill_block >> miss_offset)(31,0)
+        resp.rdata := (refill_block >> (miss_offset << 5))(31,0)
     }
 
     val AXI4_port = IO(new AXI4Bundle)

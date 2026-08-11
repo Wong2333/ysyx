@@ -34,12 +34,12 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val block = cache.read(index)
     val taget_tag = tag_array.read(index)
 
-    resp.data := (block >> offset)(31,0)
+    resp.data := (block >> (offset << 5))(31,0)
     resp.hit := (tag === taget_tag) && state_array(index)
 
     when(refill.valid){
         cache.write(refill.index, refill.block)
         tag_array.write(refill.index, refill.tag)
-        state_array(index) := true.B
+        state_array(refill.index) := true.B
     }
 }
