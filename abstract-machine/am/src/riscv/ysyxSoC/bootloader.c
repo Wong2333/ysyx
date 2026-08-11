@@ -52,6 +52,5 @@ void second_stage_bootloader(){
     dst++;
     src++;
   }
-  halt(1);
 
 }
