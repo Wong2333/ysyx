@@ -28,8 +28,10 @@ class icacheRefillUnit(block_size :Int) extends Module{
 
     val block_bits = log2Ceil(block_size)
     val block_addr = Cat(req.addr(31,block_bits),0.U(block_bits.W))
+    // 一次 INCR burst 取回整个 block：beats 个 32 位 beat
+    val beats = block_size / 4
 
-    when(req.valid){
+    when(state === s_idle && req.valid){
         state := s_wait_mem_free
         req_addr_reg := block_addr
     }
@@ -39,7 +41,9 @@ class icacheRefillUnit(block_size :Int) extends Module{
         is(s_wait_mem_free){
             AXI4_port.arvalid := true.B
             AXI4_port.araddr := req_addr_reg
+            AXI4_port.arlen := (beats - 1).U
             AXI4_port.arsize := 2.U
+            AXI4_port.arburst := 1.U  // INCR
             when(AXI4_port.arready){
                 state := s_wait_mem_data
             }
@@ -47,9 +51,13 @@ class icacheRefillUnit(block_size :Int) extends Module{
         is(s_wait_mem_data){
             AXI4_port.rready := true.B
             when(AXI4_port.rvalid){
-                state := s_idle
-                resp.valid := true.B
-                resp.block := AXI4_port.rdata
+                // beat0 在最高 32 位，后续 beat 依次右移拼接
+                block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                when(AXI4_port.rlast){
+                    state := s_idle
+                    resp.valid := true.B
+                    resp.block := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                }
             }
         }
     }

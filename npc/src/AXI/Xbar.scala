@@ -43,7 +43,7 @@ class ysyx_26030092_AXI4Xbar(n_out : Int, ranges: Seq[(Long, Long)]) extends Mod
         is(r_busy){
             out(r_sel).connectARFrom(in,true.B)
             out(r_sel).connectRFrom(in,true.B)
-            when(in.rready && in.rvalid){
+            when(in.rready && in.rvalid && in.rlast){
                 r_status := r_idle
             }
         }
