@@ -84,12 +84,22 @@ void init_mem() {
 static inline bool in_uart(paddr_t addr) {
   return addr >= 0x10000000 && addr < 0x10001000;
 }
+// ysyxSoC 其他外设：GPIO(0x10002000)/键盘(0x10011000)/VGA(0x21000000)，
+// NEMU 不模拟其行为，读返回 0、写忽略
+static inline bool in_ysyxsoch_dev(paddr_t addr) {
+  return (addr >= 0x10002000 && addr < 0x10003000) ||
+         (addr >= 0x10011000 && addr < 0x10012000) ||
+         (addr >= 0x21000000 && addr < 0x21200000);
+}
 #endif
 
 word_t paddr_read(paddr_t addr, int len) {
 #ifdef CONFIG_YSYXSOC_DEVICE
   if (in_uart(addr)) {
     return 0x20; // UART_LS_THRE
+  }
+  if (in_ysyxsoch_dev(addr)) {
+    return 0;
   }
 #endif
   if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr)
@@ -109,6 +119,9 @@ void paddr_write(paddr_t addr, int len, word_t data) {
       putchar(data & 0xff);
       fflush(stdout);
     }
+    return;
+  }
+  if (in_ysyxsoch_dev(addr)) {
     return;
   }
 #endif
