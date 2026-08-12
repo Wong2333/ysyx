@@ -146,6 +146,14 @@ config ITRACE
   bool "Enable instruction tracer"
   default y
 
+config ITRACE_PC
+  depends on TRACE && ENGINE_INTERPRETER
+  bool "Output PC-only itrace for cachesim"
+  default n
+  help
+    生成 cachesim 输入（itrace.txt）：每行一个十六进制 PC。
+    与 ITRACE 相互独立，不影响原有的指令 tracer。
+
 config ITRACE_COND
   depends on ITRACE
   string "Only trace instructions when the condition is true"

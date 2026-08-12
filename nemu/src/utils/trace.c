@@ -4,7 +4,7 @@ FILE *mtrace_fp = NULL;
 FILE *dtrace_fp = NULL;
 char *TRACE_DIR = NULL;
 FILE *etrace_fp = NULL;
-#ifdef CONFIG_ITRACE
+#ifdef CONFIG_ITRACE_PC
 FILE *itrace_fp = NULL;
 #endif
 
@@ -282,7 +282,7 @@ void init_trace(const char *trace_dir,const char *elf_file){
 #ifdef CONFIG_ETRACE
     init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
 #endif
-#ifdef CONFIG_ITRACE
+#ifdef CONFIG_ITRACE_PC
     // cachesim 用：逐指令 PC 序列
     init_trace_file(trace_dir,"itrace.txt",&itrace_fp);
 #endif
