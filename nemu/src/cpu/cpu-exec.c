@@ -16,6 +16,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
+#include <trace.h>
 #include <locale.h>
 
 /* The assembly code of instructions executed is only output to the screen
@@ -62,6 +63,10 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   push_itrace(_this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+#ifdef CONFIG_ITRACE
+  // cachesim 用：逐指令 PC 序列
+  if (itrace_fp != NULL) { fprintf(itrace_fp, FMT_WORD "\n", _this->pc); }
+#endif
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
 #if defined(CONFIG_WATCHOINT) && !defined(CONFIG_TARGET_AM)

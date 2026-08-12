@@ -78,22 +78,44 @@ void init_mem() {
 }
 
 
+#ifdef CONFIG_YSYXSOC_DEVICE
+// ysyxSoC 串口（16550 @ 0x10000000）：写数据寄存器输出字符，
+// 读线路状态寄存器（0x5）恒返回 THRE 置位（发送保持寄存器空）
+static inline bool in_uart(paddr_t addr) {
+  return addr >= 0x10000000 && addr < 0x10001000;
+}
+#endif
+
 word_t paddr_read(paddr_t addr, int len) {
-  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr) 
+#ifdef CONFIG_YSYXSOC_DEVICE
+  if (in_uart(addr)) {
+    return 0x20; // UART_LS_THRE
+  }
+#endif
+  if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr)
     || in_flash(addr) || in_sdram(addr))){
     record_mtrace(WRITE_TRACE,addr,len, pmem_read(addr, len));
     return pmem_read(addr, len);
   }
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
-  out_of_bound(addr); 
+  out_of_bound(addr);
   return 0;
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  if (likely(in_pmem(addr) || in_sram(addr)|| in_flash(addr) || in_sdram(addr))) {   
+#ifdef CONFIG_YSYXSOC_DEVICE
+  if (in_uart(addr)) {
+    if (addr == 0x10000000) {
+      putchar(data & 0xff);
+      fflush(stdout);
+    }
+    return;
+  }
+#endif
+  if (likely(in_pmem(addr) || in_sram(addr)|| in_flash(addr) || in_sdram(addr))) {
     record_mtrace(READ_TRACE,addr,len, data);
     pmem_write(addr, len, data);
-    return; 
+    return;
   }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
 

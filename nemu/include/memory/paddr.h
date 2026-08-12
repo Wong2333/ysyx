@@ -20,7 +20,12 @@
 
 #define PMEM_LEFT  ((paddr_t)CONFIG_MBASE)
 #define PMEM_RIGHT ((paddr_t)CONFIG_MBASE + CONFIG_MSIZE - 1)
+#ifdef CONFIG_RESET_FLASH
+// ysyxSoC 镜像从 flash(0x30000000) 启动（bootloader 复制 SSBL 到 sdram）
+#define RESET_VECTOR ((paddr_t)CONFIG_FLASH_BASE)
+#else
 #define RESET_VECTOR (PMEM_LEFT + CONFIG_PC_RESET_OFFSET)
+#endif
 
 /* convert the guest physical address in the guest program to host virtual address in NEMU */
 uint8_t* guest_to_host(paddr_t paddr);

@@ -4,6 +4,9 @@ FILE *mtrace_fp = NULL;
 FILE *dtrace_fp = NULL;
 char *TRACE_DIR = NULL;
 FILE *etrace_fp = NULL;
+#ifdef CONFIG_ITRACE
+FILE *itrace_fp = NULL;
+#endif
 
 bool mtrace_enable(paddr_t addr) {
   return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START_ADDR) &&
@@ -278,5 +281,9 @@ void init_trace(const char *trace_dir,const char *elf_file){
 #endif
 #ifdef CONFIG_ETRACE
     init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
+#endif
+#ifdef CONFIG_ITRACE
+    // cachesim 用：逐指令 PC 序列
+    init_trace_file(trace_dir,"itrace.txt",&itrace_fp);
 #endif
 }
