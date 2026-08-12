@@ -70,7 +70,14 @@ void init_disasm() {
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte) {
 	cs_insn *insn;
 	size_t count = cs_disasm_dl(handle, code, nbyte, pc, 0, &insn);
-  assert(count == 1);
+  if (count == 0) {
+    // capstone 无法识别该指令（如 zicsr 的某些编码或非法指令）：
+    // 不中断执行，输出原始编码便于调试
+    uint32_t raw = 0;
+    if (nbyte >= 4) memcpy(&raw, code, 4);
+    snprintf(str, size, "unknown(0x%08x)", raw);
+    return;
+  }
   int ret = snprintf(str, size, "%s", insn->mnemonic);
   if (insn->op_str[0] != '\0') {
     snprintf(str + ret, size - ret, "\t%s", insn->op_str);
