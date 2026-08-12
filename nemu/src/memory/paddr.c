@@ -90,11 +90,19 @@ static inline bool in_ysyxsoc_dev(paddr_t addr) {
          (addr >= 0x10011000 && addr < 0x10012000) ||
          (addr >= 0x21000000 && addr < 0x21200000);
 }
+// ysyxSoC RTC（mtime @ 0x0200BFF8，64 位微秒时间，AM timer 读取）
+static inline bool in_rtc(paddr_t addr) {
+  return addr >= 0x0200BFF8 && addr < 0x0200C000;
+}
 
 word_t paddr_read(paddr_t addr, int len) {
   if (ysyxsoc_mode) {
     if (in_uart(addr)) {
       return 0x20; // UART_LS_THRE
+    }
+    if (in_rtc(addr)) {
+      uint64_t t = get_time();
+      return (addr == 0x0200BFF8) ? (word_t)(t & 0xffffffff) : (word_t)(t >> 32);
     }
     if (in_ysyxsoc_dev(addr)) {
       return 0;
@@ -119,7 +127,7 @@ void paddr_write(paddr_t addr, int len, word_t data) {
       }
       return;
     }
-    if (in_ysyxsoc_dev(addr)) {
+    if (in_rtc(addr) || in_ysyxsoc_dev(addr)) {
       return;
     }
   }
