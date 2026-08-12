@@ -8,9 +8,39 @@ FILE *icachesim_fp = NULL;
 
 void init_icachesim(const char *file) {
   if (file == NULL) return;
-  icachesim_fp = fopen(file, "w");
+  // 二进制：顺序执行段记录（每段 8 字节 {start_pc, end_pc}），
+  // 比逐指令文本小两个数量级以上（microbench 全量约 25GB 文本 -> 数百 MB 段记录）
+  icachesim_fp = fopen(file, "wb");
   Assert(icachesim_fp, "Can not open '%s'", file);
   Log("icachesim-itrace is written to %s", file);
+}
+
+// 顺序执行段状态：当前段的起始/结束 PC
+static uint32_t seg_start = 0;
+static uint32_t seg_end = 0;
+static bool seg_active = false;
+
+void flush_icachesim() {
+  if (icachesim_fp != NULL && seg_active) {
+    fwrite(&seg_start, 4, 1, icachesim_fp);
+    fwrite(&seg_end, 4, 1, icachesim_fp);
+    seg_active = false;
+  }
+}
+
+void record_icachesim(uint32_t pc) {
+  if (icachesim_fp == NULL) return;
+  if (!seg_active) {
+    seg_start = seg_end = pc;
+    seg_active = true;
+  } else if (pc == seg_end + 4) {
+    seg_end = pc;
+  } else {
+    // 顺序段结束（分支/跳转），记录并开始新段
+    fwrite(&seg_start, 4, 1, icachesim_fp);
+    fwrite(&seg_end, 4, 1, icachesim_fp);
+    seg_start = seg_end = pc;
+  }
 }
 
 bool mtrace_enable(paddr_t addr) {
