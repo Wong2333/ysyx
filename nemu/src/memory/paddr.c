@@ -78,30 +78,28 @@ void init_mem() {
 }
 
 
-#ifdef CONFIG_YSYXSOC_DEVICE
 // ysyxSoC 串口（16550 @ 0x10000000）：写数据寄存器输出字符，
 // 读线路状态寄存器（0x5）恒返回 THRE 置位（发送保持寄存器空）
 static inline bool in_uart(paddr_t addr) {
   return addr >= 0x10000000 && addr < 0x10001000;
 }
 // ysyxSoC 其他外设：GPIO(0x10002000)/键盘(0x10011000)/VGA(0x21000000)，
-// NEMU 不模拟其行为，读返回 0、写忽略
+// NEMU 不模拟其行为，读返回 0、写忽略。仅在 ysyxsoc_mode 下生效。
 static inline bool in_ysyxsoc_dev(paddr_t addr) {
   return (addr >= 0x10002000 && addr < 0x10003000) ||
          (addr >= 0x10011000 && addr < 0x10012000) ||
          (addr >= 0x21000000 && addr < 0x21200000);
 }
-#endif
 
 word_t paddr_read(paddr_t addr, int len) {
-#ifdef CONFIG_YSYXSOC_DEVICE
-  if (in_uart(addr)) {
-    return 0x20; // UART_LS_THRE
+  if (ysyxsoc_mode) {
+    if (in_uart(addr)) {
+      return 0x20; // UART_LS_THRE
+    }
+    if (in_ysyxsoc_dev(addr)) {
+      return 0;
+    }
   }
-  if (in_ysyxsoc_dev(addr)) {
-    return 0;
-  }
-#endif
   if (likely(in_pmem(addr) || in_mrom(addr) || in_sram(addr)
     || in_flash(addr) || in_sdram(addr))){
     record_mtrace(WRITE_TRACE,addr,len, pmem_read(addr, len));
@@ -113,18 +111,18 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-#ifdef CONFIG_YSYXSOC_DEVICE
-  if (in_uart(addr)) {
-    if (addr == 0x10000000) {
-      putchar(data & 0xff);
-      fflush(stdout);
+  if (ysyxsoc_mode) {
+    if (in_uart(addr)) {
+      if (addr == 0x10000000) {
+        putchar(data & 0xff);
+        fflush(stdout);
+      }
+      return;
     }
-    return;
+    if (in_ysyxsoc_dev(addr)) {
+      return;
+    }
   }
-  if (in_ysyxsoc_dev(addr)) {
-    return;
-  }
-#endif
   if (likely(in_pmem(addr) || in_sram(addr)|| in_flash(addr) || in_sdram(addr))) {
     record_mtrace(READ_TRACE,addr,len, data);
     pmem_write(addr, len, data);

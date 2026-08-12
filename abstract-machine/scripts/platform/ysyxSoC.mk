@@ -33,7 +33,8 @@ run: insert-arg
 	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE).bin ELF=$(IMAGE).elf
 
 # 用 NEMU 运行镜像，生成 icachesim 的输入文件（每行一个十六进制 PC）。
-# 要求 NEMU 配置启用：TARGET_NATIVE_ELF / RESET_FLASH / YSYXSOC_DEVICE
+# -i 会自动开启 ysyxSoC 模式（复位到 flash、串口/外设模拟）。
+# 要求 NEMU 配置：TARGET_NATIVE_ELF
 NEMU_BINARY ?= $(NEMU_HOME)/build/riscv32-nemu-interpreter
 TRACE_DIR ?= $(dir $(IMAGE))
 

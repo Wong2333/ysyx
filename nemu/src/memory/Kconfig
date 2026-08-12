@@ -46,20 +46,6 @@ config PC_RESET_OFFSET
   default 0x100000 if ISA_x86
   default 0
 
-config RESET_FLASH
-  bool "Reset PC to flash (for ysyxSoC)"
-  default n
-  help
-    ysyxSoC 镜像从 flash(0x30000000) 启动（bootloader 复制 SSBL 到 sdram）。
-    仅当运行 riscv32e-ysyxsoc 平台镜像时开启。
-
-config YSYXSOC_DEVICE
-  bool "ysyxSoC devices (UART @0x10000000)"
-  default n
-  help
-    模拟 ysyxSoC 平台的串口（写 0x10000000 输出字符）。
-    仅当运行 riscv32e-ysyxsoc 平台镜像时开启。
-
 choice
   prompt "Physical memory definition"
   default PMEM_GARRAY
