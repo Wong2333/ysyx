@@ -4,9 +4,14 @@ FILE *mtrace_fp = NULL;
 FILE *dtrace_fp = NULL;
 char *TRACE_DIR = NULL;
 FILE *etrace_fp = NULL;
-#ifdef CONFIG_ICACHESIM_TRACE
 FILE *icachesim_fp = NULL;
-#endif
+
+void init_icachesim(const char *file) {
+  if (file == NULL) return;
+  icachesim_fp = fopen(file, "w");
+  Assert(icachesim_fp, "Can not open '%s'", file);
+  Log("icachesim-itrace is written to %s", file);
+}
 
 bool mtrace_enable(paddr_t addr) {
   return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START_ADDR) &&
@@ -281,9 +286,5 @@ void init_trace(const char *trace_dir,const char *elf_file){
 #endif
 #ifdef CONFIG_ETRACE
     init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
-#endif
-#ifdef CONFIG_ICACHESIM_TRACE
-    // icachesim 输入：逐指令 PC 序列（itrace 特征 + 用途，避免与 itrace.txt 混淆）
-    init_trace_file(trace_dir,"icachesim-itrace.txt",&icachesim_fp);
 #endif
 }

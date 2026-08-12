@@ -63,10 +63,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   push_itrace(_this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
-#ifdef CONFIG_ICACHESIM_TRACE
-  // cachesim 用：逐指令 PC 序列（独立于 ITRACE，不影响原有指令 tracer）
+  // icachesim 输入：逐指令 PC 序列（由 -i/--icachesim=FILE 开启，与 ITRACE 独立）
   if (icachesim_fp != NULL) { fprintf(icachesim_fp, FMT_WORD "\n", _this->pc); }
-#endif
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
 #if defined(CONFIG_WATCHOINT) && !defined(CONFIG_TARGET_AM)
