@@ -283,7 +283,7 @@ void init_trace(const char *trace_dir,const char *elf_file){
     init_trace_file(trace_dir,"etrace.txt",&etrace_fp);
 #endif
 #ifdef CONFIG_ITRACE_PC
-    // cachesim 用：逐指令 PC 序列
-    init_trace_file(trace_dir,"itrace.txt",&itrace_fp);
+    // icachesim 输入：逐指令 PC 序列（itrace 特征 + 用途，避免与 itrace.txt 混淆）
+    init_trace_file(trace_dir,"icachesim-itrace.txt",&itrace_fp);
 #endif
 }
