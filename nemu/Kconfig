@@ -146,12 +146,12 @@ config ITRACE
   bool "Enable instruction tracer"
   default y
 
-config ITRACE_PC
+config ICACHESIM_TRACE
   depends on TRACE && ENGINE_INTERPRETER
-  bool "Output PC-only itrace for cachesim"
+  bool "Output icachesim-itrace.txt (PC-only itrace for icachesim)"
   default n
   help
-    生成 cachesim 输入（itrace.txt）：每行一个十六进制 PC。
+    生成 icachesim 的输入文件 icachesim-itrace.txt：每行一个十六进制 PC。
     与 ITRACE 相互独立，不影响原有的指令 tracer。
 
 config ITRACE_COND

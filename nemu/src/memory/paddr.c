@@ -86,7 +86,7 @@ static inline bool in_uart(paddr_t addr) {
 }
 // ysyxSoC 其他外设：GPIO(0x10002000)/键盘(0x10011000)/VGA(0x21000000)，
 // NEMU 不模拟其行为，读返回 0、写忽略
-static inline bool in_ysyxsoch_dev(paddr_t addr) {
+static inline bool in_ysyxsoc_dev(paddr_t addr) {
   return (addr >= 0x10002000 && addr < 0x10003000) ||
          (addr >= 0x10011000 && addr < 0x10012000) ||
          (addr >= 0x21000000 && addr < 0x21200000);
@@ -98,7 +98,7 @@ word_t paddr_read(paddr_t addr, int len) {
   if (in_uart(addr)) {
     return 0x20; // UART_LS_THRE
   }
-  if (in_ysyxsoch_dev(addr)) {
+  if (in_ysyxsoc_dev(addr)) {
     return 0;
   }
 #endif
@@ -121,7 +121,7 @@ void paddr_write(paddr_t addr, int len, word_t data) {
     }
     return;
   }
-  if (in_ysyxsoch_dev(addr)) {
+  if (in_ysyxsoc_dev(addr)) {
     return;
   }
 #endif
