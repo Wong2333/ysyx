@@ -29,6 +29,7 @@ class ysyx_26030092_IFU extends Module{
     val PCUpdatePort = IO(Input(new PCUpdatePortBundle))
     // trap 跳转目标（mtvec 存储在 RFS，IFU 直接读）
     val mtvec = IO(Input(UInt(32.W)))
+    val flush_icache = IO(Input(Bool()))
 
     val AXI4_port = IO(new AXI4Bundle)
 
@@ -63,6 +64,7 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.AXI4_port <> AXI4_port
     icache_main_pipe.req.valid := false.B
     icache_main_pipe.req.addr := DontCare
+    icache_main_pipe.flush := flush_icache
 
     switch(state){
         is(s_idle){

@@ -25,6 +25,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
         val index = Input(UInt(index_bits.W))
         val valid = Input(Bool())
     })
+    val flush = IO(Input(Bool()))
 
     val req_addr = req.addr
     val offset = if(offset_bits <=2 ) 0.U(1.W) else req_addr(offset_bits-1,2)
@@ -42,4 +43,8 @@ class icache(block_size :Int, block_num :Int) extends Module{
         tag_array.write(refill.index, refill.tag)
         state_array(refill.index) := true.B
     }
+    when(flush){
+        state_array.foreach(_ := false.B)
+    }
+
 }

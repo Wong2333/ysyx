@@ -55,6 +55,7 @@ class EXUCTLBundle extends Bundle{
     val ALU_Jump = Output(Jump())
     val Mem_Control = Output(MemControl())
     val Branch_Control = Output(BranchControl())
+    val fence_i = Output(Bool())
 }
 
 
@@ -259,6 +260,8 @@ class ysyx_26030092_EXU extends Module{
         lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
     }
     lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
+
+    wbu_in.bits.icache_flush := idu_out_reg.exu_ctl.fence_i
 
     PerfCounter("EXU_finished") := (status === s_write_back && wbu_in.ready)
 }
