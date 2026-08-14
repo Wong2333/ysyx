@@ -101,7 +101,7 @@ class ysyx_26030092_EXU extends Module{
     val status = RegInit(s_idle)
     val is_mem = idu_out.bits.exu_ctl.Mem_Control =/= MemControl.none
 
-    // 提交指令信息：PC / 是否访存 / 访存地址（沿流水线交给 WBU → RFS）
+    // 提交指令信息：PC / 是否访存 / 访存地址
     commit_info.pc := idu_out_reg.decode.pc
     commit_info.mem := idu_out_reg.exu_ctl.Mem_Control =/= MemControl.none
     commit_info.mem_addr := lsu_in.bits.addr
