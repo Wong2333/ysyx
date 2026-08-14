@@ -47,7 +47,11 @@ static char *diff_so_file = NULL;
 static char *trace_dir = NULL;
 static char *img_file = NULL;
 static char *elf_file = NULL;
+static char *icachesim_file = NULL;
 static int difftest_port = 1234;
+
+// ysyxSoC 模式：-i/--icachesim 时自动开启（复位到 flash、串口/外设模拟）
+bool ysyxsoc_mode = false;
 
 static long load_img() {
   if (img_file == NULL) {
@@ -80,11 +84,12 @@ static int parse_args(int argc, char *argv[]) {
     {"port"     , required_argument, NULL, 'p'},
     {"trace"    , required_argument, NULL, 't'},
     {"elf"      , required_argument, NULL, 'e'},
+    {"icachesim", required_argument, NULL, 'i'},
     {"help"     , no_argument      , NULL, 'h'},
     {0          , 0                , NULL,  0 },
   };
   int o;
-  while ( (o = getopt_long(argc, argv, "-bhl:d:p:e:t:", table, NULL)) != -1) {
+  while ( (o = getopt_long(argc, argv, "-bhl:d:p:e:t:i:", table, NULL)) != -1) {
     switch (o) {
       case 'b': sdb_set_batch_mode(); break;
       case 'p': sscanf(optarg, "%d", &difftest_port); break;
@@ -92,6 +97,10 @@ static int parse_args(int argc, char *argv[]) {
       case 'd': diff_so_file = optarg; break;
       case 't': trace_dir = optarg; break;
       case 'e': elf_file = optarg; break;
+      case 'i':
+        icachesim_file = optarg;
+        ysyxsoc_mode = true; // 自动开启 ysyxSoC 行为（复位到 flash、串口/外设）
+        break;
       case 1: img_file = optarg; return 0;
       default:
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
@@ -100,6 +109,7 @@ static int parse_args(int argc, char *argv[]) {
         printf("\t-d,--diff=REF_SO        run DiffTest with reference REF_SO\n");
         printf("\t-t,--trace=TRACE_DIR    output trace file in directory\n");
         printf("\t-e,--elf=ELF            read elf from ELF\n");
+        printf("\t-i,--icachesim=FILE     output icachesim-itrace (PC per line) to FILE\n");
         printf("\t-p,--port=PORT          run DiffTest with port PORT\n");
         printf("\n");
         exit(0);
@@ -122,6 +132,9 @@ void init_monitor(int argc, char *argv[]) {
 
   // /* Initialize trace. */
   init_trace(trace_dir,elf_file);
+
+  /* Initialize icachesim-itrace output (-i/--icachesim=FILE). */
+  init_icachesim(icachesim_file);
 
   /* Initialize memory. */
   init_mem();

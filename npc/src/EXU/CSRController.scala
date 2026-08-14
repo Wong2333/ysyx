@@ -4,8 +4,6 @@ import chisel3._
 import chisel3.util._
 import npc.DecodeBundle
 import npc.WriteBackPortBundle
-import npc.CSRReadPortBundle
-import npc.ReadRegPortBundle
 import npc.EbreakBlackBox
 
 object CSRControl extends ChiselEnum{
@@ -24,9 +22,11 @@ class ysyx_26030092_CSRController extends Module{
 
         val AluResult = UInt(32.W)
 
+        // 译码阶段（IDU）预读的寄存器数据
+        val rs1_data = UInt(32.W)
+        val csr_rdata = UInt(32.W)
+
     }))
-    val RegReadPort = IO(new ReadRegPortBundle)
-    val CSRReadPort = IO(new CSRReadPortBundle)
 
     val out = IO(Output(new WriteBackPortBundle))
 
@@ -34,9 +34,6 @@ class ysyx_26030092_CSRController extends Module{
     ebreak.io.ebreak_trap := false.B
 
     out :=  0.U.asTypeOf(new WriteBackPortBundle)
-    RegReadPort.raddr1 := DontCare
-    RegReadPort.raddr2 := DontCare
-    CSRReadPort.CSRRAddr := DontCare
     switch(in.ctl){
         is(CSRControl.ebreak){
             ebreak.io.ebreak_trap := true.B
@@ -47,27 +44,23 @@ class ysyx_26030092_CSRController extends Module{
             out.isTrap := true.B
         }
         is(CSRControl.mret){
-            CSRReadPort.CSRRAddr := "h341".U
-            out.PCNext := CSRReadPort.CSRRData
+            out.PCNext := in.csr_rdata
             out.PCWrite := true.B
         }
         is(CSRControl.csrrs){
-            CSRReadPort.CSRRAddr := in.decode.imm(11,0)
             out.RegWaddr := in.decode.rd
-            out.RegWdata := CSRReadPort.CSRRData
+            out.RegWdata := in.csr_rdata
             out.RegWrite := true.B
             out.CSRAddr := in.decode.imm(11,0)
             out.CSRData := in.AluResult
             out.CSRWrite := true.B
         }
         is(CSRControl.csrrw){
-            RegReadPort.raddr1 := in.decode.rs1
-            CSRReadPort.CSRRAddr := in.decode.imm(11,0)
             out.RegWaddr := in.decode.rd
-            out.RegWdata := CSRReadPort.CSRRData
+            out.RegWdata := in.csr_rdata
             out.RegWrite := true.B
             out.CSRAddr := in.decode.imm(11,0)
-            out.CSRData := RegReadPort.rdata1
+            out.CSRData := in.rs1_data
             out.CSRWrite := true.B
         }
     }

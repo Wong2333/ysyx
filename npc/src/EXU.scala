@@ -62,11 +62,6 @@ class EXUCTLBundle extends Bundle{
 
 class ysyx_26030092_EXU extends Module{
 
-    val RFS_ReadPort = IO(new Bundle {
-        val RegReadPort = new ReadRegPortBundle
-        val CSRReadPort = new CSRReadPortBundle
-    })
-
     val idu_out = IO(Flipped(Decoupled(new IDUBundle)))
     val wbu_in = IO(Decoupled(new WriteBackPortBundle))
 
@@ -153,13 +148,10 @@ class ysyx_26030092_EXU extends Module{
         ebreak.io.ebreak_trap := true.B
     }
 
-    RFS_ReadPort.RegReadPort.raddr1 := 0.U
-    RFS_ReadPort.RegReadPort.raddr2 := 0.U
     val src1 = WireDefault(0.U(32.W))
     switch(idu_out_reg.exu_ctl.ALU_Src1){
         is(ALUSrc1.rs1){
-            RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-            src1 := RFS_ReadPort.RegReadPort.rdata1
+            src1 := idu_out_reg.rs1_data
         }
         is(ALUSrc1.pc){
             src1 := idu_out_reg.decode.pc
@@ -168,8 +160,7 @@ class ysyx_26030092_EXU extends Module{
     val src2 = WireDefault(0.U(32.W))
     switch(idu_out_reg.exu_ctl.ALU_Src2){
         is(ALUSrc2.rs2){
-            RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
-            src2 := RFS_ReadPort.RegReadPort.rdata2
+            src2 := idu_out_reg.rs2_data
         }
         is(ALUSrc2.imm){
             src2 := idu_out_reg.decode.imm
@@ -178,8 +169,7 @@ class ysyx_26030092_EXU extends Module{
             src2 := Cat(0.U(27.W),idu_out_reg.decode.imm(4,0))
         }
         is(ALUSrc2.csr){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := idu_out_reg.decode.imm(11,0)
-            src2 := RFS_ReadPort.CSRReadPort.CSRRData
+            src2 := idu_out_reg.csr_rdata
         }
     }
     val ALU_u = Module(new ysyx_26030092_ALU)
@@ -195,14 +185,13 @@ class ysyx_26030092_EXU extends Module{
         wbu_in.bits.RegWrite := true.B
         wbu_in.bits.RegWdata := AluResult
     }
-    RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
 
     val CSRController_u = Module(new ysyx_26030092_CSRController)
-    CSRController_u.CSRReadPort <> RFS_ReadPort.CSRReadPort
-    CSRController_u.RegReadPort <> RFS_ReadPort.RegReadPort
     CSRController_u.in.AluResult := AluResult
     CSRController_u.in.ctl := idu_out_reg.exu_ctl.CSR_Contorl
     CSRController_u.in.decode := idu_out_reg.decode
+    CSRController_u.in.rs1_data := idu_out_reg.rs1_data
+    CSRController_u.in.csr_rdata := idu_out_reg.csr_rdata
     when(idu_out_reg.exu_ctl.CSR_Contorl =/= CSRControl.none){
         wbu_in.bits := CSRController_u.out
     }
@@ -218,26 +207,24 @@ class ysyx_26030092_EXU extends Module{
     }
 
     val BranchCond = WireDefault(false.B)
-    RFS_ReadPort.RegReadPort.raddr1 := idu_out_reg.decode.rs1
-    RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
     switch(idu_out_reg.exu_ctl.Branch_Control){
         is(BranchControl.beq){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1 === RFS_ReadPort.RegReadPort.rdata2
+            BranchCond := idu_out_reg.rs1_data === idu_out_reg.rs2_data
         }
         is(BranchControl.bne){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1 =/= RFS_ReadPort.RegReadPort.rdata2
+            BranchCond := idu_out_reg.rs1_data =/= idu_out_reg.rs2_data
         }
         is(BranchControl.blt){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt < RFS_ReadPort.RegReadPort.rdata2.asSInt
+            BranchCond := idu_out_reg.rs1_data.asSInt < idu_out_reg.rs2_data.asSInt
         }
         is(BranchControl.bge){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1.asSInt >= RFS_ReadPort.RegReadPort.rdata2.asSInt
+            BranchCond := idu_out_reg.rs1_data.asSInt >= idu_out_reg.rs2_data.asSInt
         }
         is(BranchControl.bltu){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1 < RFS_ReadPort.RegReadPort.rdata2
+            BranchCond := idu_out_reg.rs1_data < idu_out_reg.rs2_data
         }
         is(BranchControl.bgeu){
-            BranchCond := RFS_ReadPort.RegReadPort.rdata1 >= RFS_ReadPort.RegReadPort.rdata2
+            BranchCond := idu_out_reg.rs1_data >= idu_out_reg.rs2_data
         }
     }
     when(BranchCond){
@@ -256,8 +243,7 @@ class ysyx_26030092_EXU extends Module{
         wbu_in.bits.RegWdata := lsu_out_reg.rdata
     }.elsewhen(idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.sb,MemControl.sh,MemControl.sw)){
         lsu_in.bits.addr := AluResult
-        RFS_ReadPort.RegReadPort.raddr2 := idu_out_reg.decode.rs2
-        lsu_in.bits.wdata := RFS_ReadPort.RegReadPort.rdata2
+        lsu_in.bits.wdata := idu_out_reg.rs2_data
     }
     lsu_in.bits.mem_ctl := idu_out_reg.exu_ctl.Mem_Control
 

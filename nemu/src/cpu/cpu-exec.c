@@ -16,6 +16,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
+#include <trace.h>
 #include <locale.h>
 
 /* The assembly code of instructions executed is only output to the screen
@@ -62,6 +63,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   push_itrace(_this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+  // icachesim 输入：顺序执行段记录（由 -i/--icachesim=FILE 开启，与 ITRACE 独立）
+  record_icachesim(_this->pc);
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
 #if defined(CONFIG_WATCHOINT) && !defined(CONFIG_TARGET_AM)
@@ -157,4 +160,6 @@ void cpu_exec(uint64_t n) {
       // fall through
     case NEMU_QUIT: statistic();
   }
+  // 写入 icachesim 的最后一段（程序结束时 flush）
+  flush_icachesim();
 }
