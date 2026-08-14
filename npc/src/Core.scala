@@ -43,6 +43,7 @@ class ysyx_26030092 extends Module{
     IFU_u.flush_icache := WBU_u.icache_flush
 
     IDU_u.in <> IFU_u.out
+    IDU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
     EXU_u.idu_out <> IDU_u.out
 
@@ -50,8 +51,6 @@ class ysyx_26030092 extends Module{
     EXU_u.lsu_out <> LSU_u.out
 
     EXU_u.wbu_in <> WBU_u.in
-
-    EXU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
 
     // 写回：WBU 驱动 RFS 写端口
     RFS_u.WriteRegPort := WBU_u.WriteRegPort

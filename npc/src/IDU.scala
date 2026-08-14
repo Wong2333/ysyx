@@ -53,6 +53,9 @@ class DecodeBundle extends Bundle{
 class IDUBundle extends Bundle{
     val decode = new DecodeBundle
     val exu_ctl = new EXUCTLBundle
+    val rs1_data = UInt(32.W)
+    val rs2_data = UInt(32.W)
+    val csr_rdata = UInt(32.W)
 }
 
 class ysyx_26030092_IDU extends Module{
@@ -62,6 +65,12 @@ class ysyx_26030092_IDU extends Module{
     })))
 
     val out = IO(Decoupled(new IDUBundle))
+
+    // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
+    val RFS_ReadPort = IO(new Bundle {
+        val RegReadPort = new ReadRegPortBundle
+        val CSRReadPort = new CSRReadPortBundle
+    })
 
     in.ready := out.ready
     out.valid := in.valid
@@ -346,6 +355,24 @@ class ysyx_26030092_IDU extends Module{
             }
         }
     }
+
+    // 译码阶段读取寄存器堆：rs1/rs2 无条件组合读取（x0 恒为 0，未用数据无副作用）
+    RFS_ReadPort.RegReadPort.raddr1 := inst.rs1
+    RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
+    out.bits.rs1_data := RFS_ReadPort.RegReadPort.rdata1
+    out.bits.rs2_data := RFS_ReadPort.RegReadPort.rdata2
+
+    // CSR 读地址：mret 读 mepc；csrrs/csrrw 读 imm(11,0)；其余指令不读 CSR
+    RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
+    switch(out.bits.exu_ctl.CSR_Contorl){
+        is(CSRControl.mret){
+            RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
+        }
+        is(CSRControl.csrrs, CSRControl.csrrw){
+            RFS_ReadPort.CSRReadPort.CSRRAddr := out.bits.decode.imm(11,0)
+        }
+    }
+    out.bits.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
 
     // 指令分类计数（原 switch 分支内 out.fire 触发，统一在此按 opcode 判断）
     PerfCounter("IDU_calc") := (inst.opcode === "b0010011".U || inst.opcode === "b0110011".U) && out.fire
