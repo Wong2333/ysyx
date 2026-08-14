@@ -38,15 +38,6 @@ void second_stage_bootloader(){
   uint32_t *src = &_text_lma_start;
   uint32_t *end = &_text_vma_end;
   // for(int start = _bootloader_start )
-  int cnt = 0;
-  while(cnt < 32){
-    *dst = 0x00000013;
-    cnt++;
-    dst++;
-  }
-  *dst = 0x00008067;
-  main();
-  dst = &_text_vma_start;
   while(dst < end){
     *dst = *src;
     dst++;
