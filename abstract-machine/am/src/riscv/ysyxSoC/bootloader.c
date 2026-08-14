@@ -31,6 +31,7 @@ extern uint32_t _data_vma_end;
 
 void second_stage_bootloader() __attribute__((section(".SSBL")));
 
+int main();
 
 void second_stage_bootloader(){
   uint32_t *dst = &_text_vma_start;
@@ -43,6 +44,7 @@ void second_stage_bootloader(){
     cnt++;
     dst++;
   }
+  main();
   dst = &_text_vma_start;
   while(dst < end){
     *dst = *src;
