@@ -24,6 +24,9 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         val valid = Output(Bool())
     })
 
+    val flush = IO(Input(Bool()))
+    icache.flush := flush
+
     val req_addr_s1 = RegNext(req.addr)
     val req_valid_s1 = RegNext(req.valid, false.B)
 

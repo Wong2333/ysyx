@@ -40,6 +40,7 @@ class ysyx_26030092 extends Module{
     // PC 更新（commit 事件）：WBU → IFU；trap 目标 mtvec：RFS → IFU
     IFU_u.PCUpdatePort := WBU_u.PCUpdatePort
     IFU_u.mtvec := RFS_u.mtvec_out
+    IFU_u.flush_icache := WBU_u.icache_flush
 
     IDU_u.in <> IFU_u.out
 

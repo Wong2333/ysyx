@@ -92,6 +92,7 @@ class ysyx_26030092_IDU extends Module{
     out.bits.exu_ctl.Branch_Control := BranchControl.none
     out.bits.exu_ctl.ALUWrite2Reg := false.B
     out.bits.exu_ctl.CSR_Contorl := CSRControl.none
+    out.bits.exu_ctl.fence_i := false.B
 
 
     switch(inst.opcode){
@@ -338,7 +339,12 @@ class ysyx_26030092_IDU extends Module{
                 }
             }
         }
-
+        is("b0001111".U){ //fence.i
+            when(inst.funct3 === "b001".U){
+                out.bits.exu_ctl.fence_i := true.B
+                invalid := false.B
+            }
+        }
     }
 
     // 指令分类计数（原 switch 分支内 out.fire 触发，统一在此按 opcode 判断）
