@@ -62,5 +62,5 @@ void second_stage_bootloader(){
     dst++;
     src++;
   }
-
+  asm volatile("fence.i;");
 }
