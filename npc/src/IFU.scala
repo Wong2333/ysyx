@@ -26,10 +26,10 @@ class ysyx_26030092_IFU extends Module{
     }))
 
     // WBU 的 commit 事件：valid 时更新 PC（跳转/trap）并开始下一轮取指
-    val PCUpdatePort = IO(Input(new PCUpdatePortBundle))
+    val RedirectPC = IO(Input(UInt(32.W)))
     // trap 跳转目标（mtvec 存储在 RFS，IFU 直接读）
-    val mtvec = IO(Input(UInt(32.W)))
     val flush_icache = IO(Input(Bool()))
+    val flush = IO(Input(Bool()))
 
     val AXI4_port = IO(new AXI4Bundle)
 
@@ -40,10 +40,9 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.pc_next := DontCare
     PC_reg.io.pc_we := false.B
     PC_reg.io.pc_4 := false.B
-    when(PCUpdatePort.valid){
-        PC_reg.io.pc_we := PCUpdatePort.pc_we
-        PC_reg.io.pc_next := Mux(PCUpdatePort.is_trap, mtvec, PCUpdatePort.pc_next)
-        PC_reg.io.pc_4 := !PCUpdatePort.pc_we
+    when(flush){
+        PC_reg.io.pc_we := true.B
+        PC_reg.io.pc_next := RedirectPC
     }
 
     val inst_reg = RegInit(0.U(32.W))
@@ -54,7 +53,7 @@ class ysyx_26030092_IFU extends Module{
     out.bits.pc := PC_reg.io.pc
     out.bits.inst := inst_reg
 
-    val s_idle :: s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(4)
+    val s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(3)
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
     val state = RegInit(s_req_inst)
 
@@ -64,31 +63,30 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.AXI4_port <> AXI4_port
     icache_main_pipe.req.valid := false.B
     icache_main_pipe.req.addr := DontCare
-    icache_main_pipe.flush := flush_icache
+    icache_main_pipe.icache_flush := flush_icache
 
     switch(state){
-        is(s_idle){
-            // 等待 WBU 写回：commit 时 PC 已更新，开始取下一条
-            when(PCUpdatePort.valid){
-                state := s_req_inst
-            }
-        }
         is(s_req_inst){
             icache_main_pipe.req.addr := PC_reg.io.pc
-            icache_main_pipe.req.valid := true.B
-            state := s_wait_resp
+            icache_main_pipe.req.valid := ~flush
+            when(flush){ state := s_req_inst}
+            .elsewhen(icache_main_pipe.req.ready){ state := s_wait_resp}
         }
         is(s_wait_resp){
-            when(icache_main_pipe.resp.valid){
+            when(flush){ state := s_req_inst }
+            .elsewhen(icache_main_pipe.resp.valid){
                 inst_reg := icache_main_pipe.resp.rdata
                 state := s_wait_fetch
             }
         }
         is(s_wait_fetch){
-            out.valid := true.B
-            when(out.ready){
-                state := s_idle
+            out.valid := ~flush
+            when(flush) {state := s_req_inst }
+            .elsewhen(out.fire){
+                state := s_req_inst
+                PC_reg.io.pc_4 := true.B
             }
+            
         }
     }
 

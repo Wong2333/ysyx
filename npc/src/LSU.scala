@@ -123,12 +123,13 @@ class ysyx_26030092_LSU extends Module{
         is(s_wait_mem_resp){
             when(is_write){
                 AXI4_port.bready := true.B
-                when(AXI4_port.bvalid){
+                when(AXI4_port.bvalid){                    
                     state := s_wait_fetch
                     mtrace_u.io.valid := true.B
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.data := lsu_in_reg.wdata
                     lsu_out_reg.error := AXI4_port.bresp
+                    
                 }
             }.otherwise{
                 AXI4_port.rready := true.B                

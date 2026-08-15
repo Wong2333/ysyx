@@ -12,9 +12,6 @@ class CommitInfoBundle extends Bundle {
 }
 
 class WriteBackPortBundle extends Bundle{
-    val PCNext = Output(UInt(32.W))
-    val PCWrite = Output(Bool())
-
     val RegWaddr = Output(UInt(5.W))
     val RegWdata = Output(UInt(32.W))
     val RegWrite = Output(Bool())
@@ -30,9 +27,7 @@ class WriteBackPortBundle extends Bundle{
 }
 
 // WBU → IFU 的 PC 更新端口：commit 脉冲 + 跳转/trap 事件
-class PCUpdatePortBundle extends Bundle {
-  val valid   = Output(Bool()) 
-  val pc_we   = Output(Bool())
+class RedirectBundle extends Bundle {
   val is_trap = Output(Bool())
   val pc_next = Output(UInt(32.W))
 }
@@ -53,40 +48,46 @@ class ysyx_26030092_WBU extends Module{
     val WriteRegPort = IO(Output(new WriteRegPortBundle))
     val CSRWritePort = IO(Output(new CSRWritePortBundle))
     val ExceptionPort = IO(Output(new ExceptionInfoBundle))
-    val PCUpdatePort = IO(Output(new PCUpdatePortBundle))
     val icache_flush = IO(Output(Bool()))
+    // RAW 冒险检测信息：WB 级（写回拍）的写寄存器信息
+    val wb_wb_info = IO(Output(new StageWriteInfoBundle))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
-    // EXU 只在结果就绪时拉 valid，WBU 始终接受写回
     in.ready := true.B
 
     WriteRegPort := 0.U.asTypeOf(new WriteRegPortBundle)
     CSRWritePort := 0.U.asTypeOf(new CSRWritePortBundle)
     ExceptionPort := 0.U.asTypeOf(new ExceptionInfoBundle)
-    PCUpdatePort := 0.U.asTypeOf(new PCUpdatePortBundle)
     icache_flush := false.B
 
+    val in_reg = Reg(new WriteBackPortBundle)
+
+
     when(in.fire){
-        WriteRegPort.waddr := in.bits.RegWaddr
-        WriteRegPort.wdata := in.bits.RegWdata
-        WriteRegPort.wen := in.bits.RegWrite
-
-        CSRWritePort.CSRWAddr := in.bits.CSRAddr
-        CSRWritePort.CSRWData := in.bits.CSRData
-        CSRWritePort.CSRWrite := in.bits.CSRWrite
-
-        ExceptionPort.isTrap := in.bits.isTrap
-        ExceptionPort.PC := in.bits.PC
-        ExceptionPort.Exception_Code := in.bits.Exception_Code
-
-        PCUpdatePort.valid := true.B
-        PCUpdatePort.pc_we := in.bits.PCWrite || in.bits.isTrap
-        PCUpdatePort.is_trap := in.bits.isTrap
-        PCUpdatePort.pc_next := in.bits.PCNext
-
-        icache_flush := in.bits.icache_flush
+        in_reg := in.bits
     }
+    val fire_s1 = RegNext(in.fire, false.B)
+    when(fire_s1){
+        WriteRegPort.waddr := in_reg.RegWaddr
+        WriteRegPort.wdata := in_reg.RegWdata
+        WriteRegPort.wen := in_reg.RegWrite
+
+        CSRWritePort.CSRWAddr := in_reg.CSRAddr
+        CSRWritePort.CSRWData := in_reg.CSRData
+        CSRWritePort.CSRWrite := in_reg.CSRWrite
+
+        ExceptionPort.isTrap := in_reg.isTrap
+        ExceptionPort.PC := in_reg.PC
+        ExceptionPort.Exception_Code := in_reg.Exception_Code
+
+        icache_flush := in_reg.icache_flush
+    }
+
+    // RAW 冒险检测信息：fire_s1 拍（RF 拍末才更新）是唯一的"写回窗口"拍
+    wb_wb_info.valid := fire_s1
+    wb_wb_info.wen   := in_reg.RegWrite
+    wb_wb_info.rd    := in_reg.RegWaddr
     PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）

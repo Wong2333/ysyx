@@ -58,13 +58,25 @@ class IDUBundle extends Bundle{
     val csr_rdata = UInt(32.W)
 }
 
+// 各流水线阶段的"写寄存器信息"，供 IDU 做 RAW 冒险检测（讲义方案）
+class StageWriteInfoBundle extends Bundle{
+    val valid = Output(Bool())    // 本拍该阶段是否有指令处于写回窗口
+    val wen   = Output(Bool())    // 该指令是否真的写寄存器（store/branch 等不写）
+    val rd    = Output(UInt(5.W)) // 写入的寄存器编号
+}
+
 class ysyx_26030092_IDU extends Module{
     val in = IO(Flipped(Decoupled(new Bundle {
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
     })))
-
+    val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
+
+    // 各阶段写寄存器信息（RAW 冒险检测用）
+    val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
+    val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
 
     // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
     val RFS_ReadPort = IO(new Bundle {
@@ -72,8 +84,21 @@ class ysyx_26030092_IDU extends Module{
         val CSRReadPort = new CSRReadPortBundle
     })
 
-    in.ready := out.ready
-    out.valid := in.valid
+    val inst = in.bits.inst.asTypeOf(new InstDecode)
+
+    // ========== RAW 冒险检测（讲义方案） ==========
+    // 与任一阶段"正在写回"的寄存器冲突（rs=rd 且 rs≠x0）→ 等待（stall）
+    // 等待实现：in.ready / out.valid 置无效，握手反压自然传到 IFU
+    def conflict(rs: UInt, info: StageWriteInfoBundle): Bool =
+        info.valid && info.wen && rs =/= 0.U && rs === info.rd
+
+    val stall =
+        conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
+        conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
+        conflict(inst.rs1, wb_wb_info)  || conflict(inst.rs2, wb_wb_info)
+
+    in.ready := out.ready & ~flush & ~stall
+    out.valid := in.valid & ~flush & ~stall
     out.bits.decode.inst := in.bits.inst
 
     PerfCounter("IDU_pipe_idle") := !in.valid
@@ -81,10 +106,6 @@ class ysyx_26030092_IDU extends Module{
     val trap = RegInit(false.B)
     val invalid = WireDefault(true.B)
     out.bits.decode.invalid := invalid
-
-    
-
-    val inst = in.bits.inst.asTypeOf(new InstDecode)
 
     out.bits.decode.rs1 := inst.rs1
     out.bits.decode.rs2 := inst.rs2
