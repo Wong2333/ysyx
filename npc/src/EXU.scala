@@ -108,6 +108,30 @@ class ysyx_26030092_EXU extends Module{
     val is_load = idu_out.bits.exu_ctl.mem_op === MemOp.load
     val exe     = idu_out.fire
 
+    // ========== 执行：源操作数 → ALU（接受拍组合） ==========
+    // 注意：必须定义在 wb_data 之前（wb_data 引用 AluResult/PCAddFour）
+    val src1 = WireDefault(0.U(32.W))
+    switch(idu_out.bits.exu_ctl.ALU_Src1){
+        is(ALUSrc1.rs1){ src1 := idu_out.bits.rs1_data }
+        is(ALUSrc1.pc) { src1 := idu_out.bits.decode.pc }
+    }
+    val src2 = WireDefault(0.U(32.W))
+    switch(idu_out.bits.exu_ctl.ALU_Src2){
+        is(ALUSrc2.rs2)   { src2 := idu_out.bits.rs2_data }
+        is(ALUSrc2.imm)   { src2 := idu_out.bits.decode.imm }
+        is(ALUSrc2.shamt) { src2 := Cat(0.U(27.W), idu_out.bits.decode.imm(4,0)) }
+        is(ALUSrc2.csr)   { src2 := idu_out.bits.csr_rdata }
+    }
+    val ALU_u = Module(new ysyx_26030092_ALU)
+    ALU_u.in.ctl := idu_out.bits.exu_ctl.ALU_Control
+    ALU_u.in.src1 := src1
+    ALU_u.in.src2 := src2
+    // dontTouch：防止被优化掉，便于波形调试观察 ALU 结果
+    val AluResult = WireDefault(0.U(32.W))
+    dontTouch(AluResult)
+    AluResult := ALU_u.out
+    val PCAddFour = idu_out.bits.decode.pc + 4.U
+
     // ========== 非访存写回组合值（接受拍生成，供 wb_reg / ex_pending 锁存） ==========
     val wb_data = Wire(new WriteBackPortBundle)
     wb_data := 0.U.asTypeOf(new WriteBackPortBundle)
@@ -203,29 +227,6 @@ class ysyx_26030092_EXU extends Module{
     invalid_instruction.io.pc := idu_out.bits.decode.pc
     invalid_instruction.io.inst := idu_out.bits.decode.inst
     invalid_instruction.io.invalid := exe && idu_out.bits.decode.invalid
-
-    // ========== 执行：源操作数 → ALU（接受拍组合） ==========
-    val src1 = WireDefault(0.U(32.W))
-    switch(idu_out.bits.exu_ctl.ALU_Src1){
-        is(ALUSrc1.rs1){ src1 := idu_out.bits.rs1_data }
-        is(ALUSrc1.pc) { src1 := idu_out.bits.decode.pc }
-    }
-    val src2 = WireDefault(0.U(32.W))
-    switch(idu_out.bits.exu_ctl.ALU_Src2){
-        is(ALUSrc2.rs2)   { src2 := idu_out.bits.rs2_data }
-        is(ALUSrc2.imm)   { src2 := idu_out.bits.decode.imm }
-        is(ALUSrc2.shamt) { src2 := Cat(0.U(27.W), idu_out.bits.decode.imm(4,0)) }
-        is(ALUSrc2.csr)   { src2 := idu_out.bits.csr_rdata }
-    }
-    val ALU_u = Module(new ysyx_26030092_ALU)
-    ALU_u.in.ctl := idu_out.bits.exu_ctl.ALU_Control
-    ALU_u.in.src1 := src1
-    ALU_u.in.src2 := src2
-    // dontTouch：防止被优化掉，便于波形调试观察 ALU 结果
-    val AluResult = WireDefault(0.U(32.W))
-    dontTouch(AluResult)
-    AluResult := ALU_u.out
-    val PCAddFour = idu_out.bits.decode.pc + 4.U
 
     // ========== RAW 冒险检测信息 ==========
     // EX 层：非访存指令结果已锁存（由下面两槽覆盖），恒不命中
