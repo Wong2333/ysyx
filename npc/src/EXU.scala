@@ -143,7 +143,7 @@ class ysyx_26030092_EXU extends Module{
     val is_load = idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.lb, MemControl.lbu,
                    MemControl.lh, MemControl.lhu, MemControl.lw)
 
-    ex_wb_info.valid := state === s_write_back
+    ex_wb_info.valid := (state =/= s_idle) || state === s_write_back
     ex_wb_info.wen   := idu_out_reg.exu_ctl.ALUWrite2Reg || is_jal ||
                         (is_csr && (idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrs ||
                                     idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrw))
@@ -151,7 +151,7 @@ class ysyx_26030092_EXU extends Module{
     mem_wb_info.valid := state === s_wait_lsu_free || state === s_wait_lsu_valid
     mem_wb_info.wen   := is_load
     mem_wb_info.rd    := idu_out_reg.decode.rd
-    ex_csr_info.valid := state === s_write_back
+    ex_csr_info.valid := (state =/= s_idle) || state === s_write_back
     ex_csr_info.wen   := is_csr && (idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrs ||
                                     idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrw)
     ex_csr_info.addr  := idu_out_reg.decode.imm(11,0)
