@@ -51,6 +51,7 @@ class ysyx_26030092_WBU extends Module{
     val icache_flush = IO(Output(Bool()))
     // RAW 冒险检测信息：WB 级（写回拍）的写寄存器信息
     val wb_wb_info = IO(Output(new StageWriteInfoBundle))
+    val wb_csr_info = IO(Output(new CSRWriteInfoBundle))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
@@ -88,6 +89,9 @@ class ysyx_26030092_WBU extends Module{
     wb_wb_info.valid := fire_s1
     wb_wb_info.wen   := in_reg.RegWrite
     wb_wb_info.rd    := in_reg.RegWaddr
+    wb_csr_info.valid := fire_s1
+    wb_csr_info.wen   := in_reg.CSRWrite
+    wb_csr_info.addr  := in_reg.CSRAddr
     PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）

@@ -58,6 +58,7 @@ class ysyx_26030092_EXU extends Module{
     // RAW 冒险检测信息：EX 级（执行/写回拍）与 MEM 级（访存等待）的写寄存器信息
     val ex_wb_info  = IO(Output(new StageWriteInfoBundle))
     val mem_wb_info = IO(Output(new StageWriteInfoBundle))
+    val ex_csr_info = IO(Output(new CSRWriteInfoBundle))
 
 
     val idu_out_reg = Reg(new IDUBundle)
@@ -150,6 +151,10 @@ class ysyx_26030092_EXU extends Module{
     mem_wb_info.valid := state === s_wait_lsu_free || state === s_wait_lsu_valid
     mem_wb_info.wen   := is_load
     mem_wb_info.rd    := idu_out_reg.decode.rd
+    ex_csr_info.valid := state === s_write_back
+    ex_csr_info.wen   := is_csr && (idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrs ||
+                                    idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrw)
+    ex_csr_info.addr  := idu_out_reg.decode.imm(11,0)
 
     // 分支条件判定
     val BranchCond = WireDefault(false.B)
