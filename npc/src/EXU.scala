@@ -152,15 +152,13 @@ class ysyx_26030092_EXU extends Module{
     val is_mret = idu_out_reg.exu_ctl.sys_op === SysOp.mret
     val is_load = idu_out_reg.exu_ctl.mem_op === MemOp.load
 
-    ex_wb_info.valid := (state =/= s_idle) || state === s_write_back
-    ex_wb_info.wen   := idu_out_reg.exu_ctl.reg_write
+    // RAW 检测信息：wen 已含阶段有效性（阶段空闲时为 0，rd 为垃圾值但不被使用）
+    ex_wb_info.wen   := (state =/= s_idle) && idu_out_reg.exu_ctl.reg_write
     ex_wb_info.rd    := idu_out_reg.decode.rd
-    mem_wb_info.valid := state === s_wait_lsu_free || state === s_wait_lsu_valid
-    mem_wb_info.wen   := is_load
-    mem_wb_info.rd    := idu_out_reg.decode.rd
-    ex_csr_info.valid := (state =/= s_idle) || state === s_write_back
-    ex_csr_info.wen   := idu_out_reg.exu_ctl.csr_op =/= CSROp.none
-    ex_csr_info.addr  := idu_out_reg.decode.imm(11,0)
+    mem_wb_info.wen  := (state === s_wait_lsu_free || state === s_wait_lsu_valid) && is_load
+    mem_wb_info.rd   := idu_out_reg.decode.rd
+    ex_csr_info.wen  := (state =/= s_idle) && (idu_out_reg.exu_ctl.csr_op =/= CSROp.none)
+    ex_csr_info.addr := idu_out_reg.decode.imm(11,0)
 
     // 分支条件判定
     val BranchCond = WireDefault(false.B)

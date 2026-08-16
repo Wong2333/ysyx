@@ -55,14 +55,12 @@ class IDUBundle extends Bundle{
 }
 
 class StageWriteInfoBundle extends Bundle{
-    val valid = Output(Bool())    
-    val wen   = Output(Bool())    
+    val wen   = Output(Bool())    // 本拍该阶段正在写寄存器（含阶段有效性）
     val rd    = Output(UInt(5.W)) 
 }
 
 class CSRWriteInfoBundle extends Bundle{
-    val valid = Output(Bool())
-    val wen   = Output(Bool())
+    val wen   = Output(Bool())    // 本拍该阶段正在写 CSR（含阶段有效性）
     val addr  = Output(UInt(12.W))
 }
 
@@ -91,7 +89,7 @@ class ysyx_26030092_IDU extends Module{
 
     // RAW 冒险
     def conflict(rs: UInt, info: StageWriteInfoBundle): Bool =
-        info.valid && info.wen && rs =/= 0.U && rs === info.rd
+        info.wen && rs =/= 0.U && rs === info.rd
 
     // CSR 写后读：csrrs/csrrw 读 imm(11,0)，mret 读 mepc(0x341)
     val csr_read_addr = MuxCase(0.U(12.W), Seq(
@@ -104,8 +102,8 @@ class ysyx_26030092_IDU extends Module{
         conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
         conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
         conflict(inst.rs1, wb_wb_info)  || conflict(inst.rs2, wb_wb_info) ||
-        (csr_read && ((ex_csr_info.valid && ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
-                      (wb_csr_info.valid && wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
+        (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
+                      (wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
 
     val out_valid = RegInit(false.B)
     in.ready := ~out_valid & ~flush & ~stall
