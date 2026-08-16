@@ -46,8 +46,6 @@ class DecodeBundle extends Bundle{
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
-    
-
 }
 
 class IDUBundle extends Bundle{
@@ -58,11 +56,10 @@ class IDUBundle extends Bundle{
     val csr_rdata = UInt(32.W)
 }
 
-// 各流水线阶段的"写寄存器信息"，供 IDU 做 RAW 冒险检测（讲义方案）
 class StageWriteInfoBundle extends Bundle{
-    val valid = Output(Bool())    // 本拍该阶段是否有指令处于写回窗口
-    val wen   = Output(Bool())    // 该指令是否真的写寄存器（store/branch 等不写）
-    val rd    = Output(UInt(5.W)) // 写入的寄存器编号
+    val valid = Output(Bool())    
+    val wen   = Output(Bool())    
+    val rd    = Output(UInt(5.W)) 
 }
 
 class ysyx_26030092_IDU extends Module{
@@ -73,7 +70,6 @@ class ysyx_26030092_IDU extends Module{
     val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
 
-    // 各阶段写寄存器信息（RAW 冒险检测用）
     val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
     val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
     val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
@@ -86,9 +82,7 @@ class ysyx_26030092_IDU extends Module{
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
 
-    // ========== RAW 冒险检测（讲义方案） ==========
-    // 与任一阶段"正在写回"的寄存器冲突（rs=rd 且 rs≠x0）→ 等待（stall）
-    // 等待实现：in.ready / out.valid 置无效，握手反压自然传到 IFU
+    // RAW 冒险
     def conflict(rs: UInt, info: StageWriteInfoBundle): Bool =
         info.valid && info.wen && rs =/= 0.U && rs === info.rd
 

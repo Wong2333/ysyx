@@ -39,7 +39,6 @@ class EXUCTLBundle extends Bundle{
 }
 
 class ysyx_26030092_EXU extends Module{
-    // 控制冒险：分支/跳转/异常判定点（写回拍），flush 与重定向目标从这里直接发出
     val flush = IO(Output(Bool()))
     val redirectPC = IO(Output(UInt(32.W)))
     val mtvec = IO(Input(UInt(32.W)))
@@ -143,14 +142,11 @@ class ysyx_26030092_EXU extends Module{
     val is_load = idu_out_reg.exu_ctl.Mem_Control.isOneOf(MemControl.lb, MemControl.lbu,
                    MemControl.lh, MemControl.lhu, MemControl.lw)
 
-    // ========== RAW 冒险检测信息（供 IDU 检测冲突） ==========
-    // EX 级（写回拍）：ALU 写 / jal / csrrs / csrrw 才真正写寄存器
     ex_wb_info.valid := state === s_write_back
     ex_wb_info.wen   := idu_out_reg.exu_ctl.ALUWrite2Reg || is_jal ||
                         (is_csr && (idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrs ||
                                     idu_out_reg.exu_ctl.CSR_Contorl === CSRControl.csrrw))
     ex_wb_info.rd    := idu_out_reg.decode.rd
-    // MEM 级（访存等待）：只有 load 写寄存器（store 不写）
     mem_wb_info.valid := state === s_wait_lsu_free || state === s_wait_lsu_valid
     mem_wb_info.wen   := is_load
     mem_wb_info.rd    := idu_out_reg.decode.rd

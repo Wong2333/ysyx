@@ -25,9 +25,7 @@ class ysyx_26030092_IFU extends Module{
         val pc = UInt(32.W)
     }))
 
-    // WBU 的 commit 事件：valid 时更新 PC（跳转/trap）并开始下一轮取指
     val RedirectPC = IO(Input(UInt(32.W)))
-    // trap 跳转目标（mtvec 存储在 RFS，IFU 直接读）
     val flush_icache = IO(Input(Bool()))
     val flush = IO(Input(Bool()))
 
