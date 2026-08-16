@@ -265,7 +265,7 @@ class ysyx_26030092_EXU extends Module{
     redirectPC := MuxCase(0.U(32.W), Seq(
         (is_branch && taken) -> AluResult,
         is_mret              -> idu_out.bits.csr_rdata,
-        idu_out.bits.exu_ctl.sys_op === SysOp.ecall -> mtvec
+        (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
     ))
 
     // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
