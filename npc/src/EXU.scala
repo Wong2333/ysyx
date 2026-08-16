@@ -132,6 +132,36 @@ class ysyx_26030092_EXU extends Module{
     AluResult := ALU_u.out
     val PCAddFour = idu_out.bits.decode.pc + 4.U
 
+    // ========== 分支条件判定（接受拍组合） ==========
+    val BranchCond = WireDefault(false.B)
+    switch(idu_out.bits.exu_ctl.branch_op){
+        is(BranchOp.beq)  { BranchCond := idu_out.bits.rs1_data === idu_out.bits.rs2_data }
+        is(BranchOp.bne)  { BranchCond := idu_out.bits.rs1_data =/= idu_out.bits.rs2_data }
+        is(BranchOp.blt)  { BranchCond := idu_out.bits.rs1_data.asSInt < idu_out.bits.rs2_data.asSInt }
+        is(BranchOp.bge)  { BranchCond := idu_out.bits.rs1_data.asSInt >= idu_out.bits.rs2_data.asSInt }
+        is(BranchOp.bltu) { BranchCond := idu_out.bits.rs1_data < idu_out.bits.rs2_data }
+        is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
+    }
+
+    // ========== 控制冒险：跳转目标统一 = AluResult（jal: pc+imm，jalr: rs1+imm，分支: pc+imm） ==========
+    val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
+    val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
+    val taken = BranchCond || is_jump
+    val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
+    val redirect = (is_branch && taken && AluResult =/= PCAddFour) || is_mret
+    // 组合判定：执行拍的分支/跳转/ecall → 需要冲刷。锁存动作在状态机里与指令锁存同步
+    val flush_comb = exe && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
+    val redirect_pc_comb = MuxCase(0.U(32.W), Seq(
+        (is_branch && taken) -> AluResult,
+        is_mret              -> idu_out.bits.csr_rdata,
+        (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
+    ))
+    // flush / redirectPC 由寄存器驱动（EX 锁存后信号才有效），在状态机锁存块中同步锁存
+    val flush_reg = RegInit(false.B)
+    val redirect_pc_reg = RegInit(0.U(32.W))
+    flush := flush_reg
+    redirectPC := redirect_pc_reg
+
     // ========== 非访存写回组合值（接受拍生成，供 wb_reg / ex_pending 锁存） ==========
     val wb_data = Wire(new WriteBackPortBundle)
     wb_data := 0.U.asTypeOf(new WriteBackPortBundle)
@@ -180,15 +210,24 @@ class ysyx_26030092_EXU extends Module{
                         wb_commit.mem := false.B
                         wb_commit.mem_addr := 0.U
                         wb_reg_valid := true.B
+                        // flush 与指令锁存同步（EX 锁存后信号才有效）
+                        flush_reg := flush_comb
+                        redirect_pc_reg := redirect_pc_comb
                     }.otherwise{
                         ex_pending := wb_data
                         ex_pending_commit.pc := idu_out.bits.decode.pc
                         ex_pending_commit.mem := false.B
                         ex_pending_commit.mem_addr := 0.U
                         ex_pending_valid := true.B
+                        // flush 与指令锁存同步
+                        flush_reg := flush_comb
+                        redirect_pc_reg := redirect_pc_comb
                         state := s_wait_lsu_valid
                     }
                 }
+            }.otherwise{
+                // 非执行拍：清除 flush（保证单拍脉冲）
+                flush_reg := false.B
             }
         }
         is(s_wait_lsu_valid){
@@ -243,31 +282,6 @@ class ysyx_26030092_EXU extends Module{
     ex_csr_info.wen  := (wb_reg_valid && wb_reg.CSRWrite) ||
                         (ex_pending_valid && ex_pending.CSRWrite)
     ex_csr_info.addr := Mux(wb_reg_valid, wb_reg.CSRAddr, ex_pending.CSRAddr)
-
-    // ========== 分支条件判定（接受拍组合） ==========
-    val BranchCond = WireDefault(false.B)
-    switch(idu_out.bits.exu_ctl.branch_op){
-        is(BranchOp.beq)  { BranchCond := idu_out.bits.rs1_data === idu_out.bits.rs2_data }
-        is(BranchOp.bne)  { BranchCond := idu_out.bits.rs1_data =/= idu_out.bits.rs2_data }
-        is(BranchOp.blt)  { BranchCond := idu_out.bits.rs1_data.asSInt < idu_out.bits.rs2_data.asSInt }
-        is(BranchOp.bge)  { BranchCond := idu_out.bits.rs1_data.asSInt >= idu_out.bits.rs2_data.asSInt }
-        is(BranchOp.bltu) { BranchCond := idu_out.bits.rs1_data < idu_out.bits.rs2_data }
-        is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
-    }
-
-    // ========== 控制冒险：跳转目标统一 = AluResult（jal: pc+imm，jalr: rs1+imm，分支: pc+imm） ==========
-    val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
-    val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
-    val taken = BranchCond || is_jump
-    val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
-    val redirect = (is_branch && taken && AluResult =/= PCAddFour) || is_mret
-    // flush 在接受拍（执行拍）发出，比写回拍提前一拍
-    flush := exe && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
-    redirectPC := MuxCase(0.U(32.W), Seq(
-        (is_branch && taken) -> AluResult,
-        is_mret              -> idu_out.bits.csr_rdata,
-        (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
-    ))
 
     // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
     val ebreak = Module(new EbreakBlackBox())
