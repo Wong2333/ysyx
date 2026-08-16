@@ -95,11 +95,10 @@ class ysyx_26030092_IDU extends Module{
 
     // CSR 写后读：csrrs/csrrw 读 imm(11,0)，mret 读 mepc(0x341)
     val csr_read_addr = MuxCase(0.U(12.W), Seq(
-        (out_comb.exu_ctl.CSR_Contorl === CSRControl.mret)              -> "h341".U,
-        (out_comb.exu_ctl.CSR_Contorl === CSRControl.csrrs ||
-         out_comb.exu_ctl.CSR_Contorl === CSRControl.csrrw)             -> out_comb.decode.imm(11,0)
+        (out_comb.exu_ctl.sys_op === SysOp.mret)          -> "h341".U,
+        (out_comb.exu_ctl.csr_op =/= CSROp.none)          -> out_comb.decode.imm(11,0)
     ))
-    val csr_read = out_comb.exu_ctl.CSR_Contorl.isOneOf(CSRControl.mret, CSRControl.csrrs, CSRControl.csrrw)
+    val csr_read = out_comb.exu_ctl.sys_op === SysOp.mret || out_comb.exu_ctl.csr_op =/= CSROp.none
 
     val stall =
         conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
@@ -133,74 +132,78 @@ class ysyx_26030092_IDU extends Module{
     out_comb.decode.pc := in.bits.pc
     out_comb.decode.imm := DontCare
 
-    out_comb.exu_ctl.ALU_Op := DontCare
-    out_comb.exu_ctl.ALU_Control := DontCare
-    out_comb.exu_ctl.ALU_Src1 := DontCare
-    out_comb.exu_ctl.ALU_Src2 := DontCare
-    out_comb.exu_ctl.ALU_Jump := Jump.none
-    out_comb.exu_ctl.Mem_Control := MemControl.none
-    out_comb.exu_ctl.Branch_Control := BranchControl.none
-    out_comb.exu_ctl.ALUWrite2Reg := false.B
-    out_comb.exu_ctl.CSR_Contorl := CSRControl.none
-    out_comb.exu_ctl.fence_i := false.B
+    out_comb.exu_ctl.ALU_Src1    := ALUSrc1.rs1
+    out_comb.exu_ctl.ALU_Src2    := ALUSrc2.imm
+    out_comb.exu_ctl.ALU_Control := ALUOp.add
+    out_comb.exu_ctl.reg_write   := false.B
+    out_comb.exu_ctl.wb_src      := WBSrc.none
+    out_comb.exu_ctl.mem_op      := MemOp.none
+    out_comb.exu_ctl.mem_size    := MemSize.word
+    out_comb.exu_ctl.mem_signed  := false.B
+    out_comb.exu_ctl.branch_op   := BranchOp.none
+    out_comb.exu_ctl.jump_op     := JumpOp.none
+    out_comb.exu_ctl.csr_op      := CSROp.none
+    out_comb.exu_ctl.sys_op      := SysOp.none
+    out_comb.exu_ctl.fence_i     := false.B
 
 
     switch(inst.opcode){
         is("b0010011".U){
-            out_comb.exu_ctl.ALU_Op := ALUOp.IType
             out_comb.decode.imm := inst.immI
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out_comb.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             when(inst.funct3 === "b000".U){// addi
-                out_comb.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U){// sltiu
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
             when(inst.funct3 === "b010".U){// slti
-                out_comb.exu_ctl.ALU_Control := ALUContorl.slt
+                out_comb.exu_ctl.ALU_Control := ALUOp.slt
                 invalid := false.B
             }
             when(inst.funct3 === "b001".U && inst.immI(11,5) === "b0".U ){// slli
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sll
+                out_comb.exu_ctl.ALU_Control := ALUOp.sll
                 out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.immI(11,5) === "b0".U){//srli
-                out_comb.exu_ctl.ALU_Control := ALUContorl.srl
+                out_comb.exu_ctl.ALU_Control := ALUOp.srl
                 out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B   
             }
             when(inst.funct3 === "b101".U && inst.immI(11,5) === "b0100000".U){//srai
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sra
+                out_comb.exu_ctl.ALU_Control := ALUOp.sra
                 out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B   
             }
 
             when(inst.funct3 === "b111".U){// andi
-                out_comb.exu_ctl.ALU_Control := ALUContorl.and
+                out_comb.exu_ctl.ALU_Control := ALUOp.and
                 invalid := false.B
             }
             when(inst.funct3 === "b100".U){// xori
-                out_comb.exu_ctl.ALU_Control := ALUContorl.xor
+                out_comb.exu_ctl.ALU_Control := ALUOp.xor
                 invalid := false.B
             }
             when(inst.funct3 === "b110".U){// ori
-                out_comb.exu_ctl.ALU_Control := ALUContorl.or
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
                 invalid := false.B
             }
         }
         is("b1100111".U){
-            out_comb.exu_ctl.ALU_Op := ALUOp.IType
             out_comb.decode.imm := inst.immI
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             when(inst.funct3 === "b000".U){//jalr
-                out_comb.exu_ctl.ALU_Jump := Jump.jal
-                out_comb.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.jump_op := JumpOp.jump
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.pc_plus4
                 invalid := false.B
             }
         }
@@ -208,181 +211,190 @@ class ysyx_26030092_IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    out_comb.exu_ctl.CSR_Contorl := CSRControl.ebreak
+                    out_comb.exu_ctl.sys_op := SysOp.ebreak
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out_comb.decode.rd := inst.rd
                 out_comb.decode.imm := inst.immI
                 out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
                 out_comb.exu_ctl.ALU_Src2 := ALUSrc2.csr
-                out_comb.exu_ctl.ALU_Control := ALUContorl.or
-                out_comb.exu_ctl.CSR_Contorl := CSRControl.csrrs
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
+                out_comb.exu_ctl.csr_op := CSROp.csrrs
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.csr
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b001".U){// csrws
                 out_comb.decode.rd := inst.rd
                 out_comb.decode.imm := inst.immI
-                out_comb.exu_ctl.CSR_Contorl := CSRControl.csrrw
+                out_comb.exu_ctl.csr_op := CSROp.csrrw
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.csr
                 invalid := false.B
             }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
                     inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
-                    out_comb.exu_ctl.CSR_Contorl := CSRControl.mret
+                    out_comb.exu_ctl.sys_op := SysOp.mret
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
-                out_comb.exu_ctl.CSR_Contorl := CSRControl.ecall
+                out_comb.exu_ctl.sys_op := SysOp.ecall
                 out_comb.decode.pc := in.bits.pc
                 invalid := false.B
             }
         }
         is("b0110011".U){
-            out_comb.exu_ctl.ALU_Op := ALUOp.RType
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.rs2
-            out_comb.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){// add
-                out_comb.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
                 invalid := false.B
             }
             when(inst.funct3 === "b000".U && inst.funct7 === "b0100000".U){// sub
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sub
+                out_comb.exu_ctl.ALU_Control := ALUOp.sub
                 invalid := false.B
             }
             when(inst.funct3 === "b111".U && inst.funct7 === "b0000000".U){// and
-                out_comb.exu_ctl.ALU_Control := ALUContorl.and
+                out_comb.exu_ctl.ALU_Control := ALUOp.and
                 invalid := false.B
             }
             when(inst.funct3 === "b100".U && inst.funct7 === "b0000000".U){// xor
-                out_comb.exu_ctl.ALU_Control := ALUContorl.xor
+                out_comb.exu_ctl.ALU_Control := ALUOp.xor
                 invalid := false.B
             }
             when(inst.funct3 === "b110".U && inst.funct7 === "b0000000".U){// or
-                out_comb.exu_ctl.ALU_Control := ALUContorl.or
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U && inst.funct7 === "b0000000".U){// sltu
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
 
             when(inst.funct3 === "b001".U && inst.funct7 === "b0000000".U){// sll
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sll
+                out_comb.exu_ctl.ALU_Control := ALUOp.sll
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.funct7 === "b0000000".U){// srl
-                out_comb.exu_ctl.ALU_Control := ALUContorl.srl
+                out_comb.exu_ctl.ALU_Control := ALUOp.srl
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.funct7 === "b0100000".U){// sra
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sra
+                out_comb.exu_ctl.ALU_Control := ALUOp.sra
                 invalid := false.B
             }
             when(inst.funct3 === "b010".U && inst.funct7 === "b0000000".U){// slt
-                out_comb.exu_ctl.ALU_Control := ALUContorl.slt
+                out_comb.exu_ctl.ALU_Control := ALUOp.slt
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U && inst.funct7 === "b0000000".U){// sltu
-                out_comb.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
 
 
         }
         is("b0110111".U){// lui
-            out_comb.exu_ctl.ALU_Op := ALUOp.UType
             out_comb.decode.imm := inst.immU
-            out_comb.exu_ctl.ALU_Control := ALUContorl.lui
-            out_comb.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.exu_ctl.ALU_Control := ALUOp.lui
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             invalid := false.B
         }
         is("b0010111".U){// auipc
-            out_comb.exu_ctl.ALU_Op := ALUOp.UType
             out_comb.decode.imm := inst.immU
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out_comb.exu_ctl.ALU_Control := ALUContorl.add
-            out_comb.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             invalid := false.B
         }
         is("b0000011".U){
-            out_comb.exu_ctl.ALU_Op := ALUOp.IType
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immI
-            out_comb.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.mem_op := MemOp.load
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.mem
             when(inst.funct3 === "b010".U){//lw
-                out_comb.exu_ctl.Mem_Control := MemControl.lw
+                out_comb.exu_ctl.mem_size := MemSize.word
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b100".U){//lbu
-                out_comb.exu_ctl.Mem_Control := MemControl.lbu
+                out_comb.exu_ctl.mem_size := MemSize.byte
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b101".U){//lhu
-                out_comb.exu_ctl.Mem_Control := MemControl.lhu
+                out_comb.exu_ctl.mem_size := MemSize.half
                 invalid := false.B                
             }.elsewhen(inst.funct3 === "b000".U){// lb
-                out_comb.exu_ctl.Mem_Control := MemControl.lb
+                out_comb.exu_ctl.mem_size := MemSize.byte
+                out_comb.exu_ctl.mem_signed := true.B
                 invalid := false.B    
             }.elsewhen(inst.funct3 === "b001".U){// lh
-                out_comb.exu_ctl.Mem_Control := MemControl.lh
+                out_comb.exu_ctl.mem_size := MemSize.half
+                out_comb.exu_ctl.mem_signed := true.B
                 invalid := false.B
             }
         }
         is("b0100011".U){
-            out_comb.exu_ctl.ALU_Op := ALUOp.SType
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immS
-            out_comb.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.mem_op := MemOp.store
             when(inst.funct3 === "b010".U){// sw
-                out_comb.exu_ctl.Mem_Control := MemControl.sw
+                out_comb.exu_ctl.mem_size := MemSize.word
                 invalid := false.B
                 
             }.elsewhen(inst.funct3 === "b000".U){// sb
-                out_comb.exu_ctl.Mem_Control := MemControl.sb
+                out_comb.exu_ctl.mem_size := MemSize.byte
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b001".U){
-                out_comb.exu_ctl.Mem_Control := MemControl.sh
+                out_comb.exu_ctl.mem_size := MemSize.half
                 invalid := false.B
             }
         }
         is("b1101111".U){// jal
-            out_comb.exu_ctl.ALU_Op := ALUOp.JType
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immJ
-            out_comb.exu_ctl.ALU_Control := ALUContorl.add
-            out_comb.exu_ctl.ALU_Jump := Jump.jal
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.jump_op := JumpOp.jump
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.pc_plus4
             invalid := false.B
         }
 
         is("b1100011".U){// beq
-            out_comb.exu_ctl.ALU_Op := ALUOp.BType
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immB
-            out_comb.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
             switch(inst.funct3){
                 is("b000".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.beq
+                    out_comb.exu_ctl.branch_op := BranchOp.beq
                     invalid := false.B
                 }
                 is("b001".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.bne
+                    out_comb.exu_ctl.branch_op := BranchOp.bne
                     invalid := false.B
                 }
                 is("b100".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.blt
+                    out_comb.exu_ctl.branch_op := BranchOp.blt
                     invalid := false.B                    
                 }
                 is("b101".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.bge
+                    out_comb.exu_ctl.branch_op := BranchOp.bge
                     invalid := false.B                    
                 }
                 is("b110".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.bltu
+                    out_comb.exu_ctl.branch_op := BranchOp.bltu
                     invalid := false.B                    
                 }
                 is("b111".U){
-                    out_comb.exu_ctl.Branch_Control := BranchControl.bgeu
+                    out_comb.exu_ctl.branch_op := BranchOp.bgeu
                     invalid := false.B
                 }
             }
