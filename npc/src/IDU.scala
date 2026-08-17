@@ -77,6 +77,7 @@ class ysyx_26030092_IDU extends Module{
     val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
     val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
     val ex_csr_info = IO(Flipped(new CSRWriteInfoBundle))
+    val mem_csr_info = IO(Flipped(new CSRWriteInfoBundle))
     val wb_csr_info = IO(Flipped(new CSRWriteInfoBundle))
 
     // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
@@ -103,6 +104,7 @@ class ysyx_26030092_IDU extends Module{
         conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
         conflict(inst.rs1, wb_wb_info)  || conflict(inst.rs2, wb_wb_info) ||
         (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
+                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) ||
                       (wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
 
     val out_valid = RegInit(false.B)

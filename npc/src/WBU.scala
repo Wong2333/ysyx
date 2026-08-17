@@ -62,34 +62,28 @@ class ysyx_26030092_WBU extends Module{
     ExceptionPort := 0.U.asTypeOf(new ExceptionInfoBundle)
     icache_flush := false.B
 
-    val in_reg = Reg(new WriteBackPortBundle)
-
-
+    // 写回数据已在 EXU 的 mem_pending 锁存，这里 fire 拍直出（不再二次锁存）
     when(in.fire){
-        in_reg := in.bits
-    }
-    val fire_s1 = RegNext(in.fire, false.B)
-    when(fire_s1){
-        WriteRegPort.waddr := in_reg.RegWaddr
-        WriteRegPort.wdata := in_reg.RegWdata
-        WriteRegPort.wen := in_reg.RegWrite
+        WriteRegPort.waddr := in.bits.RegWaddr
+        WriteRegPort.wdata := in.bits.RegWdata
+        WriteRegPort.wen := in.bits.RegWrite
 
-        CSRWritePort.CSRWAddr := in_reg.CSRAddr
-        CSRWritePort.CSRWData := in_reg.CSRData
-        CSRWritePort.CSRWrite := in_reg.CSRWrite
+        CSRWritePort.CSRWAddr := in.bits.CSRAddr
+        CSRWritePort.CSRWData := in.bits.CSRData
+        CSRWritePort.CSRWrite := in.bits.CSRWrite
 
-        ExceptionPort.isTrap := in_reg.isTrap
-        ExceptionPort.PC := in_reg.PC
-        ExceptionPort.Exception_Code := in_reg.Exception_Code
+        ExceptionPort.isTrap := in.bits.isTrap
+        ExceptionPort.PC := in.bits.PC
+        ExceptionPort.Exception_Code := in.bits.Exception_Code
 
-        icache_flush := in_reg.icache_flush
+        icache_flush := in.bits.icache_flush
     }
 
-    // RAW 冒险检测信息：fire_s1 拍（RF 拍末才更新）是唯一的"写回窗口"拍
-    wb_wb_info.wen   := fire_s1 && in_reg.RegWrite
-    wb_wb_info.rd    := in_reg.RegWaddr
-    wb_csr_info.wen  := fire_s1 && in_reg.CSRWrite
-    wb_csr_info.addr := in_reg.CSRAddr
+    // RAW 冒险检测信息：写回窗口 = fire 拍（RF 在拍末落盘）
+    wb_wb_info.wen   := in.fire && in.bits.RegWrite
+    wb_wb_info.rd    := in.bits.RegWaddr
+    wb_csr_info.wen  := in.fire && in.bits.CSRWrite
+    wb_csr_info.addr := in.bits.CSRAddr
     PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）

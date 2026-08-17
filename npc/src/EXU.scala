@@ -72,6 +72,7 @@ class ysyx_26030092_EXU extends Module{
     val ex_wb_info  = IO(Output(new StageWriteInfoBundle))
     val mem_wb_info = IO(Output(new StageWriteInfoBundle))
     val ex_csr_info = IO(Output(new CSRWriteInfoBundle))
+    val mem_csr_info = IO(Output(new CSRWriteInfoBundle))
 
     // 非访存暂存槽：LSU 忙时锁存ex计算结果
     val ex_pending = Reg(new WriteBackPortBundle)
@@ -249,10 +250,11 @@ class ysyx_26030092_EXU extends Module{
     
     mem_wb_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.RegWrite
     mem_wb_info.rd  := mem_pending.RegWaddr
-    // CSR 写后读
-    ex_csr_info.wen  := (ex_pending_valid && ex_pending.CSRWrite) ||
-                        ((mem_pending_valid || lsu_busy) && mem_pending.CSRWrite)
-    ex_csr_info.addr := Mux(mem_pending_valid, mem_pending.CSRAddr, ex_pending.CSRAddr)
+    // CSR 写后读：ex_pending 槽与 mem_pending 槽各一个端口（两槽可同时有 CSR 写，地址需分别比较）
+    ex_csr_info.wen  := ex_pending_valid && ex_pending.CSRWrite
+    ex_csr_info.addr := ex_pending.CSRAddr
+    mem_csr_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.CSRWrite
+    mem_csr_info.addr := mem_pending.CSRAddr
 
     // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
     val ebreak = Module(new EbreakBlackBox())
