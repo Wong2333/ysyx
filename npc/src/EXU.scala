@@ -68,33 +68,20 @@ class ysyx_26030092_EXU extends Module{
     // 提交指令信息
     val commit_info = IO(Output(new CommitInfoBundle))
 
-    // RAW 冒险检测信息（EX 层恒不命中：非访存指令的写回窗口由 wb_reg/ex_pending 覆盖）
+    // RAW 冒险检测信息（非访存指令的写回窗口由 ex_pending/mem_pending 覆盖）
     val ex_wb_info  = IO(Output(new StageWriteInfoBundle))
     val mem_wb_info = IO(Output(new StageWriteInfoBundle))
     val ex_csr_info = IO(Output(new CSRWriteInfoBundle))
 
-    // ========== 状态机：接受拍 = 执行拍 ==========
-    // s_idle: 接受新指令，当拍组合执行
-    //   - 非访存且 LSU 空闲（无更老访存）→ 结果锁存进 wb_reg（最终写回）
-    //   - 非访存且 LSU 忙（有更老访存在途）→ 结果锁存进 ex_pending 等待，进入 s_wait_lsu_valid
-    //   - 访存 → 发 LSU + 保存信息，进入 s_wait_lsu_valid
-    // s_wait_lsu_valid: 等 LSU 返回（其内部已锁存），返回拍直接锁存进 wb_reg
-    val s_idle :: s_wait_lsu_valid :: Nil = Enum(2)
-    val state = RegInit(s_idle)
-
-    // 访存等待期保存的信息
-    val wb_rd      = Reg(UInt(5.W))      // 写回地址
-    val wb_regwr   = RegInit(false.B)    // load=true / store=false
-    val wb_pc      = Reg(UInt(32.W))     // commit_info.pc
-    val wb_memaddr = Reg(UInt(32.W))     // commit_info.mem_addr
-
-    // 最终写回槽：所有写回结果统一锁存这里，wbu_in 由它驱动
-    val wb_reg = Reg(new WriteBackPortBundle)
-    val wb_reg_valid = RegInit(false.B)
-    val wb_commit = Reg(new CommitInfoBundle)
-
-    // 非访存暂存槽：LSU 忙时的结果，等 wb_reg 排空后接力写回（保证按序）
+    // 非访存暂存槽：LSU 忙时锁存ex计算结果
     val ex_pending = Reg(new WriteBackPortBundle)
+    val ex_mem_pending = Reg(new Bundle {
+        val mem_op = MemOp()
+        val mem_addr = UInt(32.W)
+        val mem_wdata = UInt(32.W)
+        val mem_size = MemSize()
+        val mem_signed = Bool()
+    })
     val ex_pending_valid = RegInit(false.B)
     val ex_pending_commit = Reg(new CommitInfoBundle)
 
@@ -106,10 +93,8 @@ class ysyx_26030092_EXU extends Module{
     // 接受拍判定（基于输入侧 idu_out.bits，接受拍即执行拍）
     val is_mem  = idu_out.bits.exu_ctl.mem_op =/= MemOp.none
     val is_load = idu_out.bits.exu_ctl.mem_op === MemOp.load
-    val exe     = idu_out.fire
+    val fire_s0     = idu_out.fire
 
-    // ========== 执行：源操作数 → ALU（接受拍组合） ==========
-    // 注意：必须定义在 wb_data 之前（wb_data 引用 AluResult/PCAddFour）
     val src1 = WireDefault(0.U(32.W))
     switch(idu_out.bits.exu_ctl.ALU_Src1){
         is(ALUSrc1.rs1){ src1 := idu_out.bits.rs1_data }
@@ -132,7 +117,6 @@ class ysyx_26030092_EXU extends Module{
     AluResult := ALU_u.out
     val PCAddFour = idu_out.bits.decode.pc + 4.U
 
-    // ========== 分支条件判定（接受拍组合） ==========
     val BranchCond = WireDefault(false.B)
     switch(idu_out.bits.exu_ctl.branch_op){
         is(BranchOp.beq)  { BranchCond := idu_out.bits.rs1_data === idu_out.bits.rs2_data }
@@ -143,43 +127,42 @@ class ysyx_26030092_EXU extends Module{
         is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
     }
 
-    // ========== 控制冒险：跳转目标统一 = AluResult（jal: pc+imm，jalr: rs1+imm，分支: pc+imm） ==========
+    // 控制冒险
     val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
     val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
     val taken = BranchCond || is_jump
     val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
     val redirect = (is_branch && taken && AluResult =/= PCAddFour) || is_mret
-    // 组合判定：执行拍的分支/跳转/ecall → 需要冲刷。锁存动作在状态机里与指令锁存同步
-    val flush_comb = exe && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
+    val flush_comb = fire_s0 && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
     val redirect_pc_comb = MuxCase(0.U(32.W), Seq(
         (is_branch && taken) -> AluResult,
         is_mret              -> idu_out.bits.csr_rdata,
         (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
     ))
-    // flush / redirectPC 由寄存器驱动（EX 锁存后信号才有效），在状态机锁存块中同步锁存
+
     val flush_reg = RegInit(false.B)
     val redirect_pc_reg = RegInit(0.U(32.W))
     flush := flush_reg
     redirectPC := redirect_pc_reg
 
-    // ========== 非访存写回组合值（接受拍生成，供 wb_reg / ex_pending 锁存） ==========
     val wb_data = Wire(new WriteBackPortBundle)
     wb_data := 0.U.asTypeOf(new WriteBackPortBundle)
     wb_data.RegWaddr := idu_out.bits.decode.rd
     wb_data.RegWrite := idu_out.bits.exu_ctl.reg_write
+    wb_data.PC := idu_out.bits.decode.pc
     switch(idu_out.bits.exu_ctl.wb_src){
         is(WBSrc.alu)      { wb_data.RegWdata := AluResult }
         is(WBSrc.pc_plus4) { wb_data.RegWdata := PCAddFour }
         is(WBSrc.csr)      { wb_data.RegWdata := idu_out.bits.csr_rdata }
     }
-    // CSR 写端口（csrrs/csrrw）：csrrw 写 rs1 原值，csrrs 写 rs1|csr（即 AluResult）
+    // CSR 写端口
     when(idu_out.bits.exu_ctl.csr_op =/= CSROp.none){
         wb_data.CSRAddr := idu_out.bits.decode.imm(11,0)
         wb_data.CSRWrite := true.B
         wb_data.CSRData := Mux(idu_out.bits.exu_ctl.csr_op === CSROp.csrrw,
                                idu_out.bits.rs1_data, AluResult)
     }
-    // 系统指令：ecall 触发 trap
+    // ecall 触发 trap
     when(idu_out.bits.exu_ctl.sys_op === SysOp.ecall){
         wb_data.Exception_Code := 11.U
         wb_data.PC := idu_out.bits.decode.pc
@@ -187,99 +170,89 @@ class ysyx_26030092_EXU extends Module{
     }
     wb_data.icache_flush := idu_out.bits.exu_ctl.fence_i
 
-    switch(state){
-        is(s_idle){
-            idu_out.ready := ~(idu_out.valid && is_mem && ~lsu_in.ready) &&
-                             ~wb_reg_valid && ~ex_pending_valid
-            lsu_in.valid := exe && is_mem
-            when(exe){
-                when(is_mem){
-                    // 访存：发 LSU，保存写回/提交信息
-                    wb_rd      := idu_out.bits.decode.rd
-                    wb_regwr   := is_load
-                    wb_pc      := idu_out.bits.decode.pc
-                    wb_memaddr := AluResult
-                    state := s_wait_lsu_valid
-                }.otherwise{
-                    // 非访存：LSU 空闲（无更老访存）→ 直接进最终写回；忙 → 暂存等待
-                    when(lsu_in.ready){
-                        wb_reg := wb_data
-                        wb_commit.pc := idu_out.bits.decode.pc
-                        wb_commit.mem := false.B
-                        wb_commit.mem_addr := 0.U
-                        wb_reg_valid := true.B
-                        // flush 与指令锁存同步（EX 锁存后信号才有效）
-                        flush_reg := flush_comb
-                        redirect_pc_reg := redirect_pc_comb
-                    }.otherwise{
-                        ex_pending := wb_data
-                        ex_pending_commit.pc := idu_out.bits.decode.pc
-                        ex_pending_commit.mem := false.B
-                        ex_pending_commit.mem_addr := 0.U
-                        ex_pending_valid := true.B
-                        // flush 与指令锁存同步
-                        flush_reg := flush_comb
-                        redirect_pc_reg := redirect_pc_comb
-                        state := s_wait_lsu_valid
-                    }
-                }
-            }.otherwise{
-                // 非执行拍：清除 flush（保证单拍脉冲）
-                flush_reg := false.B
-            }
+    // ex 流水线
+    val ex_pending_ready = WireDefault(false.B)
+    val ex_pending_fire = ex_pending_ready & ex_pending_valid
+
+    when(!ex_pending_valid || ex_pending_fire){
+        when(ex_pending_fire){ ex_pending_valid := false.B}
+        when(idu_out.valid){
+            idu_out.ready := true.B
+            ex_pending := wb_data
+            ex_mem_pending.mem_addr := AluResult
+            ex_mem_pending.mem_op := idu_out.bits.exu_ctl.mem_op
+            ex_mem_pending.mem_wdata := idu_out.bits.rs2_data
+            ex_mem_pending.mem_size := idu_out.bits.exu_ctl.mem_size
+            ex_mem_pending.mem_signed := idu_out.bits.exu_ctl.mem_signed
+            ex_pending_valid := true.B
+
+            ex_pending_commit.mem := is_mem // trace or difftest
+            ex_pending_commit.mem_addr := AluResult
+            ex_pending_commit.pc := idu_out.bits.decode.pc
         }
-        is(s_wait_lsu_valid){
+    }
+    when(idu_out.fire){//锁存ex_pending时进行控制冒险检测
+        flush_reg := flush_comb
+        redirect_pc_reg := redirect_pc_comb
+    }.otherwise{
+        flush_reg := false.B
+    }
+
+    // mem 流水线 以及 lsu状态机
+    val mem_pending = Reg(new WriteBackPortBundle)
+    val mem_pending_ready = WireDefault(false.B)
+    val mem_pending_valid = RegInit(false.B)
+    val mem_pending_commit = Reg(new CommitInfoBundle)
+    val mem_pending_fire = mem_pending_ready & mem_pending_valid
+    val ex_pending_is_mem = ex_mem_pending.mem_op =/= MemOp.none 
+    val lsu_busy = RegInit(false.B)
+
+    when(mem_pending_fire || !mem_pending_valid){
+        when(mem_pending_fire) { mem_pending_valid := false.B }
+        when(lsu_busy){ //lsu忙，等待数据
             lsu_out.ready := true.B
-            when(lsu_out.valid){
-                // LSU 返回（数据在其内部已锁存），直接锁存进最终写回
-                wb_reg := 0.U.asTypeOf(new WriteBackPortBundle)
-                wb_reg.RegWaddr := wb_rd
-                wb_reg.RegWdata := lsu_out.bits.rdata
-                wb_reg.RegWrite := wb_regwr
-                wb_commit.pc := wb_pc
-                wb_commit.mem := true.B
-                wb_commit.mem_addr := wb_memaddr
-                wb_reg_valid := true.B
-                state := s_idle
+            when(lsu_out.fire){
+                mem_pending.RegWdata := lsu_out.bits.rdata
+                mem_pending_valid := true.B
+                lsu_busy := false.B
             }
+        }.elsewhen(ex_pending_valid && ex_pending_is_mem){ //ex是访存指令
+            lsu_in.valid := true.B
+            when(lsu_in.fire){
+                mem_pending := ex_pending
+                mem_pending_commit := ex_pending_commit
+                ex_pending_ready := true.B
+                lsu_busy := true.B
+            }
+        }.elsewhen(ex_pending_valid && !ex_pending_is_mem){ //ex不访存
+            mem_pending := ex_pending
+            mem_pending_commit := ex_pending_commit
+            ex_pending_ready := true.B
+            mem_pending_valid := true.B
         }
     }
 
-    // ========== 写回通路（wbu_in 由 wb_reg 驱动，fire 后 ex_pending 接力） ==========
-    wbu_in.valid := wb_reg_valid
-    wbu_in.bits := wb_reg
-    commit_info := wb_commit
-    when(wbu_in.fire){
-        wb_reg_valid := false.B
-        when(ex_pending_valid){
-            wb_reg := ex_pending
-            wb_commit := ex_pending_commit
-            ex_pending_valid := false.B
-            wb_reg_valid := true.B
-        }
-    }
+    // wb 流水线
+    wbu_in.valid := mem_pending_valid
+    wbu_in.bits := mem_pending
+    mem_pending_ready := wbu_in.ready
+    commit_info := mem_pending_commit
 
-    // ========== 无效指令检测（仿真黑盒，接受拍触发） ==========
     val invalid_instruction = Module(new InvalidInstructionBlackBox())
     invalid_instruction.io.pc := idu_out.bits.decode.pc
     invalid_instruction.io.inst := idu_out.bits.decode.inst
-    invalid_instruction.io.invalid := exe && idu_out.bits.decode.invalid
+    invalid_instruction.io.invalid := fire_s0 && idu_out.bits.decode.invalid
 
-    // ========== RAW 冒险检测信息 ==========
-    // EX 层：非访存指令结果已锁存（由下面两槽覆盖），恒不命中
-    ex_wb_info.wen := false.B
-    ex_wb_info.rd  := 0.U
-    // MEM 层：覆盖 访存等待期（wb_rd）+ 最终写回槽 + 暂存槽 三个窗口
-    // （wb_reg_valid 与 state=s_wait_lsu_valid 互斥：等待期写回槽必空）
-    mem_wb_info.wen := (state === s_wait_lsu_valid && wb_regwr) ||
-                       (wb_reg_valid && wb_reg.RegWrite) ||
-                       (ex_pending_valid && ex_pending.RegWrite)
-    mem_wb_info.rd  := Mux(wb_reg_valid, wb_reg.RegWaddr,
-                       Mux(ex_pending_valid, ex_pending.RegWaddr, wb_rd))
-    // CSR 写后读：覆盖 最终写回槽 + 暂存槽（CSR 指令非访存，等待期无 CSR 写）
-    ex_csr_info.wen  := (wb_reg_valid && wb_reg.CSRWrite) ||
-                        (ex_pending_valid && ex_pending.CSRWrite)
-    ex_csr_info.addr := Mux(wb_reg_valid, wb_reg.CSRAddr, ex_pending.CSRAddr)
+    // RAW 冒险检测
+    ex_wb_info.wen := ex_pending_valid && ex_pending.RegWrite
+    ex_wb_info.rd  := ex_pending.RegWaddr
+    
+    mem_wb_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.RegWrite
+    mem_wb_info.rd  := mem_pending.RegWaddr
+    // CSR 写后读
+    ex_csr_info.wen  := (ex_pending_valid && ex_pending.CSRWrite) ||
+                        ((mem_pending_valid || lsu_busy) && mem_pending.CSRWrite)
+    ex_csr_info.addr := Mux(mem_pending_valid, mem_pending.CSRAddr, ex_pending.CSRAddr)
 
     // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
     val ebreak = Module(new EbreakBlackBox())
@@ -287,17 +260,17 @@ class ysyx_26030092_EXU extends Module{
     when(lsu_out.fire && lsu_out.bits.error === true.B){
         ebreak.io.ebreak_trap := true.B
     }
-    when(exe && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
+    when(fire_s0 && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
         ebreak.io.ebreak_trap := true.B
     }
 
-    // ========== 访存（接受拍发 LSU，LSU 忙时反压保证握手） ==========
+    // lsu访存请求
     lsu_in.bits := 0.U.asTypeOf(new LSUBundle)
-    lsu_in.bits.addr := AluResult
-    lsu_in.bits.wdata := idu_out.bits.rs2_data
-    lsu_in.bits.mem_op := idu_out.bits.exu_ctl.mem_op
-    lsu_in.bits.mem_size := idu_out.bits.exu_ctl.mem_size
-    lsu_in.bits.mem_signed := idu_out.bits.exu_ctl.mem_signed
+    lsu_in.bits.addr := ex_mem_pending.mem_addr
+    lsu_in.bits.wdata := ex_mem_pending.mem_wdata
+    lsu_in.bits.mem_op := ex_mem_pending.mem_op
+    lsu_in.bits.mem_size := ex_mem_pending.mem_size
+    lsu_in.bits.mem_signed := ex_mem_pending.mem_signed
 
     PerfCounter("EXU_finished") := wbu_in.fire
     // 控制冒险：冲刷次数（flush 由 EX 寄存器驱动，直接计数）
@@ -305,7 +278,7 @@ class ysyx_26030092_EXU extends Module{
     // EXU 反压拍数（写回槽满 / 访存指令遇 LSU 忙），衡量流水线停顿
     PerfCounter("EXU_stall_cycles") := idu_out.valid && ~idu_out.ready
     // 非访存指令因 LSU 忙而暂存 ex_pending 的次数（访存延迟隐藏效果）
-    PerfCounter("EXU_use_pending") := exe && ~is_mem && ~lsu_in.ready
+    PerfCounter("EXU_use_pending") := fire_s0 && ~is_mem && ~lsu_in.ready
     // EXU 完全空闲拍数（无执行、无待写回、无访存等待）
-    PerfCounter("EXU_idle_cycles") := ~exe && state === s_idle && ~wb_reg_valid && ~ex_pending_valid
+    PerfCounter("EXU_idle_cycles") := ~fire_s0 && ~ex_pending_valid && ~mem_pending_valid && ~lsu_busy
 }
