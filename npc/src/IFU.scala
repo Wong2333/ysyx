@@ -38,71 +38,53 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.pc_next := DontCare
     PC_reg.io.pc_we := false.B
     PC_reg.io.pc_4 := false.B
-
+    when(flush){
+        PC_reg.io.pc_we := true.B
+        PC_reg.io.pc_next := RedirectPC
+    }
 
     val inst_reg = RegInit(0.U(32.W))
-    val inst_reg_valid = RegInit(false.B)
     val error_reg = RegInit(false.B)
 
-    out.valid := inst_reg_valid
+    out.valid := false.B
 
     out.bits.pc := PC_reg.io.pc
     out.bits.inst := inst_reg
 
-    // val s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(3)
-    // // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
-    // val state = RegInit(s_req_inst)
+    val s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(3)
+    // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
+    val state = RegInit(s_req_inst)
 
-    // PerfCounter("IFU_get_inst_cycles") := (state === s_req_inst || state === s_wait_resp)
+    PerfCounter("IFU_get_inst_cycles") := (state === s_req_inst || state === s_wait_resp)
 
     val icache_main_pipe = Module(new icacheMainPipe(16,16))
     icache_main_pipe.AXI4_port <> AXI4_port
-    icache_main_pipe.req.addr := PC_reg.io.pc
+    icache_main_pipe.req.valid := false.B
+    icache_main_pipe.req.addr := DontCare
     icache_main_pipe.icache_flush := flush_icache
-    icache_main_pipe.resp.ready := false.B
 
-    // switch(state){
-    //     is(s_req_inst){
-    //         icache_main_pipe.req.addr := PC_reg.io.pc
-    //         icache_main_pipe.req.valid := ~flush
-    //         when(flush){ state := s_req_inst}
-    //         .elsewhen(icache_main_pipe.req.ready){ state := s_wait_resp}
-    //     }
-    //     is(s_wait_resp){
-    //         when(flush){ state := s_req_inst }
-    //         .elsewhen(icache_main_pipe.resp.valid){
-    //             inst_reg := icache_main_pipe.resp.rdata
-    //             state := s_wait_fetch
-    //         }
-    //     }
-    //     is(s_wait_fetch){
-    //         out.valid := ~flush
-    //         when(flush) {state := s_req_inst }
-    //         .elsewhen(out.fire){
-    //             state := s_req_inst
-    //             PC_reg.io.pc_4 := true.B
-    //         }
+    switch(state){
+        is(s_req_inst){
+            icache_main_pipe.req.addr := PC_reg.io.pc
+            icache_main_pipe.req.valid := ~flush
+            when(flush){ state := s_req_inst}
+            .elsewhen(icache_main_pipe.req.ready){ state := s_wait_resp}
+        }
+        is(s_wait_resp){
+            when(flush){ state := s_req_inst }
+            .elsewhen(icache_main_pipe.resp.valid){
+                inst_reg := icache_main_pipe.resp.rdata
+                state := s_wait_fetch
+            }
+        }
+        is(s_wait_fetch){
+            out.valid := ~flush
+            when(flush) {state := s_req_inst }
+            .elsewhen(out.fire){
+                state := s_req_inst
+                PC_reg.io.pc_4 := true.B
+            }
             
-    //     }
-    // }
-    val icache_main_pipe_req_fire = icache_main_pipe.req.ready & icache_main_pipe.req.valid
-    icache_main_pipe.req.valid := true.B
-    when(flush){
-        PC_reg.io.pc_we := true.B
-        PC_reg.io.pc_next := RedirectPC
-        icache_main_pipe.req.valid := false.B
-    }
-
-    when(icache_main_pipe_req_fire){
-        PC_reg.io.pc_4 := true.B
-    }
-
-    when(out.fire || !inst_reg_valid){
-        inst_reg_valid := false.B
-        when(icache_main_pipe.resp.valid){
-            icache_main_pipe.resp.ready := true.B
-            inst_reg := inst_reg
-            inst_reg_valid := true.B
         }
     }
 

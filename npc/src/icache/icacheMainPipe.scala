@@ -23,7 +23,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val resp = IO(new Bundle {
         val rdata = Output(UInt(32.W))
         val valid = Output(Bool())
-        val ready = Input(Bool())
+        //val ready = Input(Bool())
     })
 
     val icache_flush = IO(Input(Bool()))
@@ -35,11 +35,15 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val s_idle :: s_busy :: Nil = Enum(2)
 
     val state = RegInit(s_idle)
+    when(req.ready & req.valid){
+        state := s_busy
+    }.elsewhen(resp.valid) { state := s_idle }
     req.ready := Mux(state === s_idle, true.B, false.B)
 
     icache.req.addr := req.addr
 
     resp.valid := req_valid_s1 && icache.resp.hit
+    
     resp.rdata := icache.resp.data
 
     PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
@@ -66,7 +70,6 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         refill_tag := tag_s1
         refill_index := index_s1
         miss_offset := offset_s1
-        state := s_busy
     }
 
     when(refill_unit.resp.valid){
@@ -77,7 +80,6 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         icache.refill.block := refill_block
         resp.valid := true.B
         resp.rdata := (refill_block >> (miss_offset << 5))(31,0)
-        state := s_idle
     }
 
     val AXI4_port = IO(new AXI4Bundle)
