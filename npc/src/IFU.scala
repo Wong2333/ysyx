@@ -59,6 +59,7 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.AXI4_port <> AXI4_port
     icache_main_pipe.req.addr := PC_reg.io.pc
     icache_main_pipe.icache_flush := flush_icache
+    icache_main_pipe.resp.ready := false.B
 
     // switch(state){
     //     is(s_req_inst){
