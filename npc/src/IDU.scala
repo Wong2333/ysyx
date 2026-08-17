@@ -413,11 +413,13 @@ class ysyx_26030092_IDU extends Module{
     RFS_ReadPort.CSRReadPort.CSRRAddr := csr_read_addr
     out_comb.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
 
-    // 指令分类计数（原 switch 分支内 out.fire 触发，统一在此按 opcode 判断）
-    PerfCounter("IDU_calc") := (inst.opcode === "b0010011".U || inst.opcode === "b0110011".U) && out.fire
-    PerfCounter("IDU_jump") := (inst.opcode === "b1100111".U || inst.opcode === "b1101111".U) && out.fire
-    PerfCounter("IDU_csr") := (inst.opcode === "b1110011".U) && out.fire
-    PerfCounter("IDU_load") := (inst.opcode === "b0000011".U) && out.fire
-    PerfCounter("IDU_store") := (inst.opcode === "b0100011".U) && out.fire
-    PerfCounter("IDU_branch") := (inst.opcode === "b1100011".U) && out.fire
+    // 指令分类计数：基于被接受的指令（out_reg 内容），与 out.fire 同拍；
+    // 不能用 in 侧 inst——out.fire 时 inst 已是下一条指令（out_reg 改造后的错位）
+    val fired_inst = out_reg.decode.inst.asTypeOf(new InstDecode)
+    PerfCounter("IDU_calc") := (fired_inst.opcode === "b0010011".U || fired_inst.opcode === "b0110011".U) && out.fire
+    PerfCounter("IDU_jump") := (fired_inst.opcode === "b1100111".U || fired_inst.opcode === "b1101111".U) && out.fire
+    PerfCounter("IDU_csr") := (fired_inst.opcode === "b1110011".U) && out.fire
+    PerfCounter("IDU_load") := (fired_inst.opcode === "b0000011".U) && out.fire
+    PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
+    PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
 }
