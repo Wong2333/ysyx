@@ -23,6 +23,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val resp = IO(new Bundle {
         val rdata = Output(UInt(32.W))
         val valid = Output(Bool())
+        val ready = Input(Bool())
     })
 
     val icache_flush = IO(Input(Bool()))
