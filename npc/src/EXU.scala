@@ -189,8 +189,6 @@ class ysyx_26030092_EXU extends Module{
 
     switch(state){
         is(s_idle){
-            // 访存指令需 LSU 空闲才接受（保证 fire 拍 lsu_in 必握手）；
-            // 写回槽未排空时不接受新指令（严格按序写回）
             idu_out.ready := ~(idu_out.valid && is_mem && ~lsu_in.ready) &&
                              ~wb_reg_valid && ~ex_pending_valid
             lsu_in.valid := exe && is_mem
