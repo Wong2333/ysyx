@@ -422,4 +422,6 @@ class ysyx_26030092_IDU extends Module{
     PerfCounter("IDU_load") := (fired_inst.opcode === "b0000011".U) && out.fire
     PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
     PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
+    // RAW 数据冒险导致的停顿拍数
+    PerfCounter("IDU_stall_cycles") := stall
 }
