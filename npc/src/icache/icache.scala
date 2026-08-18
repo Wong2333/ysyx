@@ -52,6 +52,8 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val cache_raddr_reg = Reg(UInt(32.W))
     val cache_hit_reg = Reg(Bool())
     val cache_rdata_valid = RegInit(false.B)
+    dontTouch(cache_rdata_reg)
+dontTouch(req_addr_reg)
     val cache_rdata_fire = (cache_rdata_valid | resp_new) & resp.ready
     when(cache_rdata_fire){ 
         cache_rdata_valid := false.B 
