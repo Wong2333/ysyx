@@ -43,6 +43,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         cache_rdata_valid := false.B
         when(icache.resp.valid){
             icache.resp.ready := true.B
+            cache_rdata_valid := true.B
             cache_rdata := icache.resp.data
             cache_raddr := icache.resp.raddr
             cache_hit := icache.resp.hit
