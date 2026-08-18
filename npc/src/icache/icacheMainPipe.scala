@@ -55,7 +55,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.addr := cache_raddr
     refill_unit.req.valid := miss
     val refill_done = refill_unit.resp.valid
-    resp.valid := (cache_rdata_valid & cache_hit) | (cache_rdata_valid & refill_done) 
+    resp.valid := (cache_rdata_valid & cache_hit)
     
     resp.rdata := cache_rdata
     cache_rdata_ready := resp.ready
