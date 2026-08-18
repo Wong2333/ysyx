@@ -62,15 +62,19 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.req.valid := false.B
     icache_main_pipe.req.addr := DontCare
     icache_main_pipe.icache_flush := flush_icache
+    icache_main_pipe.resp.ready := true.B
 
     switch(state){
         is(s_req_inst){
             icache_main_pipe.req.addr := PC_reg.io.pc
             icache_main_pipe.req.valid := ~flush
             when(flush){ state := s_req_inst}
-            .elsewhen(icache_main_pipe.req.ready){ state := s_wait_resp}
+            .elsewhen(icache_main_pipe.req.ready){ 
+                state := s_wait_resp
+            }
         }
         is(s_wait_resp){
+            icache_main_pipe.resp.ready := true.B
             when(flush){ state := s_req_inst }
             .elsewhen(icache_main_pipe.resp.valid){
                 inst_reg := icache_main_pipe.resp.rdata
