@@ -59,6 +59,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     PerfCounter("icache_miss") := miss
     val refill_unit = Module(new icacheRefillUnit(block_size))
+
+    
     refill_unit.req.addr := cache_raddr
     refill_unit.req.valid := miss
 
