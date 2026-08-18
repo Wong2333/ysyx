@@ -27,6 +27,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val icache_flush = IO(Input(Bool()))
     icache.flush := icache_flush
+    icache.resp.ready := false.B
 
     icache.req.valid := req.valid
     req.ready := icache.req.ready
