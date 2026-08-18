@@ -34,7 +34,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val cache_rdata = Reg(UInt(32.W))
     val cache_raddr = Reg(UInt(32.W))
-    val cache_hit = Reg(Bool())
+    val cache_hit = RegInit(false.B)
     val cache_rdata_valid = RegInit(false.B)
     val cache_rdata_ready = WireDefault(false.B)
     val cache_rdata_fire = cache_rdata_valid & cache_rdata_ready
@@ -59,9 +59,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     PerfCounter("icache_miss") := miss
     val refill_unit = Module(new icacheRefillUnit(block_size))
-
     
-    refill_unit.req.addr := cache_raddr
+    refill_unit.req.addr := Mux(miss, cache_raddr, 0.U)
     refill_unit.req.valid := miss
 
     val offset_bits = log2Ceil(block_size)
