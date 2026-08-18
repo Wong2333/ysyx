@@ -41,22 +41,27 @@ class InvalidInstructionBlackBox extends ExtModule{
 class DecodeBundle extends Bundle{
         val inst = Output(UInt(32.W))
         val invalid = Output(Bool())
-        val rs1 = Output(UInt(5.W))
-        val rs2 = Output(UInt(5.W))
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
-    
-
 }
 
 class IDUBundle extends Bundle{
     val decode = new DecodeBundle
     val exu_ctl = new EXUCTLBundle
-    // 译码阶段从寄存器堆读出的数据，随流水线传入 EXU
     val rs1_data = UInt(32.W)
     val rs2_data = UInt(32.W)
     val csr_rdata = UInt(32.W)
+}
+
+class StageWriteInfoBundle extends Bundle{
+    val wen   = Output(Bool())    // 本拍该阶段正在写寄存器（含阶段有效性）
+    val rd    = Output(UInt(5.W)) 
+}
+
+class CSRWriteInfoBundle extends Bundle{
+    val wen   = Output(Bool())    // 本拍该阶段正在写 CSR（含阶段有效性）
+    val addr  = Output(UInt(12.W))
 }
 
 class ysyx_26030092_IDU extends Module{
@@ -64,8 +69,16 @@ class ysyx_26030092_IDU extends Module{
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
     })))
-
+    val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
+    val out_comb = Wire(new IDUBundle)
+
+    val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
+    val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    val ex_csr_info = IO(Flipped(new CSRWriteInfoBundle))
+    val mem_csr_info = IO(Flipped(new CSRWriteInfoBundle))
+    val wb_csr_info = IO(Flipped(new CSRWriteInfoBundle))
 
     // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
     val RFS_ReadPort = IO(new Bundle {
@@ -73,94 +86,124 @@ class ysyx_26030092_IDU extends Module{
         val CSRReadPort = new CSRReadPortBundle
     })
 
-    in.ready := out.ready
-    out.valid := in.valid
-    out.bits.decode.inst := in.bits.inst
+    val inst = in.bits.inst.asTypeOf(new InstDecode)
+
+    // RAW 冒险
+    def conflict(rs: UInt, info: StageWriteInfoBundle): Bool =
+        info.wen && rs =/= 0.U && rs === info.rd
+
+    // CSR 写后读：csrrs/csrrw 读 imm(11,0)，mret 读 mepc(0x341)
+    val csr_read_addr = MuxCase(0.U(12.W), Seq(
+        (out_comb.exu_ctl.sys_op === SysOp.mret)          -> "h341".U,
+        (out_comb.exu_ctl.csr_op =/= CSROp.none)          -> out_comb.decode.imm(11,0)
+    ))
+    val csr_read = out_comb.exu_ctl.sys_op === SysOp.mret || out_comb.exu_ctl.csr_op =/= CSROp.none
+
+    val stall =
+        conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
+        conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
+        conflict(inst.rs1, wb_wb_info)  || conflict(inst.rs2, wb_wb_info) ||
+        (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
+                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) ||
+                      (wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
+
+    val out_valid = RegInit(false.B)
+    in.ready := ~out_valid & ~flush & ~stall
+    out.valid := out_valid & ~flush
+    out_comb.decode.inst := in.bits.inst
+
+    val out_reg = Reg(new IDUBundle)
+    out.bits := out_reg
+    when(in.fire){
+        out_reg := out_comb
+        out_valid := true.B
+    }
+    when(out.fire | flush){
+        out_valid := false.B
+    }
 
     PerfCounter("IDU_pipe_idle") := !in.valid
 
-    val trap = RegInit(false.B)
     val invalid = WireDefault(true.B)
-    out.bits.decode.invalid := invalid
 
-    
+    out_comb.decode.invalid := invalid
 
-    val inst = in.bits.inst.asTypeOf(new InstDecode)
+    out_comb.decode.rd := inst.rd
+    out_comb.decode.pc := in.bits.pc
+    out_comb.decode.imm := DontCare
 
-    out.bits.decode.rs1 := inst.rs1
-    out.bits.decode.rs2 := inst.rs2
-    out.bits.decode.rd := inst.rd
-    out.bits.decode.pc := in.bits.pc
-    out.bits.decode.imm := DontCare
-
-    out.bits.exu_ctl.ALU_Op := DontCare
-    out.bits.exu_ctl.ALU_Control := DontCare
-    out.bits.exu_ctl.ALU_Src1 := DontCare
-    out.bits.exu_ctl.ALU_Src2 := DontCare
-    out.bits.exu_ctl.ALU_Jump := Jump.none
-    out.bits.exu_ctl.Mem_Control := MemControl.none
-    out.bits.exu_ctl.Branch_Control := BranchControl.none
-    out.bits.exu_ctl.ALUWrite2Reg := false.B
-    out.bits.exu_ctl.CSR_Contorl := CSRControl.none
-    out.bits.exu_ctl.fence_i := false.B
+    out_comb.exu_ctl.ALU_Src1    := ALUSrc1.rs1
+    out_comb.exu_ctl.ALU_Src2    := ALUSrc2.imm
+    out_comb.exu_ctl.ALU_Control := ALUOp.add
+    out_comb.exu_ctl.reg_write   := false.B
+    out_comb.exu_ctl.wb_src      := WBSrc.none
+    out_comb.exu_ctl.mem_op      := MemOp.none
+    out_comb.exu_ctl.mem_size    := MemSize.word
+    out_comb.exu_ctl.mem_signed  := false.B
+    out_comb.exu_ctl.branch_op   := BranchOp.none
+    out_comb.exu_ctl.jump_op     := JumpOp.none
+    out_comb.exu_ctl.csr_op      := CSROp.none
+    out_comb.exu_ctl.sys_op      := SysOp.none
+    out_comb.exu_ctl.fence_i     := false.B
 
 
     switch(inst.opcode){
         is("b0010011".U){
-            out.bits.exu_ctl.ALU_Op := ALUOp.IType
-            out.bits.decode.imm := inst.immI
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.decode.imm := inst.immI
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             when(inst.funct3 === "b000".U){// addi
-                out.bits.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U){// sltiu
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
             when(inst.funct3 === "b010".U){// slti
-                out.bits.exu_ctl.ALU_Control := ALUContorl.slt
+                out_comb.exu_ctl.ALU_Control := ALUOp.slt
                 invalid := false.B
             }
             when(inst.funct3 === "b001".U && inst.immI(11,5) === "b0".U ){// slli
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sll
-                out.bits.exu_ctl.ALU_Src2 := ALUSrc2.shamt
+                out_comb.exu_ctl.ALU_Control := ALUOp.sll
+                out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.immI(11,5) === "b0".U){//srli
-                out.bits.exu_ctl.ALU_Control := ALUContorl.srl
-                out.bits.exu_ctl.ALU_Src2 := ALUSrc2.shamt
+                out_comb.exu_ctl.ALU_Control := ALUOp.srl
+                out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B   
             }
             when(inst.funct3 === "b101".U && inst.immI(11,5) === "b0100000".U){//srai
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sra
-                out.bits.exu_ctl.ALU_Src2 := ALUSrc2.shamt
+                out_comb.exu_ctl.ALU_Control := ALUOp.sra
+                out_comb.exu_ctl.ALU_Src2 := ALUSrc2.shamt
                 invalid := false.B   
             }
 
             when(inst.funct3 === "b111".U){// andi
-                out.bits.exu_ctl.ALU_Control := ALUContorl.and
+                out_comb.exu_ctl.ALU_Control := ALUOp.and
                 invalid := false.B
             }
             when(inst.funct3 === "b100".U){// xori
-                out.bits.exu_ctl.ALU_Control := ALUContorl.xor
+                out_comb.exu_ctl.ALU_Control := ALUOp.xor
                 invalid := false.B
             }
             when(inst.funct3 === "b110".U){// ori
-                out.bits.exu_ctl.ALU_Control := ALUContorl.or
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
                 invalid := false.B
             }
         }
         is("b1100111".U){
-            out.bits.exu_ctl.ALU_Op := ALUOp.IType
-            out.bits.decode.imm := inst.immI
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.decode.imm := inst.immI
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             when(inst.funct3 === "b000".U){//jalr
-                out.bits.exu_ctl.ALU_Jump := Jump.jal
-                out.bits.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.jump_op := JumpOp.jump
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.pc_plus4
                 invalid := false.B
             }
         }
@@ -168,218 +211,219 @@ class ysyx_26030092_IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    out.bits.exu_ctl.CSR_Contorl := CSRControl.ebreak
+                    out_comb.exu_ctl.sys_op := SysOp.ebreak
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
-                out.bits.decode.rd := inst.rd
-                out.bits.decode.rs1 := inst.rs1
-                out.bits.decode.imm := inst.immI
-                out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-                out.bits.exu_ctl.ALU_Src2 := ALUSrc2.csr
-                out.bits.exu_ctl.ALU_Control := ALUContorl.or
-                out.bits.exu_ctl.CSR_Contorl := CSRControl.csrrs
+                out_comb.decode.rd := inst.rd
+                out_comb.decode.imm := inst.immI
+                out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+                out_comb.exu_ctl.ALU_Src2 := ALUSrc2.csr
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
+                out_comb.exu_ctl.csr_op := CSROp.csrrs
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.csr
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b001".U){// csrws
-                out.bits.decode.rd := inst.rd
-                out.bits.decode.rs1 := inst.rs1
-                out.bits.decode.imm := inst.immI
-                out.bits.exu_ctl.CSR_Contorl := CSRControl.csrrw
+                out_comb.decode.rd := inst.rd
+                out_comb.decode.imm := inst.immI
+                out_comb.exu_ctl.csr_op := CSROp.csrrw
+                out_comb.exu_ctl.reg_write := true.B
+                out_comb.exu_ctl.wb_src := WBSrc.csr
                 invalid := false.B
             }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
                     inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
-                    out.bits.exu_ctl.CSR_Contorl := CSRControl.mret
+                    out_comb.exu_ctl.sys_op := SysOp.mret
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
-                out.bits.exu_ctl.CSR_Contorl := CSRControl.ecall
-                out.bits.decode.pc := in.bits.pc
+                out_comb.exu_ctl.sys_op := SysOp.ecall
+                out_comb.decode.pc := in.bits.pc
                 invalid := false.B
             }
         }
         is("b0110011".U){
-            out.bits.exu_ctl.ALU_Op := ALUOp.RType
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.rs2
-            out.bits.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.rs2
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){// add
-                out.bits.exu_ctl.ALU_Control := ALUContorl.add
+                out_comb.exu_ctl.ALU_Control := ALUOp.add
                 invalid := false.B
             }
             when(inst.funct3 === "b000".U && inst.funct7 === "b0100000".U){// sub
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sub
+                out_comb.exu_ctl.ALU_Control := ALUOp.sub
                 invalid := false.B
             }
             when(inst.funct3 === "b111".U && inst.funct7 === "b0000000".U){// and
-                out.bits.exu_ctl.ALU_Control := ALUContorl.and
+                out_comb.exu_ctl.ALU_Control := ALUOp.and
                 invalid := false.B
             }
             when(inst.funct3 === "b100".U && inst.funct7 === "b0000000".U){// xor
-                out.bits.exu_ctl.ALU_Control := ALUContorl.xor
+                out_comb.exu_ctl.ALU_Control := ALUOp.xor
                 invalid := false.B
             }
             when(inst.funct3 === "b110".U && inst.funct7 === "b0000000".U){// or
-                out.bits.exu_ctl.ALU_Control := ALUContorl.or
+                out_comb.exu_ctl.ALU_Control := ALUOp.or
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U && inst.funct7 === "b0000000".U){// sltu
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
 
             when(inst.funct3 === "b001".U && inst.funct7 === "b0000000".U){// sll
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sll
+                out_comb.exu_ctl.ALU_Control := ALUOp.sll
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.funct7 === "b0000000".U){// srl
-                out.bits.exu_ctl.ALU_Control := ALUContorl.srl
+                out_comb.exu_ctl.ALU_Control := ALUOp.srl
                 invalid := false.B
             }
             when(inst.funct3 === "b101".U && inst.funct7 === "b0100000".U){// sra
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sra
+                out_comb.exu_ctl.ALU_Control := ALUOp.sra
                 invalid := false.B
             }
             when(inst.funct3 === "b010".U && inst.funct7 === "b0000000".U){// slt
-                out.bits.exu_ctl.ALU_Control := ALUContorl.slt
+                out_comb.exu_ctl.ALU_Control := ALUOp.slt
                 invalid := false.B
             }
             when(inst.funct3 === "b011".U && inst.funct7 === "b0000000".U){// sltu
-                out.bits.exu_ctl.ALU_Control := ALUContorl.sltu
+                out_comb.exu_ctl.ALU_Control := ALUOp.sltu
                 invalid := false.B
             }
 
 
         }
         is("b0110111".U){// lui
-            out.bits.exu_ctl.ALU_Op := ALUOp.UType
-            out.bits.decode.imm := inst.immU
-            out.bits.exu_ctl.ALU_Control := ALUContorl.lui
-            out.bits.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.decode.imm := inst.immU
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.exu_ctl.ALU_Control := ALUOp.lui
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             invalid := false.B
         }
         is("b0010111".U){// auipc
-            out.bits.exu_ctl.ALU_Op := ALUOp.UType
-            out.bits.decode.imm := inst.immU
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.exu_ctl.ALU_Control := ALUContorl.add
-            out.bits.exu_ctl.ALUWrite2Reg := true.B
+            out_comb.decode.imm := inst.immU
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.alu
             invalid := false.B
         }
         is("b0000011".U){
-            out.bits.exu_ctl.ALU_Op := ALUOp.IType
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.decode.imm := inst.immI
-            out.bits.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.decode.imm := inst.immI
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.mem_op := MemOp.load
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.mem
             when(inst.funct3 === "b010".U){//lw
-                out.bits.exu_ctl.Mem_Control := MemControl.lw
+                out_comb.exu_ctl.mem_size := MemSize.word
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b100".U){//lbu
-                out.bits.exu_ctl.Mem_Control := MemControl.lbu
+                out_comb.exu_ctl.mem_size := MemSize.byte
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b101".U){//lhu
-                out.bits.exu_ctl.Mem_Control := MemControl.lhu
+                out_comb.exu_ctl.mem_size := MemSize.half
                 invalid := false.B                
             }.elsewhen(inst.funct3 === "b000".U){// lb
-                out.bits.exu_ctl.Mem_Control := MemControl.lb
+                out_comb.exu_ctl.mem_size := MemSize.byte
+                out_comb.exu_ctl.mem_signed := true.B
                 invalid := false.B    
             }.elsewhen(inst.funct3 === "b001".U){// lh
-                out.bits.exu_ctl.Mem_Control := MemControl.lh
+                out_comb.exu_ctl.mem_size := MemSize.half
+                out_comb.exu_ctl.mem_signed := true.B
                 invalid := false.B
             }
         }
         is("b0100011".U){
-            out.bits.exu_ctl.ALU_Op := ALUOp.SType
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.rs1
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.decode.imm := inst.immS
-            out.bits.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.decode.imm := inst.immS
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.mem_op := MemOp.store
             when(inst.funct3 === "b010".U){// sw
-                out.bits.exu_ctl.Mem_Control := MemControl.sw
+                out_comb.exu_ctl.mem_size := MemSize.word
                 invalid := false.B
                 
             }.elsewhen(inst.funct3 === "b000".U){// sb
-                out.bits.exu_ctl.Mem_Control := MemControl.sb
+                out_comb.exu_ctl.mem_size := MemSize.byte
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b001".U){
-                out.bits.exu_ctl.Mem_Control := MemControl.sh
+                out_comb.exu_ctl.mem_size := MemSize.half
                 invalid := false.B
             }
         }
         is("b1101111".U){// jal
-            out.bits.exu_ctl.ALU_Op := ALUOp.JType
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.decode.imm := inst.immJ
-            out.bits.exu_ctl.ALU_Control := ALUContorl.add
-            out.bits.exu_ctl.ALU_Jump := Jump.jal
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.decode.imm := inst.immJ
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
+            out_comb.exu_ctl.jump_op := JumpOp.jump
+            out_comb.exu_ctl.reg_write := true.B
+            out_comb.exu_ctl.wb_src := WBSrc.pc_plus4
             invalid := false.B
         }
 
         is("b1100011".U){// beq
-            out.bits.exu_ctl.ALU_Op := ALUOp.BType
-            out.bits.exu_ctl.ALU_Src1 := ALUSrc1.pc
-            out.bits.exu_ctl.ALU_Src2 := ALUSrc2.imm
-            out.bits.decode.imm := inst.immB
-            out.bits.exu_ctl.ALU_Control := ALUContorl.add
+            out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
+            out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
+            out_comb.decode.imm := inst.immB
+            out_comb.exu_ctl.ALU_Control := ALUOp.add
             switch(inst.funct3){
                 is("b000".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.beq
+                    out_comb.exu_ctl.branch_op := BranchOp.beq
                     invalid := false.B
                 }
                 is("b001".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.bne
+                    out_comb.exu_ctl.branch_op := BranchOp.bne
                     invalid := false.B
                 }
                 is("b100".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.blt
+                    out_comb.exu_ctl.branch_op := BranchOp.blt
                     invalid := false.B                    
                 }
                 is("b101".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.bge
+                    out_comb.exu_ctl.branch_op := BranchOp.bge
                     invalid := false.B                    
                 }
                 is("b110".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.bltu
+                    out_comb.exu_ctl.branch_op := BranchOp.bltu
                     invalid := false.B                    
                 }
                 is("b111".U){
-                    out.bits.exu_ctl.Branch_Control := BranchControl.bgeu
+                    out_comb.exu_ctl.branch_op := BranchOp.bgeu
                     invalid := false.B
                 }
             }
         }
         is("b0001111".U){ //fence.i
             when(inst.funct3 === "b001".U){
-                out.bits.exu_ctl.fence_i := true.B
+                out_comb.exu_ctl.fence_i := true.B
                 invalid := false.B
             }
         }
     }
 
-    // 译码阶段读取寄存器堆：rs1/rs2 无条件组合读取（x0 恒为 0，未用数据无副作用）
     RFS_ReadPort.RegReadPort.raddr1 := inst.rs1
     RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
-    out.bits.rs1_data := RFS_ReadPort.RegReadPort.rdata1
-    out.bits.rs2_data := RFS_ReadPort.RegReadPort.rdata2
+    out_comb.rs1_data := RFS_ReadPort.RegReadPort.rdata1
+    out_comb.rs2_data := RFS_ReadPort.RegReadPort.rdata2
+    
+    RFS_ReadPort.CSRReadPort.CSRRAddr := csr_read_addr
+    out_comb.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
 
-    // CSR 读地址：mret 读 mepc；csrrs/csrrw 读 imm(11,0)；其余指令不读 CSR
-    RFS_ReadPort.CSRReadPort.CSRRAddr := 0.U
-    switch(out.bits.exu_ctl.CSR_Contorl){
-        is(CSRControl.mret){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := "h341".U
-        }
-        is(CSRControl.csrrs, CSRControl.csrrw){
-            RFS_ReadPort.CSRReadPort.CSRRAddr := out.bits.decode.imm(11,0)
-        }
-    }
-    out.bits.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
-
-    // 指令分类计数（原 switch 分支内 out.fire 触发，统一在此按 opcode 判断）
-    PerfCounter("IDU_calc") := (inst.opcode === "b0010011".U || inst.opcode === "b0110011".U) && out.fire
-    PerfCounter("IDU_jump") := (inst.opcode === "b1100111".U || inst.opcode === "b1101111".U) && out.fire
-    PerfCounter("IDU_csr") := (inst.opcode === "b1110011".U) && out.fire
-    PerfCounter("IDU_load") := (inst.opcode === "b0000011".U) && out.fire
-    PerfCounter("IDU_store") := (inst.opcode === "b0100011".U) && out.fire
-    PerfCounter("IDU_branch") := (inst.opcode === "b1100011".U) && out.fire
+    // 指令分类计数：基于被接受的指令（out_reg 内容），与 out.fire 同拍；
+    // 不能用 in 侧 inst——out.fire 时 inst 已是下一条指令（out_reg 改造后的错位）
+    val fired_inst = out_reg.decode.inst.asTypeOf(new InstDecode)
+    PerfCounter("IDU_calc") := (fired_inst.opcode === "b0010011".U || fired_inst.opcode === "b0110011".U) && out.fire
+    PerfCounter("IDU_jump") := (fired_inst.opcode === "b1100111".U || fired_inst.opcode === "b1101111".U) && out.fire
+    PerfCounter("IDU_csr") := (fired_inst.opcode === "b1110011".U) && out.fire
+    PerfCounter("IDU_load") := (fired_inst.opcode === "b0000011".U) && out.fire
+    PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
+    PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
+    // RAW 数据冒险导致的停顿拍数
+    PerfCounter("IDU_stall_cycles") := stall
 }

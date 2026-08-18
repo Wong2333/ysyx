@@ -12,9 +12,6 @@ class CommitInfoBundle extends Bundle {
 }
 
 class WriteBackPortBundle extends Bundle{
-    val PCNext = Output(UInt(32.W))
-    val PCWrite = Output(Bool())
-
     val RegWaddr = Output(UInt(5.W))
     val RegWdata = Output(UInt(32.W))
     val RegWrite = Output(Bool())
@@ -30,9 +27,7 @@ class WriteBackPortBundle extends Bundle{
 }
 
 // WBU → IFU 的 PC 更新端口：commit 脉冲 + 跳转/trap 事件
-class PCUpdatePortBundle extends Bundle {
-  val valid   = Output(Bool()) 
-  val pc_we   = Output(Bool())
+class RedirectBundle extends Bundle {
   val is_trap = Output(Bool())
   val pc_next = Output(UInt(32.W))
 }
@@ -53,20 +48,21 @@ class ysyx_26030092_WBU extends Module{
     val WriteRegPort = IO(Output(new WriteRegPortBundle))
     val CSRWritePort = IO(Output(new CSRWritePortBundle))
     val ExceptionPort = IO(Output(new ExceptionInfoBundle))
-    val PCUpdatePort = IO(Output(new PCUpdatePortBundle))
     val icache_flush = IO(Output(Bool()))
+    // RAW 冒险检测信息：WB 级（写回拍）的写寄存器信息
+    val wb_wb_info = IO(Output(new StageWriteInfoBundle))
+    val wb_csr_info = IO(Output(new CSRWriteInfoBundle))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
-    // EXU 只在结果就绪时拉 valid，WBU 始终接受写回
     in.ready := true.B
 
     WriteRegPort := 0.U.asTypeOf(new WriteRegPortBundle)
     CSRWritePort := 0.U.asTypeOf(new CSRWritePortBundle)
     ExceptionPort := 0.U.asTypeOf(new ExceptionInfoBundle)
-    PCUpdatePort := 0.U.asTypeOf(new PCUpdatePortBundle)
     icache_flush := false.B
 
+    // 写回数据已在 EXU 的 mem_pending 锁存，这里 fire 拍直出（不再二次锁存）
     when(in.fire){
         WriteRegPort.waddr := in.bits.RegWaddr
         WriteRegPort.wdata := in.bits.RegWdata
@@ -80,13 +76,14 @@ class ysyx_26030092_WBU extends Module{
         ExceptionPort.PC := in.bits.PC
         ExceptionPort.Exception_Code := in.bits.Exception_Code
 
-        PCUpdatePort.valid := true.B
-        PCUpdatePort.pc_we := in.bits.PCWrite || in.bits.isTrap
-        PCUpdatePort.is_trap := in.bits.isTrap
-        PCUpdatePort.pc_next := in.bits.PCNext
-
         icache_flush := in.bits.icache_flush
     }
+
+    // RAW 冒险检测信息：写回窗口 = fire 拍（RF 在拍末落盘）
+    wb_wb_info.wen   := in.fire && in.bits.RegWrite
+    wb_wb_info.rd    := in.bits.RegWaddr
+    wb_csr_info.wen  := in.fire && in.bits.CSRWrite
+    wb_csr_info.addr := in.bits.CSRAddr
     PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）

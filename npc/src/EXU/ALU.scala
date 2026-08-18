@@ -15,63 +15,59 @@ object ALUSrc2 extends ChiselEnum{
     csr = Value
 }
 
-object ALUContorl extends ChiselEnum{
-    val none,
-    add,
+object ALUOp extends ChiselEnum{
+    val add,
     sub,
     and,
     or,
     xor,
     lui,
     sll,srl,sra, //左移右移
-    slt,sltu, //小于
-    equ = Value
+    slt,sltu //小于
+    = Value
 }
 
 class ysyx_26030092_ALU extends Module{
 
     val in = IO(Input(new Bundle {
-        val ctl = ALUContorl()
+        val ctl = ALUOp()
         val src1 = UInt(32.W)
         val src2 = UInt(32.W)
     }))
     val out = IO(Output(UInt(32.W)))
     out := DontCare
     switch(in.ctl){
-        is(ALUContorl.add){
+        is(ALUOp.add){
             out := in.src1 + in.src2
         }
-        is(ALUContorl.sub){
+        is(ALUOp.sub){
             out := in.src1 - in.src2
         }
-        is(ALUContorl.sltu){
+        is(ALUOp.sltu){
             out := in.src1 < in.src2
         }
-        is(ALUContorl.slt){
+        is(ALUOp.slt){
             out := in.src1.asSInt < in.src2.asSInt
         }
-        is(ALUContorl.and){
+        is(ALUOp.and){
             out := in.src1 & in.src2
         }
-        is(ALUContorl.xor){
+        is(ALUOp.xor){
             out := in.src1 ^ in.src2
         }
-        is(ALUContorl.or){
+        is(ALUOp.or){
             out := in.src1 | in.src2
         }
-        is(ALUContorl.equ){
-            out := in.src1 === in.src2
-        }
-        is(ALUContorl.lui){
+        is(ALUOp.lui){
             out := in.src2
         }
-        is(ALUContorl.sll){
+        is(ALUOp.sll){
             out := in.src1 << in.src2(4,0)
         }
-        is(ALUContorl.srl){
+        is(ALUOp.srl){
             out := in.src1 >> in.src2(4,0)
         }
-        is(ALUContorl.sra){
+        is(ALUOp.sra){
             out := (in.src1.asSInt >> in.src2(4,0)).asUInt
         }
     }

@@ -37,13 +37,22 @@ class ysyx_26030092 extends Module{
     val AXI4Arbiter_u = Module(new ysyx_26030092_AXI4Arbiter(2))
     io.slave.initSlave()
     
-    // PC 更新（commit 事件）：WBU → IFU；trap 目标 mtvec：RFS → IFU
-    IFU_u.PCUpdatePort := WBU_u.PCUpdatePort
-    IFU_u.mtvec := RFS_u.mtvec_out
+
     IFU_u.flush_icache := WBU_u.icache_flush
+    IFU_u.flush := EXU_u.flush
+    IFU_u.RedirectPC :=EXU_u.redirectPC
 
     IDU_u.in <> IFU_u.out
     IDU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
+    IDU_u.flush := EXU_u.flush
+
+    // RAW 冒险检测：各阶段写寄存器信息 → IDU
+    IDU_u.ex_wb_info <> EXU_u.ex_wb_info
+    IDU_u.mem_wb_info <> EXU_u.mem_wb_info
+    IDU_u.wb_wb_info <> WBU_u.wb_wb_info
+    IDU_u.ex_csr_info <> EXU_u.ex_csr_info
+    IDU_u.mem_csr_info <> EXU_u.mem_csr_info
+    IDU_u.wb_csr_info <> WBU_u.wb_csr_info
 
     EXU_u.idu_out <> IDU_u.out
 
@@ -51,8 +60,8 @@ class ysyx_26030092 extends Module{
     EXU_u.lsu_out <> LSU_u.out
 
     EXU_u.wbu_in <> WBU_u.in
+    EXU_u.mtvec := RFS_u.mtvec_out
 
-    // 写回：WBU 驱动 RFS 写端口
     RFS_u.WriteRegPort := WBU_u.WriteRegPort
     RFS_u.CSRWritePort := WBU_u.CSRWritePort
     RFS_u.ExceptionPort := WBU_u.ExceptionPort

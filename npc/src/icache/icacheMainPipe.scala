@@ -17,26 +17,38 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
+        val ready = Output(Bool())
     })
 
     val resp = IO(new Bundle {
         val rdata = Output(UInt(32.W))
         val valid = Output(Bool())
+        //val ready = Input(Bool())
     })
 
-    val flush = IO(Input(Bool()))
-    icache.flush := flush
+    val icache_flush = IO(Input(Bool()))
+    icache.flush := icache_flush
 
     val req_addr_s1 = RegNext(req.addr)
-    val req_valid_s1 = RegNext(req.valid, false.B)
+    val req_valid_s1 = RegNext(req.valid & req.ready, false.B)
+
+    val s_idle :: s_busy :: Nil = Enum(2)
+
+    val state = RegInit(s_idle)
+    when(req.ready & req.valid){
+        state := s_busy
+    }.elsewhen(resp.valid) { state := s_idle }
+    req.ready := Mux(state === s_idle, true.B, false.B)
 
     icache.req.addr := req.addr
 
     resp.valid := req_valid_s1 && icache.resp.hit
+    
     resp.rdata := icache.resp.data
 
     PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss_s1 = req_valid_s1 && !icache.resp.hit
+
     PerfCounter("icache_miss") := miss_s1
     val refill_unit = Module(new icacheRefillUnit(block_size))
     refill_unit.req.addr := req_addr_s1

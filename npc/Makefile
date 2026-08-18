@@ -128,7 +128,7 @@ CLK_FREQ_MHZ = 800
 include /home/wjm/yosys-sta/Makefile.common
 
 # 注意：必须在 include Makefile.common 之后覆盖
-#PDK_NAME = nangate45
+# PDK_NAME = nangate45
 
 
 $(KCONFIG_INCLUDE): .config
