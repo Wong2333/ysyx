@@ -38,12 +38,11 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val cache_hit = RegInit(false.B)
     val cache_rdata_valid = RegInit(false.B)
     val cache_rdata_ready = WireDefault(false.B)
-    val cache_rdata_fire = cache_rdata_valid & cache_rdata_ready
+    val cache_rdata_fire = resp.valid & cache_rdata_ready
     when(cache_rdata_fire || ~cache_rdata_valid){
         cache_rdata_valid := false.B
         when(icache.resp.valid){
             icache.resp.ready := true.B
-            cache_rdata_valid := true.B
             cache_rdata := icache.resp.data
             cache_raddr := icache.resp.raddr
             cache_hit := icache.resp.hit
