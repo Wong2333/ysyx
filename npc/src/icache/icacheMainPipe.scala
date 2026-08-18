@@ -47,21 +47,22 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
             cache_hit := icache.resp.hit
         }
     }
-
+    // PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
+    val miss = cache_rdata_valid && !cache_hit
+    val refill_unit = Module(new icacheRefillUnit(block_size))
+    
+    refill_unit.req.addr := cache_raddr
+    refill_unit.req.valid := miss
     val refill_done = refill_unit.resp.valid
     resp.valid := (cache_rdata_valid & cache_hit) | (cache_rdata_valid & refill_done) 
     
     resp.rdata := cache_rdata
     cache_rdata_ready := resp.ready
 
-    // PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
-    val miss = cache_rdata_valid && !cache_hit
+
 
     PerfCounter("icache_miss") := miss
-    val refill_unit = Module(new icacheRefillUnit(block_size))
-    
-    refill_unit.req.addr := Mux(miss, cache_raddr, 0.U)
-    refill_unit.req.valid := miss
+
 
     val offset_bits = log2Ceil(block_size)
     val index_bits = log2Ceil(block_num)
