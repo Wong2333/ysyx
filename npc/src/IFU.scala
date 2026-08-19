@@ -48,9 +48,6 @@ class ysyx_26030092_IFU extends Module{
 
     out.valid := false.B
 
-    out.bits.pc := PC_reg.io.pc
-    out.bits.inst := inst_reg
-
     val s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(3)
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
     val state = RegInit(s_req_inst)
@@ -63,6 +60,8 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.req.addr := DontCare
     icache_main_pipe.icache_flush := flush_icache
     icache_main_pipe.resp.ready := false.B
+    out.bits.pc := icache_main_pipe.resp.raddr
+    out.bits.inst := icache_main_pipe.resp.rdata
 
     switch(state){
         is(s_req_inst){

@@ -21,6 +21,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val resp = IO(new Bundle {
         val rdata = Output(UInt(32.W))
+        val raddr = Output(UInt(32.W))
         val valid = Output(Bool())
         val ready = Input(Bool())
     })
@@ -63,6 +64,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     resp.valid := (cache_rdata_valid & cache_hit)
     
     resp.rdata := cache_rdata
+    resp.raddr := cache_raddr
     cache_rdata_ready := resp.ready
 
 
