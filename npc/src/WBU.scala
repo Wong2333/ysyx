@@ -87,27 +87,15 @@ class ysyx_26030092_WBU extends Module{
     PerfCounter("WBU_commit") := in.fire
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）
-    val commit_reg = RegInit(false.B)
-    val commit_pc_reg = Reg(UInt(32.W))
-    val commit_mem_reg = RegInit(false.B)
-    val commit_mem_addr_reg = Reg(UInt(32.W))
     val commit_u = Module(new Commit)
     commit_u.clock := clock
     commit_u.reset := reset
     commit_u.valid := false.B
-    commit_u.pc := DontCare
-    commit_u.mem_commit := commit_mem_reg
-    commit_u.mem_addr := commit_mem_addr_reg
+    commit_u.pc := commit_info.pc
+    commit_u.mem_commit := commit_info.mem
+    commit_u.mem_addr := commit_info.mem_addr
+
     when(in.fire){
-        commit_reg := true.B
-        commit_pc_reg := commit_info.pc
-        commit_mem_reg := commit_info.mem
-        commit_mem_addr_reg := commit_info.mem_addr
-    }
-    when(commit_reg){
         commit_u.valid := true.B
-        commit_reg := false.B
-        commit_mem_reg := false.B
-        commit_u.pc := commit_pc_reg
     }
 }

@@ -108,8 +108,21 @@ static bool is_skip_ref(uint32_t pc){
   return !in_mem(commit_mem_addr);
 }
 
+// 取指流水线让架构 PC（取指 PC）超前于提交点，不能拿 read_pc_reg() 直接和 REF 对比。
+// 改为延迟一拍校验：上一拍 REF 执行完后的 pc 应等于本拍提交指令的 pc。
+static uint32_t ref_next_pc = 0;
+static bool have_ref_pc = false;
+
 void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
+
+  bool ok = true;
+  if (have_ref_pc && pc != ref_next_pc) {
+    printf("Difftest: Mismatch at pc = 0x%08x, pc: right = 0x%08x, wrong = 0x%08x\n",
+           pc, ref_next_pc, pc);
+    ok = false;
+  }
+  have_ref_pc = false;
 
   riscv32_CPU_state dut_state;
   // RV32E: 只读低 16 个寄存器，高 16 个保持 0
@@ -117,10 +130,13 @@ void check_difftest(uint32_t pc) {
   for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
-  dut_state.pc = read_pc_reg();
 
   if (is_skip_ref(pc)) {
+    // MMIO 提交：REF 无法复现外设访问，重同步寄存器堆；访存指令必顺序执行，下一 pc = pc+4
+    dut_state.pc = pc + 4;
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
+    ref_next_pc = dut_state.pc;
+    have_ref_pc = true;
     return;
   }
   ref_difftest_exec(1);
@@ -128,10 +144,6 @@ void check_difftest(uint32_t pc) {
   riscv32_CPU_state ref_state;
   ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
 
-  // check
-  // static uint32_t cnt = 0;
-  // printf("difftesting...%u\n",cnt++);
-  bool ok = true;
   for (int i = 1; i < 32; i++) {
     if (dut_state.gpr[i] != ref_state.gpr[i]) {
       printf("Difftest: Mismatch at pc = 0x%08x, %s: right = 0x%08x, wrong = 0x%08x\n",
@@ -139,11 +151,8 @@ void check_difftest(uint32_t pc) {
       ok = false;
     }
   }
-  if (dut_state.pc != ref_state.pc) {
-    printf("Difftest: Mismatch at pc = 0x%08x, pc: right = 0x%08x, wrong = 0x%08x\n",
-           pc, ref_state.pc, dut_state.pc);
-    ok = false;
-  }
+  ref_next_pc = ref_state.pc;
+  have_ref_pc = true;
 
   if (!ok) {
     printf("Difftest: FAIL at pc = 0x%08x\n", pc);

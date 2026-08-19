@@ -71,4 +71,6 @@ class ysyx_26030092 extends Module{
     CLINT_AXI4Router_u.toCLINT <> CLINT_u.AXI4_port
 
     io.master <> AXI4Arbiter_u.out
+
+    PerfCounter("total_cycles") := true.B
 }

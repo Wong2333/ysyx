@@ -6,10 +6,13 @@ import npc.AXI._
 import npc.PMU._
 
 class icacheRefillUnit(block_size :Int) extends Module{
+    val flush = IO(Input(Bool()))
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
+        val ready = Output(Bool())
     })
+    req.ready := false.B
 
     val resp = IO(new Bundle {
         val block = Output(UInt((block_size*8).W))
@@ -24,6 +27,7 @@ class icacheRefillUnit(block_size :Int) extends Module{
     val s_idle :: s_wait_mem_free :: s_wait_mem_data :: Nil = Enum(3)
     val state = RegInit(s_idle)
     PerfCounter("icache_refill_busy") := (state =/= s_idle)
+    PerfCounter("icache_refill_count") := (state === s_idle) && req.valid
     val req_addr_reg = Reg(UInt(32.W))
 
     val block_bits = log2Ceil(block_size)
@@ -32,10 +36,12 @@ class icacheRefillUnit(block_size :Int) extends Module{
     val beats = block_size / 4
 
     when(state === s_idle && req.valid){
+        req.ready := true.B
         state := s_wait_mem_free
         req_addr_reg := block_addr
     }
     val block_reg = Reg(UInt((block_size*8).W))
+    val block_valid = RegInit(false.B)
 
     switch(state){
         is(s_wait_mem_free){
@@ -49,16 +55,20 @@ class icacheRefillUnit(block_size :Int) extends Module{
             }
         }
         is(s_wait_mem_data){
-            AXI4_port.rready := true.B
             when(AXI4_port.rvalid){
+                AXI4_port.rready := true.B
                 // beat0 在最高 32 位，后续 beat 依次右移拼接
                 block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
                 when(AXI4_port.rlast){
                     state := s_idle
-                    resp.valid := true.B
-                    resp.block := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                    block_valid := true.B
                 }
             }
         }
     }
+
+    resp.block := block_reg
+    resp.valid := block_valid
+    when(block_valid){ block_valid := false.B }
+
 }
