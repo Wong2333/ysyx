@@ -65,11 +65,12 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.valid := false.B
 
     val wait_miss_block = RegInit(false.B)
+    val wait_refill_flush = RegInit(false.B)
     when(miss){
 
-        refill_unit.req.valid := ~wait_miss_block
+        refill_unit.req.valid := ~wait_miss_block & ~wait_refill_flush
         
-        when(refill_unit.req.ready){
+        when(refill_unit.req.ready & refill_unit.req.valid){
             wait_miss_block := true.B
         }
     }
@@ -95,16 +96,22 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     when(refill_done){
         val refill_block = refill_unit.resp.block
         wait_miss_block := false.B
-        icache.refill.valid := true.B
-        icache.refill.tag := tag
-        icache.refill.index := index
-        icache.refill.block := refill_block
-        cache_rdata := (refill_block >> (offset << 5))(31,0)
-        cache_hit := true.B
+        wait_refill_flush := false.B
+        when(!wait_refill_flush){
+            icache.refill.valid := true.B
+            icache.refill.tag := tag
+            icache.refill.index := index
+            icache.refill.block := refill_block
+            cache_rdata := (refill_block >> (offset << 5))(31,0)
+            cache_hit := true.B
+        }
     }
 
     when(flush) { 
         cache_rdata_valid := false.B
+        when(wait_miss_block){
+            wait_refill_flush := true.B
+        }
         wait_miss_block := false.B
     }
     val AXI4_port = IO(new AXI4Bundle)

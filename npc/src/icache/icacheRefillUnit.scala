@@ -41,36 +41,26 @@ class icacheRefillUnit(block_size :Int) extends Module{
     }
     val block_reg = Reg(UInt((block_size*8).W))
     val block_valid = RegInit(false.B)
-    val ignore_refill = RegInit(false.B)
 
     switch(state){
         is(s_wait_mem_free){
-            AXI4_port.arvalid := ~flush
+            AXI4_port.arvalid := true.B
             AXI4_port.araddr := req_addr_reg
             AXI4_port.arlen := (beats - 1).U
             AXI4_port.arsize := 2.U
             AXI4_port.arburst := 1.U  // INCR
-            when(flush){
-                state := s_idle
-            }.elsewhen(AXI4_port.arready){
+            when(AXI4_port.arready){
                 state := s_wait_mem_data
             }
         }
         is(s_wait_mem_data){
-            when(flush){
-                ignore_refill := true.B
-            }.elsewhen(AXI4_port.rvalid){
+            when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 // beat0 在最高 32 位，后续 beat 依次右移拼接
                 block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
                 when(AXI4_port.rlast){
                     state := s_idle
-                    when(ignore_refill){
-                        block_valid := false.B
-                        ignore_refill := false.B
-                    }.otherwise{
-                        block_valid := true.B
-                    }
+                    block_valid := true.B
                 }
             }
         }
