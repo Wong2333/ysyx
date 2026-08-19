@@ -66,7 +66,9 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val refilling = RegInit(false.B)
     val wait_miss_block = RegInit(false.B)
     when(miss){
-        refill_unit.req.valid := true.B
+
+        refill_unit.req.valid := ~wait_miss_block
+        
         when(refill_unit.req.ready){
             wait_miss_block := true.B
         }
