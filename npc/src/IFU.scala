@@ -52,12 +52,7 @@ class ysyx_26030092_IFU extends Module{
     // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
     val state = RegInit(s_req_inst)
 
-    PerfCounter("IFU_get_inst_cycles") := (state === s_req_inst || state === s_wait_resp)
-    // 取指停顿分项：被 icache 反压（refill/槽满） / 等响应（命中延迟+miss 惩罚） / 被 IDU 反压
-    PerfCounter("IFU_wait_icache") := (state === s_req_inst) && ~icache_main_pipe.req.ready
-    PerfCounter("IFU_wait_resp")   := (state === s_wait_resp) && ~icache_main_pipe.resp.valid
-    PerfCounter("IFU_wait_idu")    := (state === s_wait_resp) && icache_main_pipe.resp.valid && ~out.fire
-    PerfCounter("IFU_fetch")       := out.fire
+
 
     val icache_main_pipe = Module(new icacheMainPipe(16,16))
     icache_main_pipe.AXI4_port <> AXI4_port
@@ -96,5 +91,10 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
-
+    PerfCounter("IFU_get_inst_cycles") := (state === s_req_inst || state === s_wait_resp)
+    // 取指停顿分项：被 icache 反压（refill/槽满） / 等响应（命中延迟+miss 惩罚） / 被 IDU 反压
+    PerfCounter("IFU_wait_icache") := (state === s_req_inst) && ~icache_main_pipe.req.ready
+    PerfCounter("IFU_wait_resp")   := (state === s_wait_resp) && ~icache_main_pipe.resp.valid
+    PerfCounter("IFU_wait_idu")    := (state === s_wait_resp) && icache_main_pipe.resp.valid && ~out.fire
+    PerfCounter("IFU_fetch")       := out.fire
 }
