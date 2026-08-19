@@ -73,15 +73,8 @@ class ysyx_26030092_IFU extends Module{
             }
         }
         is(s_wait_resp){
-            icache_main_pipe.resp.ready := true.B
-            when(flush){ state := s_req_inst }
-            .elsewhen(icache_main_pipe.resp.valid){
-                inst_reg := icache_main_pipe.resp.rdata
-                state := s_wait_fetch
-            }
-        }
-        is(s_wait_fetch){
-            out.valid := ~flush
+            out.valid := ~flush & icache_main_pipe.resp.valid
+            icache_main_pipe.resp.ready := out.ready
             when(flush) {state := s_req_inst }
             .elsewhen(out.fire){
                 state := s_req_inst
