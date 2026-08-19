@@ -64,27 +64,34 @@ class ysyx_26030092_IFU extends Module{
     out.bits.pc := icache_main_pipe.resp.raddr
     out.bits.inst := icache_main_pipe.resp.rdata
 
-    switch(state){
-        is(s_req_inst){
-            icache_main_pipe.req.addr := PC_reg.io.pc
-            icache_main_pipe.req.valid := ~flush
-            when(flush){ state := s_req_inst}
-            .elsewhen(icache_main_pipe.req.ready & icache_main_pipe.req.valid){ 
-                state := s_wait_resp
-                PC_reg.io.pc_4 := true.B
-            }
-        }
-        is(s_wait_resp){
-            out.valid := ~flush & icache_main_pipe.resp.valid
-            icache_main_pipe.resp.ready := out.ready
-            when(flush) {state := s_req_inst }
-            .elsewhen(out.fire){
-                state := s_req_inst
-
-            }
-            
-        }
+    icache_main_pipe.req.addr := PC_reg.io.pc
+    icache_main_pipe.req.valid := ~flush
+    when(icache_main_pipe.req.ready & icache_main_pipe.req.valid){
+        PC_reg.io.pc_4 := true.B
     }
+    out.valid := ~flush & icache_main_pipe.resp.valid
+    icache_main_pipe.resp.ready := out.ready
+    // switch(state){
+    //     is(s_req_inst){
+    //         icache_main_pipe.req.addr := PC_reg.io.pc
+    //         icache_main_pipe.req.valid := ~flush
+    //         when(flush){ state := s_req_inst}
+    //         .elsewhen(icache_main_pipe.req.ready & icache_main_pipe.req.valid){ 
+    //             state := s_wait_resp
+    //             PC_reg.io.pc_4 := true.B
+    //         }
+    //     }
+    //     is(s_wait_resp){
+    //         out.valid := ~flush & icache_main_pipe.resp.valid
+    //         icache_main_pipe.resp.ready := out.ready
+    //         when(flush) {state := s_req_inst }
+    //         .elsewhen(out.fire){
+    //             state := s_req_inst
+
+    //         }
+            
+    //     }
+    // }
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
