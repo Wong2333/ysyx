@@ -35,6 +35,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val cache_rdata = Reg(UInt(32.W))
     val cache_raddr = Reg(UInt(32.W))
+    dontTouch(cache_raddr)
+    dontTouch(cache_rdata)
     val cache_hit = RegInit(false.B)
     val cache_rdata_valid = RegInit(false.B)
     val cache_rdata_ready = WireDefault(false.B)
