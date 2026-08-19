@@ -56,14 +56,14 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
             cache_hit := icache.resp.hit
         }
     }
-    when(flush) { cache_rdata_valid := false.B}
+    
     // PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss = cache_rdata_valid && !cache_hit
     val refill_unit = Module(new icacheRefillUnit(block_size))
     refill_unit.flush := flush
     refill_unit.req.addr := cache_raddr
     refill_unit.req.valid := false.B
-    val refilling = RegInit(false.B)
+
     val wait_miss_block = RegInit(false.B)
     when(miss){
 
@@ -103,6 +103,10 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         cache_hit := true.B
     }
 
+    when(flush) { 
+        cache_rdata_valid := false.B
+        wait_miss_block := false.B
+    }
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
 }
