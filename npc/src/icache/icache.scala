@@ -56,7 +56,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     dontTouch(cache_rdata_reg)
 dontTouch(req_addr_reg)
     val cache_rdata_fire = (cache_rdata_valid | resp_new) & resp.ready
-    when(cache_rdata_fire | ~flush){ 
+    when(cache_rdata_fire | flush){ 
         cache_rdata_valid := false.B 
     }
     .elsewhen(resp_new){ 
