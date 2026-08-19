@@ -37,7 +37,7 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.reset := reset
     PC_reg.io.pc_next := DontCare
     PC_reg.io.pc_we := false.B
-    PC_reg.io.pc_4 := true.B
+    PC_reg.io.pc_4 := ~flush
     when(flush){
         PC_reg.io.pc_we := true.B
         PC_reg.io.pc_next := RedirectPC
@@ -60,6 +60,7 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.req.addr := DontCare
     icache_main_pipe.icache_flush := flush_icache
     icache_main_pipe.resp.ready := false.B
+    icache_main_pipe.flush := flush
     out.bits.pc := icache_main_pipe.resp.raddr
     out.bits.inst := icache_main_pipe.resp.rdata
 
