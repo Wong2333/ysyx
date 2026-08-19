@@ -12,6 +12,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     icache.refill.tag := DontCare
     icache.refill.block := DontCare
 
+    val flush = IO(Input(Bool()))
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
@@ -27,7 +28,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     })
 
     val icache_flush = IO(Input(Bool()))
-    icache.flush := icache_flush
+    icache.flush_cache := icache_flush
+    icache.flush := flush
     icache.resp.ready := false.B
 
     icache.req.valid := req.valid
@@ -54,6 +56,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
             cache_hit := icache.resp.hit
         }
     }
+    when(flush) { cache_rdata_valid := false.B}
     // PerfCounter("icache_hit") := req_valid_s1 && icache.resp.hit
     val miss = cache_rdata_valid && !cache_hit
     val refill_unit = Module(new icacheRefillUnit(block_size))
@@ -61,7 +64,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.addr := cache_raddr
     refill_unit.req.valid := miss
     val refill_done = refill_unit.resp.valid
-    resp.valid := (cache_rdata_valid & cache_hit)
+    resp.valid := (cache_rdata_valid & cache_hit) & ~flush
     
     resp.rdata := cache_rdata
     resp.raddr := cache_raddr

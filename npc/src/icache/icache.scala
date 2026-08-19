@@ -29,6 +29,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
         val index = Input(UInt(index_bits.W))
         val valid = Input(Bool())
     })
+    val flush_cache = IO(Input(Bool()))
     val flush = IO(Input(Bool()))
 
     val req_addr = req.addr
@@ -38,7 +39,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val taget_tag = tag_array.read(index)
 
     val req_addr_reg   = RegEnable(req.addr, req.valid & req.ready)
-    val req_addr_valid = RegNext(req.valid & req.ready, false.B)
+    val req_addr_valid = RegNext(req.valid & req.ready & ~flush, false.B)
 
     val offset_s1 = if(offset_bits <= 2) 0.U(1.W) else req_addr_reg(offset_bits-1,2)
     val index_s1 = req_addr_reg(offset_bits + index_bits-1, offset_bits)
@@ -55,7 +56,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     dontTouch(cache_rdata_reg)
 dontTouch(req_addr_reg)
     val cache_rdata_fire = (cache_rdata_valid | resp_new) & resp.ready
-    when(cache_rdata_fire){ 
+    when(cache_rdata_fire | ~flush){ 
         cache_rdata_valid := false.B 
     }
     .elsewhen(resp_new){ 
@@ -70,14 +71,14 @@ dontTouch(req_addr_reg)
     resp.data := Mux(resp_new, resp_new_data, cache_rdata_reg)
     resp.hit := Mux(resp_new, resp_new_hit, cache_hit_reg)
     resp.raddr := Mux(resp_new, req_addr_reg, cache_raddr_reg)
-    resp.valid := cache_rdata_valid | resp_new
+    resp.valid := (cache_rdata_valid | resp_new) & flush
 
     when(refill.valid){
         cache.write(refill.index, refill.block)
         tag_array.write(refill.index, refill.tag)
         state_array(refill.index) := true.B
     }
-    when(flush){
+    when(flush_cache){
         state_array.foreach(_ := false.B)
     }
 
