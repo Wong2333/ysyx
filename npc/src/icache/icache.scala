@@ -71,7 +71,7 @@ dontTouch(req_addr_reg)
     resp.data := Mux(resp_new, resp_new_data, cache_rdata_reg)
     resp.hit := Mux(resp_new, resp_new_hit, cache_hit_reg)
     resp.raddr := Mux(resp_new, req_addr_reg, cache_raddr_reg)
-    resp.valid := (cache_rdata_valid | resp_new) & flush
+    resp.valid := (cache_rdata_valid | resp_new) & ~flush
 
     when(refill.valid){
         cache.write(refill.index, refill.block)
