@@ -27,6 +27,7 @@ class icacheRefillUnit(block_size :Int) extends Module{
     val s_idle :: s_wait_mem_free :: s_wait_mem_data :: Nil = Enum(3)
     val state = RegInit(s_idle)
     PerfCounter("icache_refill_busy") := (state =/= s_idle)
+    PerfCounter("icache_refill_count") := (state === s_idle) && req.valid
     val req_addr_reg = Reg(UInt(32.W))
 
     val block_bits = log2Ceil(block_size)

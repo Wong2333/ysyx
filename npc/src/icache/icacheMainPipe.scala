@@ -84,6 +84,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
 
     PerfCounter("icache_miss") := miss
+    PerfCounter("icache_hit") := cache_rdata_valid && cache_hit
 
 
     val offset_bits = log2Ceil(block_size)
