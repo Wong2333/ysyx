@@ -71,6 +71,7 @@ class ysyx_26030092_IFU extends Module{
             when(flush){ state := s_req_inst}
             .elsewhen(icache_main_pipe.req.ready & icache_main_pipe.req.valid){ 
                 state := s_wait_resp
+                PC_reg.io.pc_4 := true.B
             }
         }
         is(s_wait_resp){
@@ -79,7 +80,7 @@ class ysyx_26030092_IFU extends Module{
             when(flush) {state := s_req_inst }
             .elsewhen(out.fire){
                 state := s_req_inst
-                PC_reg.io.pc_4 := true.B
+
             }
             
         }
