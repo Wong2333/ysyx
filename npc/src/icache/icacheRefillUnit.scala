@@ -17,7 +17,6 @@ class icacheRefillUnit(block_size :Int) extends Module{
     val resp = IO(new Bundle {
         val block = Output(UInt((block_size*8).W))
         val valid = Output(Bool())
-        val ready = Input(Bool())
     })
     resp.block := DontCare
     resp.valid := false.B

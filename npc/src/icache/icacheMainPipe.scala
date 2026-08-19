@@ -62,6 +62,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val refill_unit = Module(new icacheRefillUnit(block_size))
     refill_unit.flush := flush
     refill_unit.req.addr := cache_raddr
+    refill_unit.req.valid := false.B
     val refilling = RegInit(false.B)
     val wait_miss_block = RegInit(false.B)
     when(miss){
