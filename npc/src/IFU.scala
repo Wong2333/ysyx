@@ -37,7 +37,7 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.reset := reset
     PC_reg.io.pc_next := DontCare
     PC_reg.io.pc_we := false.B
-    PC_reg.io.pc_4 := false.B
+    PC_reg.io.pc_4 := true.B
     when(flush){
         PC_reg.io.pc_we := true.B
         PC_reg.io.pc_next := RedirectPC
@@ -78,7 +78,6 @@ class ysyx_26030092_IFU extends Module{
             when(flush) {state := s_req_inst }
             .elsewhen(out.fire){
                 state := s_req_inst
-                PC_reg.io.pc_4 := true.B
             }
             
         }
