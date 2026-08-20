@@ -64,16 +64,17 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.addr := cache_raddr
     refill_unit.req.valid := false.B
 
-    val wait_miss_block = RegInit(false.B)
-    val wait_refill_flush = RegInit(false.B)
-    when(miss){
+    // val wait_miss_block = RegInit(false.B)
+    // val wait_refill_flush = RegInit(false.B)
+    // when(miss){
 
-        refill_unit.req.valid := ~wait_miss_block & ~wait_refill_flush
+    //     refill_unit.req.valid := ~wait_miss_block & ~wait_refill_flush
         
-        when(refill_unit.req.ready & refill_unit.req.valid){
-            wait_miss_block := true.B
-        }
-    }
+    //     when(refill_unit.req.ready & refill_unit.req.valid){
+    //         wait_miss_block := true.B
+    //     }
+    // }
+
     val refill_done = refill_unit.resp.valid
     resp.valid := (cache_rdata_valid & cache_hit) & ~flush
     
@@ -94,27 +95,50 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val index = cache_raddr(offset_bits + index_bits-1, offset_bits)
     val tag = cache_raddr(31, offset_bits + index_bits)
 
-    when(refill_done){
-        val refill_block = refill_unit.resp.block
-        wait_miss_block := false.B
-        wait_refill_flush := false.B
-        when(!wait_refill_flush){
-            icache.refill.valid := true.B
-            icache.refill.tag := tag
-            icache.refill.index := index
-            icache.refill.block := refill_block
-            cache_rdata := (refill_block >> (offset << 5))(31,0)
-            cache_hit := true.B
+    // when(refill_done){
+    //     val refill_block = refill_unit.resp.block
+    //     wait_miss_block := false.B
+    //     wait_refill_flush := false.B
+    //     when(!wait_refill_flush){
+    //         icache.refill.valid := true.B
+    //         icache.refill.tag := tag
+    //         icache.refill.index := index
+    //         icache.refill.block := refill_block
+    //         cache_rdata := (refill_block >> (offset << 5))(31,0)
+    //         cache_hit := true.B
+    //     }
+    // }
+    val none_refill :: wait_refill :: Nil = Enum(2)
+    val refill_state = RegInit(none_refill)
+    switch(refill_state){
+        is(none_refill){
+            when(miss){
+                refill_unit.req.valid := true.B
+                when(refill_unit.req.valid & refill_unit.req.ready){
+                    refill_state := wait_refill
+                }
+            }
+        }
+        is(wait_refill){
+            when(refill_unit.resp.valid){
+                val refill_block = refill_unit.resp.block
+                icache.refill.valid := true.B
+                icache.refill.tag := tag
+                icache.refill.index := index
+                icache.refill.block := refill_block
+                cache_rdata := (refill_block >> (offset << 5))(31,0)
+                cache_hit := true.B
+                refill_state := none_refill
+            }
         }
     }
 
     when(flush) { 
         cache_rdata_valid := false.B
-        when(wait_miss_block){
-            wait_refill_flush := true.B
-        }
-        wait_miss_block := false.B
+        refill_state := none_refill
     }
+    // 被 flush 丢弃的 refill 次数（refill 在途时来 flush → 结果作废，即错误路径 refill）
+    PerfCounter("icache_refill_flushed") := (refill_state === wait_refill) && flush
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
 }
