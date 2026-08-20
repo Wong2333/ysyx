@@ -277,6 +277,8 @@ class ysyx_26030092_EXU extends Module{
     PerfCounter("EXU_finished") := wbu_in.fire
     // 控制冒险：冲刷次数（flush 由 EX 寄存器驱动，直接计数）
     PerfCounter("EXU_flush_count") := flush_reg
+    // flush 时被丢弃的在途指令数（ex/mem 槽 + lsu 在途）——度量取指超前深度
+    PerfCounter("EXU_flush_discard") := flush_reg && (ex_pending_valid || mem_pending_valid || lsu_busy)
     // EXU 反压拍数（写回槽满 / 访存指令遇 LSU 忙），衡量流水线停顿
     PerfCounter("EXU_stall_cycles") := idu_out.valid && ~idu_out.ready
     // 非访存指令因 LSU 忙而暂存 ex_pending 的次数（访存延迟隐藏效果）

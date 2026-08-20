@@ -137,6 +137,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         cache_rdata_valid := false.B
         refill_state := none_refill
     }
+    // 被 flush 丢弃的 refill 次数（refill 在途时来 flush → 结果作废，即错误路径 refill）
+    PerfCounter("icache_refill_flushed") := (refill_state === wait_refill) && flush
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
 }

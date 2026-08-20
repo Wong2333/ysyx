@@ -426,4 +426,6 @@ class ysyx_26030092_IDU extends Module{
     PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
     // RAW 数据冒险导致的停顿拍数
     PerfCounter("IDU_stall_cycles") := stall
+    // flush 时被丢弃的已译码指令（out_reg 在途）
+    PerfCounter("IDU_flush_discard") := flush && out_valid
 }
