@@ -108,7 +108,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     //         cache_hit := true.B
     //     }
     // }
-    val none_refill :: wait_refill :: Nil = Enum(3)
+    val none_refill :: wait_refill :: Nil = Enum(2)
     val refill_state = RegInit(none_refill)
     switch(refill_state){
         is(none_refill){
