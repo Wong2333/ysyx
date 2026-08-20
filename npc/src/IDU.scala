@@ -135,7 +135,7 @@ class ysyx_26030092_IDU extends Module{
 
     when(out.fire | ~out_valid){
         out_valid := false.B
-        when(in.valid && ~stall && ~self_stall){
+        when(in.valid && ~stall && ~(self_stall & out_valid)){
             in.ready := true.B
             out_valid := true.B
             out_reg := out_comb
