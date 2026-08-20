@@ -87,6 +87,7 @@ class ysyx_26030092_IDU extends Module{
     })
 
     val inst = in.bits.inst.asTypeOf(new InstDecode)
+    dontTouch(inst)
 
     // RAW 冒险
     def conflict(rs: UInt, info: StageWriteInfoBundle): Bool =
