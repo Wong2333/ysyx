@@ -107,6 +107,15 @@ class ysyx_26030092_IDU extends Module{
         (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
                       (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) ||
                       (wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
+
+    val out_valid = RegInit(false.B)
+    in.ready := false.B
+    out.valid := out_valid
+    out_comb.decode.inst := in.bits.inst
+
+    val out_reg = Reg(new IDUBundle)
+    out.bits := out_reg
+    
     val out_reg_csr_write = out_reg.exu_ctl.csr_op =/= CSROp.none
     val out_reg_csr_addr = MuxCase(0.U(12.W), Seq(
         (out_reg.exu_ctl.sys_op === SysOp.mret)          -> "h341".U,
@@ -116,14 +125,6 @@ class ysyx_26030092_IDU extends Module{
     val self_stall = (inst.rs2 === out_reg.decode.rd & out_reg.exu_ctl.reg_write) ||
         (inst.rs1 === out_reg.decode.rd & out_reg.exu_ctl.reg_write) || 
         ((csr_read_addr === out_reg_csr_addr) & out_reg_csr_write)
-
-    val out_valid = RegInit(false.B)
-    in.ready := false.B
-    out.valid := out_valid
-    out_comb.decode.inst := in.bits.inst
-
-    val out_reg = Reg(new IDUBundle)
-    out.bits := out_reg
     // when(in.fire){
     //     out_reg := out_comb
     //     out_valid := true.B
