@@ -128,6 +128,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
                 icache.refill.block := refill_block
                 cache_rdata := (refill_block >> (offset << 5))(31,0)
                 cache_hit := true.B
+                refill_state := none_refill
             }
         }
     }
