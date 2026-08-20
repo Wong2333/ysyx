@@ -215,6 +215,7 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
   };
   disassemble(buf, sizeof(buf), pc, code, 4);
   fprintf(itrace_fp, "0x%08x: 0x%08x\t%s\n", pc, inst, buf);
+  printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
   fflush(itrace_fp);
   {
     static char ringbuf_entry[128];
@@ -223,15 +224,8 @@ void trace_record(uint32_t pc, uint32_t inst, uint32_t dnpc) {
   }
 #endif
 
-  /* ftrace: always check (guarded inside record_ftrace) */
-  record_ftrace(pc, dnpc, inst);
-  // printf("pc: %x, inst: %x\n",pc,inst);
-  // MemAccessInfo mc_info = get_mem_access_info(inst);
-  // if(mc_info.type == 1){
-  //   record_mtrace(READ_TRACE,mc_info.addr,mc_info.size,mc_info.data);
-  // }else if(mc_info.type == 2){
-  //   record_mtrace(WRITE_TRACE,mc_info.addr,mc_info.size,mc_info.data);
-  // }
+  //record_ftrace(pc, dnpc, inst);
+
 }
 
 void init_trace(const char *trace_dir, const char *elf_file) {

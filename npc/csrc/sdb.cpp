@@ -228,7 +228,7 @@ extern "C" void commit(int pc, int mem_commit, int mem_addr){
   commit_mem_addr = (uint32_t)mem_addr;
 }
 
-#define STUCK_THRESHOLD 10000
+#define STUCK_THRESHOLD 50000
 static uint32_t stuck_cycle = 0;
 uint64_t inst_counter = 0; 
 bool check_commit(){
