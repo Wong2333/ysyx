@@ -273,6 +273,7 @@ class ysyx_26030092_EXU extends Module{
     lsu_in.bits.mem_op := ex_mem_pending.mem_op
     lsu_in.bits.mem_size := ex_mem_pending.mem_size
     lsu_in.bits.mem_signed := ex_mem_pending.mem_signed
+    lsu_in.bits.pc := ex_pending.PC
 
     PerfCounter("EXU_finished") := wbu_in.fire
     // 控制冒险：冲刷次数（flush 由 EX 寄存器驱动，直接计数）

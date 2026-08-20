@@ -12,6 +12,7 @@ class mtrace extends ExtModule{
         val data = Input(UInt(32.W))
         val size = Input(UInt(4.W))
         val valid = Input(Bool())
+        val pc = Input(UInt(32.W))
     })
     addResource("/mtrace.v")
 }
@@ -22,6 +23,7 @@ class LSUBundle extends Bundle{
     val mem_signed = Output(Bool())       // 符号扩展（仅 load 有效）
     val wdata = Output(UInt(32.W))
     val addr  = Output(UInt(32.W))
+    val pc    = Output(UInt(32.W))
 }
 
 class ysyx_26030092_LSU extends Module{
@@ -73,6 +75,7 @@ class ysyx_26030092_LSU extends Module{
     mtrace_u.io.valid := false.B
     List( mtrace_u.io.data, mtrace_u.io.is_write, mtrace_u.io.size).map(_ := 0.U)
     mtrace_u.io.addr := lsu_in_reg.addr
+    mtrace_u.io.pc := lsu_in_reg.pc
 
     out.bits.rdata := DontCare
 
