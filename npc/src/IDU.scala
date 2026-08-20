@@ -127,6 +127,7 @@ class ysyx_26030092_IDU extends Module{
         when(in.valid && ~stall){
             in.ready := true.B
             out_valid := true.B
+            out_reg := out_comb
         }
     }
     when(flush){
