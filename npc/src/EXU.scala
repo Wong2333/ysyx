@@ -134,7 +134,7 @@ class ysyx_26030092_EXU extends Module{
     val taken = BranchCond || is_jump
     // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
     val redirect = (taken && AluResult =/= PCAddFour) || is_mret
-    val flush_comb = fire_s0 && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
+    val flush_comb = !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
     val redirect_pc_comb = MuxCase(0.U(32.W), Seq(
         (taken) -> AluResult,
         is_mret              -> idu_out.bits.csr_rdata,
