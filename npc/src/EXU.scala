@@ -139,8 +139,8 @@ class ysyx_26030092_EXU extends Module{
     val actual_target_pc = Module(new PCBlackBox)
     actual_target_pc.io.clock := clock
     actual_target_pc.io.reset := reset 
-    actual_target_pc.io.pc_4 := idu_out.fire
-    actual_target_pc.io.pc_we := (taken || is_mret) && idu_out.fire
+    actual_target_pc.io.pc_4 := idu_out.fire && pc_prediction_hit
+    actual_target_pc.io.pc_we := (taken || is_mret || is_trap) && idu_out.fire && pc_prediction_hit
     actual_target_pc.io.pc_next := MuxCase(0.U, Seq(
         taken -> AluResult,
         is_mret -> idu_out.bits.csr_rdata,
@@ -190,7 +190,7 @@ class ysyx_26030092_EXU extends Module{
 
     when(!ex_pending_valid || ex_pending_fire){
         when(ex_pending_fire){ ex_pending_valid := false.B}
-        when(idu_out.valid){
+        when(idu_out.valid && pc_prediction_hit){
             idu_out.ready := true.B
             ex_pending := wb_data
             ex_mem_pending.mem_addr := AluResult
