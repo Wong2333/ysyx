@@ -137,6 +137,7 @@ class ysyx_26030092_EXU extends Module{
     val is_trap = idu_out.bits.exu_ctl.sys_op === SysOp.ecall
 
     val actual_target_pc = Module(new PCBlackBox)
+    val pc_prediction_hit = actual_target_pc.io.pc === idu_out.bits.decode.pc
     actual_target_pc.io.clock := clock
     actual_target_pc.io.reset := reset 
     actual_target_pc.io.pc_4 := idu_out.fire && pc_prediction_hit
@@ -146,8 +147,6 @@ class ysyx_26030092_EXU extends Module{
         is_mret -> idu_out.bits.csr_rdata,
         is_trap -> mtvec
     ))
-
-    val pc_prediction_hit = actual_target_pc.io.pc === idu_out.bits.decode.pc
 
 
     // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
