@@ -112,7 +112,7 @@ class ysyx_26030092_EXU extends Module{
     ALU_u.in.ctl := idu_out.bits.exu_ctl.ALU_Control
     ALU_u.in.src1 := src1
     ALU_u.in.src2 := src2
-    // dontTouch：防止被优化掉，便于波形调试观察 ALU 结果
+    
     val AluResult = WireDefault(0.U(32.W))
     dontTouch(AluResult)
     AluResult := ALU_u.out
@@ -128,18 +128,31 @@ class ysyx_26030092_EXU extends Module{
         is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
     }
 
+
+
     // 控制冒险
     val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
     val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
     val taken = BranchCond || is_jump
-    // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
-    val redirect = (taken && AluResult =/= PCAddFour) || is_mret
-    val flush_comb = !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
-    val redirect_pc_comb = MuxCase(0.U(32.W), Seq(
-        (taken) -> AluResult,
-        is_mret              -> idu_out.bits.csr_rdata,
-        (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
+    val is_trap = idu_out.bits.exu_ctl.sys_op === SysOp.ecall
+
+    val actual_target_pc = Module(new PCBlackBox)
+    actual_target_pc.io.clock := clock
+    actual_target_pc.io.reset := reset 
+    actual_target_pc.io.pc_4 := idu_out.fire
+    actual_target_pc.io.pc_we := (taken || is_mret) && idu_out.fire
+    actual_target_pc.io.pc_next := MuxCase(0.U, Seq(
+        taken -> AluResult,
+        is_mret -> idu_out.bits.csr_rdata,
+        is_trap -> mtvec
     ))
+
+    val pc_prediction_hit = actual_target_pc.io.pc === idu_out.bits.decode.pc
+
+
+    // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
+    val flush_comb = (!pc_prediction_hit)
+    val redirect_pc_comb = actual_target_pc.io.pc
 
     val flush_reg = RegInit(false.B)
     val redirect_pc_reg = RegInit(0.U(32.W))
