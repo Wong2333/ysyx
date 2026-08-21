@@ -152,6 +152,7 @@ class ysyx_26030092_EXU extends Module{
     // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
     val flush_comb = (!pc_prediction_hit)
     val redirect_pc_comb = actual_target_pc.io.pc
+    val fire_and_hit = idu_out.fire && pc_prediction_hit
 
     val flush_reg = RegInit(false.B)
     val redirect_pc_reg = RegInit(0.U(32.W))
@@ -204,7 +205,7 @@ class ysyx_26030092_EXU extends Module{
             ex_pending_commit.pc := idu_out.bits.decode.pc
         }
     }
-    when(idu_out.fire){//锁存ex_pending时进行控制冒险检测
+    when(idu_out.valid && !pc_prediction_hit){//锁存ex_pending时进行控制冒险检测
         flush_reg := flush_comb
         redirect_pc_reg := redirect_pc_comb
     }.otherwise{
@@ -274,7 +275,7 @@ class ysyx_26030092_EXU extends Module{
     when(lsu_out.fire && lsu_out.bits.error === true.B){
         ebreak.io.ebreak_trap := true.B
     }
-    when(fire_s0 && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
+    when(fire_and_hit && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
         ebreak.io.ebreak_trap := true.B
     }
 
