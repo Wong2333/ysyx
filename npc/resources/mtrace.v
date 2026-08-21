@@ -3,12 +3,13 @@ module mtrace (
     input [31:0] addr,
     input [31:0] data,
     input [3:0] size,
-    input valid
+    input valid,
+    input [31:0] pc
 );
 `ifndef SYNTHESIS
-    import "DPI-C" context function void mtrace(input byte is_write,input int addr, input int data, input int size);
+    import "DPI-C" context function void mtrace(input byte is_write,input int addr, input int data, input int size, input int pc);
     always@(*) begin
-        if(valid) mtrace({7'b0, is_write}, addr, data, {28'd0, size});
+        if(valid) mtrace({7'b0, is_write}, addr, data, {28'd0, size}, pc);
     end
 `endif
 endmodule

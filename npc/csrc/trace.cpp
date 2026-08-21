@@ -135,13 +135,13 @@ static int get_func_idx(uint32_t pc) {
 }
 #endif
 
-void record_mtrace(RECORD_MODE mode, uint32_t addr, int len, uint32_t data) {
+void record_mtrace(RECORD_MODE mode, uint32_t pc, uint32_t addr, int len, uint32_t data) {
 #ifdef CONFIG_ENABLE_MTRACE
   if (!mtrace_fp) return;
   if (mode == READ_TRACE)
-    fprintf(mtrace_fp, "read  memory: addr=0x%08x len=%d data=0x%08x\n", addr, len, data);
+    fprintf(mtrace_fp, "read  memory: pc=0x%08x addr=0x%08x len=%d data=0x%08x\n", pc, addr, len, data);
   else
-    fprintf(mtrace_fp, "write memory: addr=0x%08x len=%d data=0x%08x\n", addr, len, data);
+    fprintf(mtrace_fp, "write memory: pc=0x%08x addr=0x%08x len=%d data=0x%08x\n", pc, addr, len, data);
 #endif
 }
 
@@ -278,6 +278,6 @@ void init_trace(const char *trace_dir, const char *elf_file) {
 #endif
 }
 
-extern "C" void mtrace(char is_write, int addr, int data, int size){
-  record_mtrace(is_write?WRITE_TRACE:READ_TRACE, addr, size, data);
+extern "C" void mtrace(char is_write, int addr, int data, int size, int pc){
+  record_mtrace(is_write?WRITE_TRACE:READ_TRACE, pc, addr, size, data);
 }
