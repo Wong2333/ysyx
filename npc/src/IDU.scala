@@ -449,8 +449,8 @@ class ysyx_26030092_IDU extends Module{
     PerfCounter("IDU_load") := (fired_inst.opcode === "b0000011".U) && out.fire
     PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
     PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
-    // RAW 数据冒险导致的停顿拍数
-    PerfCounter("IDU_stall_cycles") := stall
+    // RAW 数据冒险导致的停顿拍数（无输入时 inst 是无效组合值，排除）
+    PerfCounter("IDU_stall_cycles") := stall && in.valid
     // flush 时被丢弃的已译码指令（out_reg 在途）
     PerfCounter("IDU_flush_discard") := flush && out_valid
 }

@@ -84,8 +84,10 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
 
 
-    PerfCounter("icache_miss") := miss
-    PerfCounter("icache_hit") := cache_rdata_valid && cache_hit
+    // 事件计数：miss 上升沿（每 miss 一次）；hit = 命中响应被消费拍
+    val miss_prev = RegNext(miss, false.B)
+    PerfCounter("icache_miss") := miss && !miss_prev
+    PerfCounter("icache_hit") := cache_rdata_fire
 
 
     val offset_bits = log2Ceil(block_size)
