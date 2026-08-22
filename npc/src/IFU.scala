@@ -23,6 +23,8 @@ class ysyx_26030092_IFU extends Module{
     val out = IO(Decoupled(new Bundle {
         val inst = UInt(32.W)
         val pc = UInt(32.W)
+        val excp_code = UInt(32.W)
+        val is_excp = Bool()
     }))
 
     val RedirectPC = IO(Input(UInt(32.W)))
@@ -63,6 +65,8 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.flush := flush
     out.bits.pc := icache_main_pipe.resp.raddr
     out.bits.inst := icache_main_pipe.resp.rdata
+    out.bits.excp_code := icache_main_pipe.resp.excp_code
+    out.bits.is_excp := icache_main_pipe.resp.excp_trap
 
     icache_main_pipe.req.addr := PC_reg.io.pc
     icache_main_pipe.req.valid := ~flush
@@ -71,27 +75,7 @@ class ysyx_26030092_IFU extends Module{
     }
     out.valid := ~flush & icache_main_pipe.resp.valid
     icache_main_pipe.resp.ready := out.ready
-    // switch(state){
-    //     is(s_req_inst){
-    //         icache_main_pipe.req.addr := PC_reg.io.pc
-    //         icache_main_pipe.req.valid := ~flush
-    //         when(flush){ state := s_req_inst}
-    //         .elsewhen(icache_main_pipe.req.ready & icache_main_pipe.req.valid){ 
-    //             state := s_wait_resp
-    //             PC_reg.io.pc_4 := true.B
-    //         }
-    //     }
-    //     is(s_wait_resp){
-    //         out.valid := ~flush & icache_main_pipe.resp.valid
-    //         icache_main_pipe.resp.ready := out.ready
-    //         when(flush) {state := s_req_inst }
-    //         .elsewhen(out.fire){
-    //             state := s_req_inst
 
-    //         }
-            
-    //     }
-    // }
 
     val ebreak = Module(new EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B

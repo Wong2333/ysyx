@@ -40,7 +40,6 @@ class InvalidInstructionBlackBox extends ExtModule{
 
 class DecodeBundle extends Bundle{
         val inst = Output(UInt(32.W))
-        val invalid = Output(Bool())
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
@@ -52,6 +51,8 @@ class IDUBundle extends Bundle{
     val rs1_data = UInt(32.W)
     val rs2_data = UInt(32.W)
     val csr_rdata = UInt(32.W)
+    val excp_code = UInt(32.W)
+    val is_excp = Bool()
 }
 
 class StageWriteInfoBundle extends Bundle{
@@ -68,7 +69,10 @@ class ysyx_26030092_IDU extends Module{
     val in = IO(Flipped(Decoupled(new Bundle {
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
+        val excp_code = Input(UInt(32.W))
+        val is_excp = Input(Bool())
     })))
+
     val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
     val out_comb = Wire(new IDUBundle)
@@ -151,7 +155,8 @@ class ysyx_26030092_IDU extends Module{
 
     val invalid = WireDefault(true.B)
 
-    out_comb.decode.invalid := invalid
+    out_comb.excp_code := DontCare
+    out_comb.is_excp := false.B
 
     out_comb.decode.rd := inst.rd
     out_comb.decode.pc := in.bits.pc
@@ -170,6 +175,11 @@ class ysyx_26030092_IDU extends Module{
     out_comb.exu_ctl.csr_op      := CSROp.none
     out_comb.exu_ctl.sys_op      := SysOp.none
     out_comb.exu_ctl.fence_i     := false.B
+
+    when(invalid && !in.bits.is_excp){
+        out_comb.excp_code := 2.U
+        out_comb.is_excp := true.B
+    }
 
 
     switch(inst.opcode){
@@ -236,7 +246,10 @@ class ysyx_26030092_IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    out_comb.exu_ctl.sys_op := SysOp.ebreak
+                    when(!in.bits.is_excp){
+                        out_comb.excp_code := 3.U
+                        out_comb.is_excp := true.B
+                    }
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out_comb.decode.rd := inst.rd
@@ -261,7 +274,10 @@ class ysyx_26030092_IDU extends Module{
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
-                out_comb.exu_ctl.sys_op := SysOp.ecall
+                when(!in.bits.is_excp){
+                    out_comb.excp_code := 11.U
+                    out_comb.is_excp := true.B
+                }
                 out_comb.decode.pc := in.bits.pc
                 invalid := false.B
             }
