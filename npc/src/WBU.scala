@@ -98,4 +98,23 @@ class ysyx_26030092_WBU extends Module{
     when(in.fire){
         commit_u.valid := true.B
     }
+
+    val invalid_instruction = Module(new InvalidInstructionBlackBox())
+    invalid_instruction.io.pc := ExceptionPort.PC
+    invalid_instruction.io.inst := DontCare
+    invalid_instruction.io.invalid := false.B
+
+    // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
+    val ebreak = Module(new EbreakBlackBox())
+    ebreak.io.ebreak_trap := false.B
+    // when(lsu_out.fire && lsu_out.bits.error === true.B){
+    //     ebreak.io.ebreak_trap := true.B
+    // }
+    when(ExceptionPort.isTrap && in.fire){
+        when(ExceptionPort.Exception_Code === 0.U || ExceptionPort.Exception_Code === 3.U){
+            ebreak.io.ebreak_trap := true.B
+        }.elsewhen(ExceptionPort.Exception_Code === 2.U){
+            invalid_instruction.io.invalid := true.B
+        }
+    }
 }
