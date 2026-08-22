@@ -448,6 +448,12 @@ class ysyx_26030092_IDU extends Module{
         }
     }
 
+    // 取指异常（icache 非对齐等）优先传递，覆盖非法/ebreak/ecall 的本地译码
+    when(in.bits.is_excp){
+        out_comb.is_excp := true.B
+        out_comb.excp_code := in.bits.excp_code
+    }
+
     RFS_ReadPort.RegReadPort.raddr1 := inst.rs1
     RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
     out_comb.rs1_data := RFS_ReadPort.RegReadPort.rdata1
