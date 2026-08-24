@@ -184,9 +184,13 @@ class ysyx_26030092_IDU extends Module{
         !stall_csr -> RFS_ReadPort.CSRReadPort.CSRRData,
         forward_csr_valid -> forward_csr_data
     ))
-    val rs1_valid = !stall_rs1 || forward_rs1_valid
-    val rs2_valid = !stall_rs2 || forward_rs2_valid
-    val csr_valid = !stall_csr || forward_csr_valid
+    val rs1_used = WireDefault(false.B)
+    val rs2_used = WireDefault(false.B)
+    val csr_used = WireDefault(false.B)
+
+    val rs1_valid = !rs1_used || !stall_rs1 || forward_rs1_valid
+    val rs2_valid = !rs2_used || !stall_rs2 || forward_rs2_valid
+    val csr_valid = !csr_used || !stall_csr || forward_csr_valid
 
     val read_reg_valid = rs1_valid && rs2_valid && csr_valid
     
@@ -240,6 +244,7 @@ class ysyx_26030092_IDU extends Module{
         is("b0010011".U){
             out_comb.decode.imm := inst.immI
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            rs1_used := true.B
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.exu_ctl.reg_write := true.B
             out_comb.exu_ctl.wb_src := WBSrc.alu
@@ -287,6 +292,7 @@ class ysyx_26030092_IDU extends Module{
         is("b1100111".U){
             out_comb.decode.imm := inst.immI
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            rs1_used := true.B
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             when(inst.funct3 === "b000".U){//jalr
                 out_comb.exu_ctl.jump_op := JumpOp.jump
@@ -309,13 +315,17 @@ class ysyx_26030092_IDU extends Module{
                 out_comb.decode.rd := inst.rd
                 out_comb.decode.imm := inst.immI
                 out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+                rs1_used := true.B
                 out_comb.exu_ctl.ALU_Src2 := ALUSrc2.csr
+                csr_used := true.B
                 out_comb.exu_ctl.ALU_Control := ALUOp.or
                 out_comb.exu_ctl.csr_op := CSROp.csrrs
                 out_comb.exu_ctl.reg_write := true.B
                 out_comb.exu_ctl.wb_src := WBSrc.csr
                 invalid := false.B
             }.elsewhen(inst.funct3 === "b001".U){// csrws
+                rs1_used := true.B
+                csr_used := true.B
                 out_comb.decode.rd := inst.rd
                 out_comb.decode.imm := inst.immI
                 out_comb.exu_ctl.csr_op := CSROp.csrrw
@@ -324,6 +334,7 @@ class ysyx_26030092_IDU extends Module{
                 invalid := false.B
             }.elsewhen(inst.funct3 === 0.U && inst.rd === 0.U && 
                     inst.rs1 === 0.U && inst.immI === "b001100000010".U){// mret
+                    csr_used := true.B
                     out_comb.exu_ctl.sys_op := SysOp.mret
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
@@ -338,7 +349,9 @@ class ysyx_26030092_IDU extends Module{
         }
         is("b0110011".U){
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            rs1_used := true.B
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.rs2
+            rs2_used := true.B
             out_comb.exu_ctl.reg_write := true.B
             out_comb.exu_ctl.wb_src := WBSrc.alu
             when(inst.funct3 === "b000".U && inst.funct7 === "b0000000".U){// add
@@ -408,6 +421,7 @@ class ysyx_26030092_IDU extends Module{
         }
         is("b0000011".U){
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            rs1_used := true.B
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immI
             out_comb.exu_ctl.ALU_Control := ALUOp.add
@@ -435,6 +449,8 @@ class ysyx_26030092_IDU extends Module{
         }
         is("b0100011".U){
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.rs1
+            rs1_used := true.B
+            rs2_used := true.B
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immS
             out_comb.exu_ctl.ALU_Control := ALUOp.add
@@ -462,7 +478,9 @@ class ysyx_26030092_IDU extends Module{
             invalid := false.B
         }
 
-        is("b1100011".U){// beq
+        is("b1100011".U){// branch
+            rs1_used := true.B
+            rs2_used := true.B
             out_comb.exu_ctl.ALU_Src1 := ALUSrc1.pc
             out_comb.exu_ctl.ALU_Src2 := ALUSrc2.imm
             out_comb.decode.imm := inst.immB
