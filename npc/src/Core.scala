@@ -49,10 +49,8 @@ class ysyx_26030092 extends Module{
     // RAW 冒险检测：各阶段写寄存器信息 → IDU
     IDU_u.ex_wb_info <> EXU_u.ex_wb_info
     IDU_u.mem_wb_info <> EXU_u.mem_wb_info
-    IDU_u.wb_wb_info <> WBU_u.wb_wb_info
     IDU_u.ex_csr_info <> EXU_u.ex_csr_info
     IDU_u.mem_csr_info <> EXU_u.mem_csr_info
-    IDU_u.wb_csr_info <> WBU_u.wb_csr_info
 
     EXU_u.idu_out <> IDU_u.out
 

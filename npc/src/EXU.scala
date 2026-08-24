@@ -30,7 +30,7 @@ object CSROp extends ChiselEnum{
 }
 
 object SysOp extends ChiselEnum{
-    val none, ecall, ebreak, mret = Value
+    val none, mret = Value
 }
 
 class EXUCTLBundle extends Bundle{
@@ -45,7 +45,7 @@ class EXUCTLBundle extends Bundle{
     val branch_op   = Output(BranchOp())    // 条件分支
     val jump_op     = Output(JumpOp())      // 无条件跳转
     val csr_op      = Output(CSROp())       // CSR 读写
-    val sys_op      = Output(SysOp())       // ecall / ebreak / mret
+    val sys_op      = Output(SysOp())       // mret
     val fence_i     = Output(Bool())
 }
 
@@ -112,7 +112,7 @@ class ysyx_26030092_EXU extends Module{
     ALU_u.in.ctl := idu_out.bits.exu_ctl.ALU_Control
     ALU_u.in.src1 := src1
     ALU_u.in.src2 := src2
-    // dontTouch：防止被优化掉，便于波形调试观察 ALU 结果
+    
     val AluResult = WireDefault(0.U(32.W))
     dontTouch(AluResult)
     AluResult := ALU_u.out
@@ -128,18 +128,31 @@ class ysyx_26030092_EXU extends Module{
         is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
     }
 
+
+
     // 控制冒险
     val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
     val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
     val taken = BranchCond || is_jump
-    val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
-    val redirect = (is_branch && taken && AluResult =/= PCAddFour) || is_mret
-    val flush_comb = fire_s0 && !is_mem && (redirect || idu_out.bits.exu_ctl.sys_op === SysOp.ecall)
-    val redirect_pc_comb = MuxCase(0.U(32.W), Seq(
-        (is_branch && taken) -> AluResult,
-        is_mret              -> idu_out.bits.csr_rdata,
-        (idu_out.bits.exu_ctl.sys_op === SysOp.ecall) -> mtvec
+    val is_trap = idu_out.bits.is_excp
+
+    val actual_target_pc = Module(new PCBlackBox)
+    val pc_prediction_hit = actual_target_pc.io.pc === idu_out.bits.decode.pc
+    actual_target_pc.io.clock := clock
+    actual_target_pc.io.reset := reset 
+    actual_target_pc.io.pc_4 := idu_out.fire && pc_prediction_hit
+    actual_target_pc.io.pc_we := (taken || is_mret || is_trap) && idu_out.fire && pc_prediction_hit
+    actual_target_pc.io.pc_next := MuxCase(0.U, Seq(
+        taken -> AluResult,
+        is_mret -> idu_out.bits.csr_rdata,
+        is_trap -> mtvec
     ))
+
+
+    // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
+    val flush_comb = (!pc_prediction_hit)
+    val redirect_pc_comb = actual_target_pc.io.pc
+    val fire_and_hit = idu_out.fire && pc_prediction_hit
 
     val flush_reg = RegInit(false.B)
     val redirect_pc_reg = RegInit(0.U(32.W))
@@ -163,13 +176,9 @@ class ysyx_26030092_EXU extends Module{
         wb_data.CSRData := Mux(idu_out.bits.exu_ctl.csr_op === CSROp.csrrw,
                                idu_out.bits.rs1_data, AluResult)
     }
-    // ecall 触发 trap
-    when(idu_out.bits.exu_ctl.sys_op === SysOp.ecall){
-        wb_data.Exception_Code := 11.U
-        wb_data.PC := idu_out.bits.decode.pc
-        wb_data.isTrap := true.B
-    }
     wb_data.icache_flush := idu_out.bits.exu_ctl.fence_i
+    wb_data.Exception_Code := idu_out.bits.excp_code
+    wb_data.isTrap := idu_out.bits.is_excp
 
     // ex 流水线
     val ex_pending_ready = WireDefault(false.B)
@@ -177,7 +186,7 @@ class ysyx_26030092_EXU extends Module{
 
     when(!ex_pending_valid || ex_pending_fire){
         when(ex_pending_fire){ ex_pending_valid := false.B}
-        when(idu_out.valid){
+        when(idu_out.valid && pc_prediction_hit){
             idu_out.ready := true.B
             ex_pending := wb_data
             ex_mem_pending.mem_addr := AluResult
@@ -192,7 +201,7 @@ class ysyx_26030092_EXU extends Module{
             ex_pending_commit.pc := idu_out.bits.decode.pc
         }
     }
-    when(idu_out.fire){//锁存ex_pending时进行控制冒险检测
+    when(idu_out.valid && !pc_prediction_hit){//锁存ex_pending时进行控制冒险检测
         flush_reg := flush_comb
         redirect_pc_reg := redirect_pc_comb
     }.otherwise{
@@ -239,32 +248,30 @@ class ysyx_26030092_EXU extends Module{
     mem_pending_ready := wbu_in.ready
     commit_info := mem_pending_commit
 
-    val invalid_instruction = Module(new InvalidInstructionBlackBox())
-    invalid_instruction.io.pc := idu_out.bits.decode.pc
-    invalid_instruction.io.inst := idu_out.bits.decode.inst
-    invalid_instruction.io.invalid := fire_s0 && idu_out.bits.decode.invalid
+
 
     // RAW 冒险检测
     ex_wb_info.wen := ex_pending_valid && ex_pending.RegWrite
     ex_wb_info.rd  := ex_pending.RegWaddr
+    ex_wb_info.value := ex_pending.RegWdata
+    ex_wb_info.valid := ex_pending_valid && ex_pending.RegWrite && !ex_pending_is_mem
     
     mem_wb_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.RegWrite
     mem_wb_info.rd  := mem_pending.RegWaddr
+    mem_wb_info.value := mem_pending.RegWdata
+    mem_wb_info.valid := mem_pending_valid && mem_pending.RegWrite
     // CSR 写后读：ex_pending 槽与 mem_pending 槽各一个端口（两槽可同时有 CSR 写，地址需分别比较）
     ex_csr_info.wen  := ex_pending_valid && ex_pending.CSRWrite
     ex_csr_info.addr := ex_pending.CSRAddr
+    ex_csr_info.value := ex_pending.CSRData
+    ex_csr_info.valid := ex_pending_valid && ex_pending.CSRWrite
+
     mem_csr_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.CSRWrite
     mem_csr_info.addr := mem_pending.CSRAddr
+    mem_csr_info.value := mem_pending.CSRData
+    mem_csr_info.valid := mem_pending_valid && mem_pending.CSRWrite
 
-    // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
-    val ebreak = Module(new EbreakBlackBox())
-    ebreak.io.ebreak_trap := false.B
-    when(lsu_out.fire && lsu_out.bits.error === true.B){
-        ebreak.io.ebreak_trap := true.B
-    }
-    when(fire_s0 && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
-        ebreak.io.ebreak_trap := true.B
-    }
+
 
     // lsu访存请求
     lsu_in.bits := 0.U.asTypeOf(new LSUBundle)

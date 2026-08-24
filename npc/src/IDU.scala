@@ -40,7 +40,6 @@ class InvalidInstructionBlackBox extends ExtModule{
 
 class DecodeBundle extends Bundle{
         val inst = Output(UInt(32.W))
-        val invalid = Output(Bool())
         val rd = Output(UInt(5.W))
         val imm = Output(UInt(32.W))
         val pc = Output(UInt(32.W))
@@ -52,33 +51,41 @@ class IDUBundle extends Bundle{
     val rs1_data = UInt(32.W)
     val rs2_data = UInt(32.W)
     val csr_rdata = UInt(32.W)
+    val excp_code = UInt(32.W)
+    val is_excp = Bool()
 }
 
 class StageWriteInfoBundle extends Bundle{
     val wen   = Output(Bool())    // 本拍该阶段正在写寄存器（含阶段有效性）
     val rd    = Output(UInt(5.W)) 
+    val value = Output(UInt(32.W))
+    val valid = Output(Bool())
 }
 
 class CSRWriteInfoBundle extends Bundle{
     val wen   = Output(Bool())    // 本拍该阶段正在写 CSR（含阶段有效性）
     val addr  = Output(UInt(12.W))
+    val value = Output(UInt(32.W))
+    val valid = Output(Bool())
 }
 
 class ysyx_26030092_IDU extends Module{
     val in = IO(Flipped(Decoupled(new Bundle {
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))
+        val excp_code = Input(UInt(32.W))
+        val is_excp = Input(Bool())
     })))
+
     val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
     val out_comb = Wire(new IDUBundle)
 
     val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
     val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
-    val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    
     val ex_csr_info = IO(Flipped(new CSRWriteInfoBundle))
     val mem_csr_info = IO(Flipped(new CSRWriteInfoBundle))
-    val wb_csr_info = IO(Flipped(new CSRWriteInfoBundle))
 
     // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
     val RFS_ReadPort = IO(new Bundle {
@@ -103,10 +110,40 @@ class ysyx_26030092_IDU extends Module{
     val stall =
         conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
         conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
-        conflict(inst.rs1, wb_wb_info)  || conflict(inst.rs2, wb_wb_info) ||
         (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
-                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) ||
-                      (wb_csr_info.wen && csr_read_addr === wb_csr_info.addr)))
+                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr)))
+    
+    // val stall_rs1 = conflict(inst.rs1, ex_wb_info) || conflict(inst.rs1, mem_wb_info)
+    // val stall_rs2 = conflict(inst.rs2, ex_wb_info) || conflict(inst.rs2, mem_wb_info)
+    // val stall_csr = (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
+    //                   (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr)))
+    
+    // val forward_rs1_data = MuxCase(0.U, Seq(
+    //     conflict(inst.rs1, ex_wb_info) -> ex_wb_info.value,
+    //     conflict(inst.rs1, mem_wb_info) -> mem_wb_info.valid
+    // ))
+    // val forward_rs1_valid = MuxCase(false.B, Seq(
+    //     conflict(inst.rs1, ex_wb_info) -> ex_wb_info.valid,
+    //     conflict(inst.rs1, mem_wb_info) -> mem_wb_info.valid
+    // ))
+
+    // val forward_rs2_data = MuxCase(0.U, Seq(
+    //     conflict(inst.rs1, ex_wb_info) -> ex_wb_info.value,
+    //     conflict(inst.rs1, mem_wb_info) -> mem_wb_info.valid
+    // ))
+    // val forward_rs2_valid = MuxCase(false.B, Seq(
+    //     conflict(inst.rs1, ex_wb_info) -> ex_wb_info.valid,
+    //     conflict(inst.rs1, mem_wb_info) -> mem_wb_info.valid
+    // ))
+
+    val forward_csr_data = MuxCase(0.U, Seq(
+        (ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) -> ex_csr_info.value,
+        (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) -> mem_csr_info.value
+    ))
+    val forward_csr_valid = MuxCase(false.B, Seq(
+        (ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) -> ex_csr_info.valid,
+        (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) -> mem_csr_info.valid
+    ))
 
     val out_valid = RegInit(false.B)
     in.ready := false.B
@@ -125,13 +162,34 @@ class ysyx_26030092_IDU extends Module{
     val self_stall = (inst.rs2 === out_reg.decode.rd & out_reg.exu_ctl.reg_write) ||
         (inst.rs1 === out_reg.decode.rd & out_reg.exu_ctl.reg_write) || 
         ((csr_read_addr === out_reg_csr_addr) & out_reg_csr_write)
-    // when(in.fire){
-    //     out_reg := out_comb
-    //     out_valid := true.B
-    // }
-    // when(out.fire | flush){
-    //     out_valid := false.B
-    // }
+    
+    RFS_ReadPort.RegReadPort.raddr1 := inst.rs1
+    RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
+    RFS_ReadPort.CSRReadPort.CSRRAddr := csr_read_addr
+
+    out_comb.rs1_data := RFS_ReadPort.RegReadPort.rdata1
+    out_comb.rs2_data := RFS_ReadPort.RegReadPort.rdata2
+    out_comb.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
+    // out_comb.rs1_data := MuxCase(0.U, Seq(
+    //     !stall_rs1 -> RFS_ReadPort.RegReadPort.rdata1,
+    //     forward_rs1_valid -> forward_rs1_data
+    // ))
+    // out_comb.rs2_data := MuxCase(0.U, Seq(
+    //     !stall_rs2 -> RFS_ReadPort.RegReadPort.rdata2,
+    //     forward_rs2_valid -> forward_rs2_data
+    // ))
+    
+    // 
+    // out_comb.csr_rdata := MuxCase(0.U, Seq(
+    //     !stall_csr -> RFS_ReadPort.CSRReadPort.CSRRData,
+    //     forward_csr_valid -> forward_csr_data
+    // ))
+    // val rs1_valid = !stall_rs1 || forward_rs1_valid
+    // val rs2_valid = !stall_rs2 || forward_rs2_valid
+    // val csr_valid = !stall_csr || forward_csr_valid
+
+    // val read_reg_finish = rs1_valid && rs2_valid && csr_valid
+    
 
     when(out.fire | ~out_valid){
         out_valid := false.B
@@ -151,7 +209,8 @@ class ysyx_26030092_IDU extends Module{
 
     val invalid = WireDefault(true.B)
 
-    out_comb.decode.invalid := invalid
+    out_comb.excp_code := DontCare
+    out_comb.is_excp := false.B
 
     out_comb.decode.rd := inst.rd
     out_comb.decode.pc := in.bits.pc
@@ -170,6 +229,11 @@ class ysyx_26030092_IDU extends Module{
     out_comb.exu_ctl.csr_op      := CSROp.none
     out_comb.exu_ctl.sys_op      := SysOp.none
     out_comb.exu_ctl.fence_i     := false.B
+
+    when(invalid && !in.bits.is_excp){
+        out_comb.excp_code := 2.U
+        out_comb.is_excp := true.B
+    }
 
 
     switch(inst.opcode){
@@ -236,7 +300,10 @@ class ysyx_26030092_IDU extends Module{
             when(inst.funct3 === "b000".U && inst.immI === 1.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){//ebreak
                     invalid := false.B
-                    out_comb.exu_ctl.sys_op := SysOp.ebreak
+                    when(!in.bits.is_excp){
+                        out_comb.excp_code := 3.U
+                        out_comb.is_excp := true.B
+                    }
                 
             }.elsewhen(inst.funct3 === "b010".U){// csrrs
                 out_comb.decode.rd := inst.rd
@@ -261,7 +328,10 @@ class ysyx_26030092_IDU extends Module{
                     invalid := false.B
             }.elsewhen(inst.funct3 === "b000".U && inst.immI === 0.U && 
                         inst.rs1 === 0.U && inst.rd === 0.U){ // ecall
-                out_comb.exu_ctl.sys_op := SysOp.ecall
+                when(!in.bits.is_excp){
+                    out_comb.excp_code := 11.U
+                    out_comb.is_excp := true.B
+                }
                 out_comb.decode.pc := in.bits.pc
                 invalid := false.B
             }
@@ -432,13 +502,11 @@ class ysyx_26030092_IDU extends Module{
         }
     }
 
-    RFS_ReadPort.RegReadPort.raddr1 := inst.rs1
-    RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
-    out_comb.rs1_data := RFS_ReadPort.RegReadPort.rdata1
-    out_comb.rs2_data := RFS_ReadPort.RegReadPort.rdata2
-    
-    RFS_ReadPort.CSRReadPort.CSRRAddr := csr_read_addr
-    out_comb.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
+    // 取指异常（icache 非对齐等）优先传递，覆盖非法/ebreak/ecall 的本地译码
+    when(in.bits.is_excp){
+        out_comb.is_excp := true.B
+        out_comb.excp_code := in.bits.excp_code
+    }
 
     // 指令分类计数：基于被接受的指令（out_reg 内容），与 out.fire 同拍；
     // 不能用 in 侧 inst——out.fire 时 inst 已是下一条指令（out_reg 改造后的错位）
@@ -449,8 +517,8 @@ class ysyx_26030092_IDU extends Module{
     PerfCounter("IDU_load") := (fired_inst.opcode === "b0000011".U) && out.fire
     PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
     PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
-    // RAW 数据冒险导致的停顿拍数
-    PerfCounter("IDU_stall_cycles") := stall
+    // RAW 数据冒险导致的停顿拍数（无输入时 inst 是无效组合值，排除）
+    PerfCounter("IDU_stall_cycles") := stall && in.valid
     // flush 时被丢弃的已译码指令（out_reg 在途）
     PerfCounter("IDU_flush_discard") := flush && out_valid
 }
