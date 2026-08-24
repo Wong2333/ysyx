@@ -83,10 +83,9 @@ class ysyx_26030092_IDU extends Module{
 
     val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
     val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
-    val wb_wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    
     val ex_csr_info = IO(Flipped(new CSRWriteInfoBundle))
     val mem_csr_info = IO(Flipped(new CSRWriteInfoBundle))
-    val wb_csr_info = IO(Flipped(new CSRWriteInfoBundle))
 
     // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
     val RFS_ReadPort = IO(new Bundle {
