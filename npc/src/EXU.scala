@@ -248,32 +248,30 @@ class ysyx_26030092_EXU extends Module{
     mem_pending_ready := wbu_in.ready
     commit_info := mem_pending_commit
 
-    // val invalid_instruction = Module(new InvalidInstructionBlackBox())
-    // invalid_instruction.io.pc := idu_out.bits.decode.pc
-    // invalid_instruction.io.inst := idu_out.bits.decode.inst
-    // invalid_instruction.io.invalid := fire_s0 && idu_out.bits.decode.invalid
+
 
     // RAW 冒险检测
     ex_wb_info.wen := ex_pending_valid && ex_pending.RegWrite
     ex_wb_info.rd  := ex_pending.RegWaddr
+    ex_wb_info.value := ex_pending.RegWdata
+    ex_wb_info.valid := ex_pending_valid && ex_pending.RegWrite && !ex_pending_is_mem
     
     mem_wb_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.RegWrite
     mem_wb_info.rd  := mem_pending.RegWaddr
+    mem_wb_info.value := mem_pending.RegWdata
+    mem_wb_info.valid := mem_pending_valid && mem_pending.RegWrite
     // CSR 写后读：ex_pending 槽与 mem_pending 槽各一个端口（两槽可同时有 CSR 写，地址需分别比较）
     ex_csr_info.wen  := ex_pending_valid && ex_pending.CSRWrite
     ex_csr_info.addr := ex_pending.CSRAddr
+    ex_csr_info.value := ex_pending.CSRData
+    ex_csr_info.valid := ex_pending_valid && ex_pending.CSRWrite
+
     mem_csr_info.wen := (mem_pending_valid || lsu_busy) && mem_pending.CSRWrite
     mem_csr_info.addr := mem_pending.CSRAddr
+    mem_csr_info.value := mem_pending.CSRData
+    mem_csr_info.valid := mem_pending_valid && mem_pending.CSRWrite
 
-    // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
-    // val ebreak = Module(new EbreakBlackBox())
-    // ebreak.io.ebreak_trap := false.B
-    // when(lsu_out.fire && lsu_out.bits.error === true.B){
-    //     ebreak.io.ebreak_trap := true.B
-    // }
-    // when(fire_and_hit && idu_out.bits.exu_ctl.sys_op === SysOp.ebreak){
-    //     ebreak.io.ebreak_trap := true.B
-    // }
+
 
     // lsu访存请求
     lsu_in.bits := 0.U.asTypeOf(new LSUBundle)
