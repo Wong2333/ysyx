@@ -33,7 +33,7 @@ class BPU(entry_num :Int) extends Module{
 
     val index_bits = log2Ceil(entry_num)
     val btb = Reg(Vec(entry_num, new BTBEntry(index_bits)))
-    withReset(reset){
+    when(reset.asBool){
         btb.foreach(_.valid := false.B)
     }
 
