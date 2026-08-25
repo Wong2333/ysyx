@@ -41,6 +41,8 @@ class ysyx_26030092 extends Module{
     
     BPU_u.pc := IFU_u.bpu_pc
     IFU_u.bpu_predict := BPU_u.predict_port
+    BPU_u.train_port := EXU_u.bpu_train
+
 
     IFU_u.flush_icache := WBU_u.icache_flush
     IFU_u.flush := EXU_u.flush
