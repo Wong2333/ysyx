@@ -58,7 +58,12 @@ class icacheRefillUnit(block_size :Int) extends Module{
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 // beat0 在最高 32 位，后续 beat 依次右移拼接
-                block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                if(block_size > 4){
+                    block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                }else{
+                    block_reg := AXI4_port.rdata
+                }
+
                 when(AXI4_port.rlast){
                     state := s_idle
                     block_valid := true.B
