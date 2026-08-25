@@ -5,6 +5,7 @@ import npc.AXI._
 // import npc.Xbar.{Arbiter,Xbar}
 import npc.device._
 import npc.PMU._
+import npc.BPU._
 
 class ysyx_26030092 extends Module{
 
@@ -25,6 +26,7 @@ class ysyx_26030092 extends Module{
     val IDU_u = Module(new ysyx_26030092_IDU())
     val EXU_u = Module(new ysyx_26030092_EXU())
     val WBU_u = Module(new ysyx_26030092_WBU())
+    val BPU_u = Module(new BPU(8))
     // commit 数据通路：EXU → WBU（commit 通知在 WBU 内部）
     WBU_u.commit_info := EXU_u.commit_info
 
@@ -37,6 +39,10 @@ class ysyx_26030092 extends Module{
     val AXI4Arbiter_u = Module(new ysyx_26030092_AXI4Arbiter(2))
     io.slave.initSlave()
     
+    BPU_u.pc := IFU_u.bpu_pc
+    IFU_u.bpu_predict := BPU_u.predict_port
+    BPU_u.train_port := EXU_u.bpu_train
+
 
     IFU_u.flush_icache := WBU_u.icache_flush
     IFU_u.flush := EXU_u.flush
