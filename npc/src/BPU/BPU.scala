@@ -58,12 +58,12 @@ class BPU(entry_num :Int) extends Module{
                     train_entry.counter := train_entry.counter + 1.U
                 }
             }.otherwise{
-                train_entry.counter := 0.U
+                train_entry.counter := 1.U
                 train_entry.target := train_port.target
             }
         }.otherwise{
             when(train_hit){
-                train_entry.valid := false.B
+                train_entry.counter := 0.U
             }
         }
     }
