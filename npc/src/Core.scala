@@ -26,7 +26,7 @@ class ysyx_26030092 extends Module{
     val IDU_u = Module(new ysyx_26030092_IDU())
     val EXU_u = Module(new ysyx_26030092_EXU())
     val WBU_u = Module(new ysyx_26030092_WBU())
-    val BPU_u = Module(new BPU(8))
+    val BPU_u = Module(new BPU(4))
     // commit 数据通路：EXU → WBU（commit 通知在 WBU 内部）
     WBU_u.commit_info := EXU_u.commit_info
 
