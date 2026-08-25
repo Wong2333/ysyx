@@ -5,7 +5,6 @@ import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
 import npc.icache.icacheMainPipe
-import npc.BPU.BPUPredictBundle
 
 class PCBlackBox extends ExtModule{
     val io = FlatIO(new Bundle {
@@ -32,20 +31,15 @@ class ysyx_26030092_IFU extends Module{
     val flush_icache = IO(Input(Bool()))
     val flush = IO(Input(Bool()))
 
-    val bpu_pc = IO(Output(UInt(30.W)))
-
-    val bpu_predict = IO(Input(new BPUPredictBundle))
-
     val AXI4_port = IO(new AXI4Bundle)
 
     // PC 寄存器（架构 PC = 取指 PC，串行流水线下两者合一）
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := bpu_predict.next_pc
-    PC_reg.io.pc_we := bpu_predict.valid && bpu_predict.take
+    PC_reg.io.pc_next := DontCare
+    PC_reg.io.pc_we := false.B
     PC_reg.io.pc_4 := false.B
-    bpu_pc := PC_reg.io.pc
     when(flush){
         PC_reg.io.pc_we := true.B
         PC_reg.io.pc_next := RedirectPC
@@ -55,6 +49,11 @@ class ysyx_26030092_IFU extends Module{
     val error_reg = RegInit(false.B)
 
     out.valid := false.B
+
+    val s_req_inst :: s_wait_resp :: s_wait_fetch :: Nil = Enum(3)
+    // 复位后 PC=CONFIG_START_ADDR，直接取第一条指令
+    val state = RegInit(s_req_inst)
+
 
 
     val icache_main_pipe = Module(new icacheMainPipe(16,4))

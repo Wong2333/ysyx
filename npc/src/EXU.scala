@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import npc.EXUs._
 import npc.PMU._
-import npc.BPU.BPUTrainBundle
 
 object JumpOp extends ChiselEnum{
     val none, jump = Value
@@ -56,8 +55,6 @@ class ysyx_26030092_EXU extends Module{
     val flush = IO(Output(Bool()))
     val redirectPC = IO(Output(UInt(32.W)))
     val mtvec = IO(Input(UInt(32.W)))
-
-    val bpu_train = IO(Output(new BPUTrainBundle))
 
     val idu_out = IO(Flipped(Decoupled(new IDUBundle)))
     val wbu_in = IO(Decoupled(new WriteBackPortBundle))
@@ -131,13 +128,13 @@ class ysyx_26030092_EXU extends Module{
         is(BranchOp.bgeu) { BranchCond := idu_out.bits.rs1_data >= idu_out.bits.rs2_data }
     }
 
+
+
     // 控制冒险
     val is_jump = idu_out.bits.exu_ctl.jump_op === JumpOp.jump
     val is_mret = idu_out.bits.exu_ctl.sys_op === SysOp.mret
     val taken = BranchCond || is_jump
     val is_trap = idu_out.bits.is_excp
-    val is_branch = idu_out.bits.exu_ctl.branch_op.isOneOf(BranchOp.beq, BranchOp.bne, BranchOp.blt, 
-        BranchOp.bltu, BranchOp.bge, BranchOp.bgeu)
 
     val actual_target_pc = Module(new PCBlackBox)
     val pc_prediction_hit = actual_target_pc.io.pc === idu_out.bits.decode.pc
@@ -150,12 +147,6 @@ class ysyx_26030092_EXU extends Module{
         is_mret -> idu_out.bits.csr_rdata,
         is_trap -> mtvec
     ))
-
-    bpu_train.is_jal := is_jump
-    bpu_train.pc := actual_target_pc.io.pc
-    bpu_train.valid := (is_branch || is_jump) && idu_out.fire
-    bpu_train.taken := taken
-    bpu_train.target := actual_target_pc.io.pc_next(31,2)
 
 
     // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
