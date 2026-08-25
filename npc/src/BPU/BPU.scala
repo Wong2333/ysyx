@@ -13,6 +13,7 @@ class BTBEntry(index_size :Int) extends Bundle{
 
 class BPUTrainBundle extends Bundle{
     val valid = Bool()
+    val taken = Bool()
     val pc = UInt(30.W)
     val target = UInt(30.W)
     val is_jal = Bool()
@@ -48,15 +49,23 @@ class BPU(entry_num :Int) extends Module{
         val train_tag = train_port.pc(29, index_bits)
         val train_hit = train_tag === btb(train_index).tag && btb(train_index).valid
         val train_entry = btb(train_index)
+        when(train_port.taken){
             train_entry.jal := train_port.is_jal
             train_entry.valid := true.B
             train_entry.tag := train_tag
             when(train_hit && train_entry.target === train_port.target){
-                train_entry.counter := 1.U
+                when(train_entry.counter =/= 1.U){
+                    train_entry.counter := train_entry.counter + 1.U
+                }
             }.otherwise{
                 train_entry.counter := 0.U
                 train_entry.target := train_port.target
             }
+        }.otherwise{
+            when(train_hit){
+                train_entry.valid := false.B
+            }
+        }
     }
 
 }
