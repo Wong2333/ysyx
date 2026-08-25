@@ -7,7 +7,7 @@ KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += --threads 1 -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O1 --x-assign fast --x-initial fast --noassert \
+				-O3 --x-assign fast --x-initial fast --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush 
 
 VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
@@ -128,7 +128,7 @@ CLK_FREQ_MHZ = 800
 include /home/wjm/yosys-sta/Makefile.common
 
 # 注意：必须在 include Makefile.common 之后覆盖
-# PDK_NAME = nangate45
+PDK_NAME = nangate45
 
 
 $(KCONFIG_INCLUDE): .config

@@ -112,11 +112,14 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         is(wait_refill){
             when(refill_unit.resp.valid){
                 val refill_block = refill_unit.resp.block
+                val block_words = VecInit.tabulate(block_size/4)(i => {
+                    refill_block((i + 1) * 32 - 1, i * 32)
+                })
                 icache.refill.valid := true.B
                 icache.refill.tag := tag
                 icache.refill.index := index
                 icache.refill.block := refill_block
-                cache_rdata := (refill_block >> (offset << 5))(31,0)
+                cache_rdata := block_words(offset)
                 cache_hit := true.B
                 refill_state := none_refill
             }

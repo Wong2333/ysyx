@@ -46,7 +46,10 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val tag_s1 = req_addr_reg(31, offset_bits + index_bits)
 
     val resp_new = req_addr_valid
-    val resp_new_data = (block >> (offset_s1 << 5))(31,0)
+    val block_words = VecInit.tabulate(block_size/4)(i => {
+        block((i + 1) * 32 - 1, i * 32)
+    })
+    val resp_new_data = block_words(offset_s1)
     val resp_new_hit = (tag_s1 === taget_tag) && state_array(index_s1)
 
     val cache_rdata_reg = Reg(UInt(32.W))
@@ -54,7 +57,7 @@ class icache(block_size :Int, block_num :Int) extends Module{
     val cache_hit_reg = Reg(Bool())
     val cache_rdata_valid = RegInit(false.B)
     dontTouch(cache_rdata_reg)
-dontTouch(req_addr_reg)
+    dontTouch(req_addr_reg)
     val cache_rdata_fire = (cache_rdata_valid | resp_new) & resp.ready
     when(cache_rdata_fire | flush){ 
         cache_rdata_valid := false.B 
