@@ -42,8 +42,8 @@ class ysyx_26030092_IFU extends Module{
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := DontCare //bpu_predict.next_pc
-    PC_reg.io.pc_we := false.B // bpu_predict.valid && bpu_predict.take
+    PC_reg.io.pc_next := bpu_predict.next_pc
+    PC_reg.io.pc_we := bpu_predict.valid && bpu_predict.take
     PC_reg.io.pc_4 := false.B
     bpu_pc := PC_reg.io.pc
     when(flush){
