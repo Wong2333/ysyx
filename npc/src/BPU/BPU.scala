@@ -6,7 +6,7 @@ import chisel3.util._
 class BTBEntry(index_size :Int) extends Bundle{
     val tag = UInt((30 - index_size).W)
     val target = UInt(30.W)
-    val counter = UInt(1.W)
+    val counter = UInt(2.W)
     val jal = Bool()
     val valid = Bool()
 }
@@ -41,7 +41,7 @@ class BPU(entry_num :Int) extends Module{
     val tag = pc(29, index_bits)
 
     predict_port.valid := btb(index).tag === tag && btb(index).valid
-    predict_port.take := btb(index).jal || btb(index).counter === 1.U
+    predict_port.take := btb(index).jal || btb(index).counter === 3.U
     predict_port.next_pc := Cat(btb(index).target ,0.U(2.W))
 
     when(train_port.valid){
@@ -54,7 +54,7 @@ class BPU(entry_num :Int) extends Module{
             train_entry.valid := true.B
             train_entry.tag := train_tag
             when(train_hit && train_entry.target === train_port.target){
-                when(train_entry.counter =/= 1.U){
+                when(train_entry.counter =/= 3.U){
                     train_entry.counter := train_entry.counter + 1.U
                 }
             }.otherwise{
