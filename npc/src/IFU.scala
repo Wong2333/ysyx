@@ -83,10 +83,6 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
-    PerfCounter("IFU_get_inst_cycles") := ~flush
-    // 取指停顿分项：被 icache 反压（refill/槽满） / 等响应（流水线填充/气泡） / 被 IDU 反压
-    PerfCounter("IFU_wait_icache") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
-    PerfCounter("IFU_wait_resp")   := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
-    PerfCounter("IFU_wait_idu")    := out.valid && ~out.fire
-    PerfCounter("IFU_fetch")       := out.fire
+    // PerfCounter("IFU_get_inst_cycles") := ~flush
+    // PerfCounter("IFU_fetch_inst_counter")      := out.fire
 }

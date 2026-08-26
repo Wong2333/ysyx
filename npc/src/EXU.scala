@@ -226,11 +226,14 @@ class ysyx_26030092_EXU extends Module{
     val ex_pending_is_mem = ex_mem_pending.mem_op =/= MemOp.none 
     val lsu_busy = RegInit(false.B)
 
+    val ex_stall_by_mem_pending = WireDefault(false.B)
+    val ex_stall_by_lsu_reject = WireDefault(false.B)
+
     when(mem_pending_fire || !mem_pending_valid){
         when(mem_pending_fire) { mem_pending_valid := false.B }
         when(lsu_busy){ //lsu忙，等待数据
             lsu_out.ready := true.B
-            PerfCounter("EXU_ex_stall_by_mem_pending") := ex_pending_valid
+            ex_stall_by_mem_pending := ex_pending_valid
             when(lsu_out.fire){
                 mem_pending.RegWdata := lsu_out.bits.rdata
                 mem_pending_valid := true.B
@@ -238,7 +241,7 @@ class ysyx_26030092_EXU extends Module{
             }
         }.elsewhen(ex_pending_valid && ex_pending_is_mem){ //ex是访存指令
             lsu_in.valid := true.B
-            PerfCounter("EXU_ex_stall_by_lsu") := !lsu_in.ready
+            ex_stall_by_lsu_reject := !lsu_in.ready
             when(lsu_in.fire){
                 mem_pending := ex_pending
                 mem_pending_commit := ex_pending_commit
@@ -298,6 +301,9 @@ class ysyx_26030092_EXU extends Module{
     // EX 被阻塞周期
     PerfCounter("EXU_ex_stall_cycles") := ex_pending_valid && !ex_pending_ready
 
+    PerfCounter("EXU_ex_stall_by_lsu_reject") := ex_stall_by_lsu_reject
+
+    PerfCounter("EXU_ex_stall_by_mem_pending") := ex_stall_by_mem_pending
     
     // EXU 完全空闲拍数（无执行、无待写回、无访存等待）
     PerfCounter("EXU_idle_cycles") := ~fire_s0 && ~ex_pending_valid && ~mem_pending_valid && ~lsu_busy

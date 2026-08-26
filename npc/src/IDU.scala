@@ -526,8 +526,6 @@ class ysyx_26030092_IDU extends Module{
         out_comb.excp_code := in.bits.excp_code
     }
 
-    // 指令分类计数：基于被接受的指令（out_reg 内容），与 out.fire 同拍；
-    // 不能用 in 侧 inst——out.fire 时 inst 已是下一条指令（out_reg 改造后的错位）
     val fired_inst = out_reg.decode.inst.asTypeOf(new InstDecode)
     PerfCounter("IDU_calc") := (fired_inst.opcode === "b0010011".U || fired_inst.opcode === "b0110011".U) && out.fire
     PerfCounter("IDU_jump") := (fired_inst.opcode === "b1100111".U || fired_inst.opcode === "b1101111".U) && out.fire
@@ -536,7 +534,11 @@ class ysyx_26030092_IDU extends Module{
     PerfCounter("IDU_store") := (fired_inst.opcode === "b0100011".U) && out.fire
     PerfCounter("IDU_branch") := (fired_inst.opcode === "b1100011".U) && out.fire
     // RAW 数据冒险导致的停顿拍数（无输入时 inst 是无效组合值，排除）
-    PerfCounter("IDU_stall_cycles") := ~read_reg_valid && in.valid
-    // flush 时被丢弃的已译码指令（out_reg 在途）
+    PerfCounter("IDU_RAW_stall_cycles") := ~read_reg_valid && in.valid
+    PerfCounter("IDU_idle_cycle") := !out_valid & !in.valid
+    PerfCounter("IDU_stall_by_EXU_cycle") := out_valid & !out.ready
+    val idu_internal_stall = in.valid && !in.ready && !out.fire
+    PerfCounter("IDU_internal_stall_cycles") := idu_internal_stall
+    // flush 时被丢弃的已译码指令（out_reg 在途
     PerfCounter("IDU_flush_discard") := flush && out_valid
 }

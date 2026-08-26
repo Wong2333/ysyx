@@ -87,8 +87,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     // 事件计数：miss 上升沿（每 miss 一次）；hit = 命中响应被消费拍
     val miss_prev = RegNext(miss, false.B)
-    PerfCounter("icache_miss") := miss && !miss_prev
-    PerfCounter("icache_hit") := cache_rdata_fire
+    PerfCounter("icache_miss") := icache.resp.valid && icache.resp.ready && !icache.resp.hit
+    PerfCounter("icache_hit") := icache.resp.valid && icache.resp.ready && icache.resp.hit
 
 
     val offset_bits = log2Ceil(block_size)
@@ -130,8 +130,12 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
         cache_rdata_valid := false.B
         refill_state := none_refill
     }
-    // 被 flush 丢弃的 refill 次数（refill 在途时来 flush → 结果作废，即错误路径 refill）
+
     PerfCounter("icache_refill_flushed") := (refill_state === wait_refill) && flush
+    PerfCounter("icache_stall_by_refill") := (refill_state === wait_refill)
+    PerfCounter("icache_stall_by_backend") := resp.valid && !resp.ready
+    PerfCounter("icache_refill_req_stall") := refill_unit.req.valid && !refill_unit.req.ready
+
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
 }
