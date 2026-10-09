@@ -98,6 +98,15 @@ class ysyx_26030092_LSU extends Module{
     PerfCounter("LSU_access_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp)
     PerfCounter("LSU_wait_free") := (state === s_wait_mem_free)
     PerfCounter("LSU_wait_resp") := (state === s_wait_mem_resp)
+    // LSU 占用拍数 = 流水线被访存阻塞的拍数（EXU 在 lsu_busy 期间冻结 ex_pending）
+    PerfCounter("LSU_busy") := state =/= s_idle
+    // 读写通道分开归账：load 占读通道，store 占写通道
+    PerfCounter("LSU_load_latency")  := (state === s_wait_mem_free || state === s_wait_mem_resp) && !is_write
+    PerfCounter("LSU_store_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp) && is_write
+    PerfCounter("LSU_load_wait_free")  := (state === s_wait_mem_free) && !is_write
+    PerfCounter("LSU_store_wait_free") := (state === s_wait_mem_free) && is_write
+    PerfCounter("LSU_load_wait_resp")  := (state === s_wait_mem_resp) && !is_write
+    PerfCounter("LSU_store_wait_resp") := (state === s_wait_mem_resp) && is_write
 
     switch(state){
         is(s_idle){
@@ -177,4 +186,6 @@ class ysyx_26030092_LSU extends Module{
 
     PerfCounter("LSU_get_data") := (is_write && AXI4_port.bvalid && AXI4_port.bready) ||
                                    (!is_write && AXI4_port.rvalid && AXI4_port.rready)
+    PerfCounter("LSU_load_get_data")  := (!is_write && AXI4_port.rvalid && AXI4_port.rready)
+    PerfCounter("LSU_store_get_data") := (is_write && AXI4_port.bvalid && AXI4_port.bready)
 }

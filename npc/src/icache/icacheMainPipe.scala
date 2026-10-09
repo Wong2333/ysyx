@@ -13,6 +13,8 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     icache.refill.block := DontCare
 
     val flush = IO(Input(Bool()))
+    // 供 IFU 归因：当前是否卡在 refill（真缺失）而非响应槽被后端占用
+    val refilling = IO(Output(Bool()))
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
@@ -100,6 +102,7 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
 
     val none_refill :: wait_refill :: Nil = Enum(2)
     val refill_state = RegInit(none_refill)
+    refilling := (refill_state === wait_refill)
     switch(refill_state){
         is(none_refill){
             when(miss){

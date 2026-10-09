@@ -83,6 +83,13 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
-    // PerfCounter("IFU_get_inst_cycles") := ~flush
-    // PerfCounter("IFU_fetch_inst_counter")      := out.fire
+    // 取指停顿归因：wait_miss 卡在 refill（真缺失）；wait_backend = 响应槽被未消费的
+    // 命中占住（后端反压）；两者之和恒等于 wait_icache
+    PerfCounter("IFU_get_inst_cycles") := ~flush
+    PerfCounter("IFU_wait_icache")  := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
+    PerfCounter("IFU_wait_miss")    := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && icache_main_pipe.refilling
+    PerfCounter("IFU_wait_backend") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && ~icache_main_pipe.refilling
+    PerfCounter("IFU_wait_resp")    := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
+    PerfCounter("IFU_wait_idu")     := out.valid && ~out.fire
+    PerfCounter("IFU_fetch")        := out.fire
 }
