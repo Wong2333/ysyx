@@ -106,12 +106,6 @@ class ysyx_26030092_IDU extends Module{
         (out_comb.exu_ctl.csr_op =/= CSROp.none)          -> out_comb.decode.imm(11,0)
     ))
     val csr_read = out_comb.exu_ctl.sys_op === SysOp.mret || out_comb.exu_ctl.csr_op =/= CSROp.none
-
-    val stall =
-        conflict(inst.rs1, ex_wb_info)  || conflict(inst.rs2, ex_wb_info)  ||
-        conflict(inst.rs1, mem_wb_info) || conflict(inst.rs2, mem_wb_info) ||
-        (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
-                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr)))
     
     val stall_rs1 = conflict(inst.rs1, ex_wb_info) || conflict(inst.rs1, mem_wb_info)
     val stall_rs2 = conflict(inst.rs2, ex_wb_info) || conflict(inst.rs2, mem_wb_info)
@@ -167,9 +161,6 @@ class ysyx_26030092_IDU extends Module{
     RFS_ReadPort.RegReadPort.raddr2 := inst.rs2
     RFS_ReadPort.CSRReadPort.CSRRAddr := csr_read_addr
 
-    // out_comb.rs1_data := RFS_ReadPort.RegReadPort.rdata1
-    // out_comb.rs2_data := RFS_ReadPort.RegReadPort.rdata2
-    // out_comb.csr_rdata := RFS_ReadPort.CSRReadPort.CSRRData
     out_comb.rs1_data := MuxCase(0.U, Seq(
         !stall_rs1 -> RFS_ReadPort.RegReadPort.rdata1,
         forward_rs1_valid -> forward_rs1_data

@@ -100,16 +100,29 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val index = cache_raddr(offset_bits + index_bits-1, offset_bits)
     val tag = cache_raddr(31, offset_bits + index_bits)
 
-    val none_refill :: wait_refill :: Nil = Enum(2)
+    // refill 宽限窗口：miss 检测后先等 refill_grace 拍再发 refill 请求。
+    // 错误路径取指的 flush 就在它自己的 miss 检测同拍或之后 1~4 拍到达，落在窗口里就
+    // 整笔抑制（refill 单元连状态机都不进，一个 AR 都不发）；代价是每次真缺失多几拍。
+    val refill_grace = 2
+    val none_refill :: wait_grace :: wait_refill :: Nil = Enum(3)
     val refill_state = RegInit(none_refill)
-    refilling := (refill_state === wait_refill)
+    val grace_cnt = RegInit(0.U((log2Ceil(refill_grace + 2)).W))
+    refilling := (refill_state =/= none_refill)
     switch(refill_state){
         is(none_refill){
             when(miss){
+                refill_state := wait_grace
+                grace_cnt := refill_grace.U
+            }
+        }
+        is(wait_grace){
+            when(grace_cnt === 0.U && !flush){
                 refill_unit.req.valid := true.B
                 when(refill_unit.req.valid & refill_unit.req.ready){
                     refill_state := wait_refill
                 }
+            }.otherwise{
+                grace_cnt := grace_cnt - 1.U
             }
         }
         is(wait_refill){
@@ -132,10 +145,17 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     when(flush) { 
         cache_rdata_valid := false.B
         refill_state := none_refill
+        grace_cnt := 0.U
     }
 
+    // 归因用：一次错误路径 miss 的 flush 若落在同拍或 1~4 拍内，分别进下面三个计数；
+    // 三者之和就是被抑制掉的"白烧通道"的 refill 数
     PerfCounter("icache_refill_flushed") := (refill_state === wait_refill) && flush
+    PerfCounter("icache_refill_grace_killed") := (refill_state === wait_grace) && flush
+    PerfCounter("icache_refill_suppressed") := miss && flush && refill_unit.req.ready
+    PerfCounter("icache_miss_killed_by_flush") := flush && icache.resp.valid && !icache.resp.hit
     PerfCounter("icache_stall_by_refill") := (refill_state === wait_refill)
+    PerfCounter("icache_refill_window") := (refill_state === wait_grace)
     PerfCounter("icache_stall_by_backend") := resp.valid && !resp.ready
     PerfCounter("icache_refill_req_stall") := refill_unit.req.valid && !refill_unit.req.ready
 
