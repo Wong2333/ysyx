@@ -77,6 +77,7 @@ class ysyx_26030092_WBU extends Module{
     }
 
     PerfCounter("WBU_commit") := in.fire
+    PerfCounter("WBU_stall_cycle") := !in.valid
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）
     val commit_u = Module(new Commit)

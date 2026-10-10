@@ -226,10 +226,14 @@ class ysyx_26030092_EXU extends Module{
     val ex_pending_is_mem = ex_mem_pending.mem_op =/= MemOp.none 
     val lsu_busy = RegInit(false.B)
 
+    val ex_stall_by_mem_pending = WireDefault(false.B)
+    val ex_stall_by_lsu_reject = WireDefault(false.B)
+
     when(mem_pending_fire || !mem_pending_valid){
         when(mem_pending_fire) { mem_pending_valid := false.B }
         when(lsu_busy){ //lsu忙，等待数据
             lsu_out.ready := true.B
+            ex_stall_by_mem_pending := ex_pending_valid
             when(lsu_out.fire){
                 mem_pending.RegWdata := lsu_out.bits.rdata
                 mem_pending_valid := true.B
@@ -237,6 +241,7 @@ class ysyx_26030092_EXU extends Module{
             }
         }.elsewhen(ex_pending_valid && ex_pending_is_mem){ //ex是访存指令
             lsu_in.valid := true.B
+            ex_stall_by_lsu_reject := !lsu_in.ready
             when(lsu_in.fire){
                 mem_pending := ex_pending
                 mem_pending_commit := ex_pending_commit
@@ -291,15 +296,15 @@ class ysyx_26030092_EXU extends Module{
     lsu_in.bits.mem_signed := ex_mem_pending.mem_signed
     lsu_in.bits.pc := ex_pending.PC
 
-    PerfCounter("EXU_finished") := wbu_in.fire
-    // 控制冒险：冲刷次数（flush 由 EX 寄存器驱动，直接计数）
+    // 冲刷次数
     PerfCounter("EXU_flush_count") := flush_reg
-    // flush 时被丢弃的在途指令数（ex/mem 槽 + lsu 在途）——度量取指超前深度
-    PerfCounter("EXU_flush_discard") := flush_reg && (ex_pending_valid || mem_pending_valid || lsu_busy)
-    // EXU 反压拍数（写回槽满 / 访存指令遇 LSU 忙），衡量流水线停顿
-    PerfCounter("EXU_stall_cycles") := idu_out.valid && ~idu_out.ready
-    // 非访存指令因 LSU 忙而暂存 ex_pending 的次数（访存延迟隐藏效果）
-    PerfCounter("EXU_use_pending") := fire_s0 && ~is_mem && ~lsu_in.ready
+    // EX 被阻塞周期
+    PerfCounter("EXU_ex_stall_cycles") := ex_pending_valid && !ex_pending_ready
+
+    PerfCounter("EXU_ex_stall_by_lsu_reject") := ex_stall_by_lsu_reject
+
+    PerfCounter("EXU_ex_stall_by_mem_pending") := ex_stall_by_mem_pending
+    
     // EXU 完全空闲拍数（无执行、无待写回、无访存等待）
     PerfCounter("EXU_idle_cycles") := ~fire_s0 && ~ex_pending_valid && ~mem_pending_valid && ~lsu_busy
 }

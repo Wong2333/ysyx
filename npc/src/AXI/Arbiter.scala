@@ -2,6 +2,7 @@ package npc.AXI
 import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
+import npc.PMU._
 
 
 class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
@@ -76,5 +77,14 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
                 }
             }
         }
+    }
+
+    // AXI 通道占用：判断流水线是否已撞到"单通道带宽天花板"的总开关
+    // 0 = IFU（icache refill），1 = LSU（load/store）
+    PerfCounter("AXI_read_busy") := r_state === r_busy
+    PerfCounter("AXI_write_busy") := w_state === w_busy
+    for(i <- 0 until n_in){
+        PerfCounter(s"AXI_read_grant_$i") := (r_state === r_busy) && (r_sel === i.U)
+        PerfCounter(s"AXI_write_grant_$i") := (w_state === w_busy) && (w_sel === i.U)
     }
 }

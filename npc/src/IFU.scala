@@ -42,8 +42,8 @@ class ysyx_26030092_IFU extends Module{
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
-    PC_reg.io.pc_next := DontCare //bpu_predict.next_pc
-    PC_reg.io.pc_we := false.B // bpu_predict.valid && bpu_predict.take
+    PC_reg.io.pc_next := bpu_predict.next_pc
+    PC_reg.io.pc_we := bpu_predict.valid && bpu_predict.take
     PC_reg.io.pc_4 := false.B
     bpu_pc := PC_reg.io.pc
     when(flush){
@@ -83,10 +83,13 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
+    // 取指停顿归因：wait_miss 卡在 refill（真缺失）；wait_backend = 响应槽被未消费的
+    // 命中占住（后端反压）；两者之和恒等于 wait_icache
     PerfCounter("IFU_get_inst_cycles") := ~flush
-    // 取指停顿分项：被 icache 反压（refill/槽满） / 等响应（流水线填充/气泡） / 被 IDU 反压
-    PerfCounter("IFU_wait_icache") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
-    PerfCounter("IFU_wait_resp")   := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
-    PerfCounter("IFU_wait_idu")    := out.valid && ~out.fire
-    PerfCounter("IFU_fetch")       := out.fire
+    PerfCounter("IFU_wait_icache")  := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
+    PerfCounter("IFU_wait_miss")    := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && icache_main_pipe.refilling
+    PerfCounter("IFU_wait_backend") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && ~icache_main_pipe.refilling
+    PerfCounter("IFU_wait_resp")    := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
+    PerfCounter("IFU_wait_idu")     := out.valid && ~out.fire
+    PerfCounter("IFU_fetch")        := out.fire
 }
