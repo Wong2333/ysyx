@@ -2,6 +2,7 @@ package npc.icache
 
 import chisel3._
 import chisel3.util._
+import npc.PMU._
 
 class icache(block_size :Int, block_num :Int) extends Module{
     val cache = SyncReadMem(block_num, UInt((block_size*8).W))
@@ -71,8 +72,21 @@ class icache(block_size :Int, block_num :Int) extends Module{
 
     req.ready := ~(cache_rdata_valid | resp_new) | cache_rdata_fire
 
-    resp.data := Mux(resp_new, resp_new_data, cache_rdata_reg)
-    resp.hit := Mux(resp_new, resp_new_hit, cache_hit_reg)
+    // ---- 在途响应补判（refill 落地当拍）------------------------------------
+    // 缺失等 refill 期间取指还会往前走一格（mainPipe 占着它自己那个响应槽，本模块这个
+    // 暂存槽是空的），第二格查的是同一行、当时行还没回来，于是又被判成 miss —— 一行被
+    // 取两遍、读通道白烧一倍。refill 落地当拍就地补判：若暂存的响应正好属于刚取回的
+    // 行，直接改判命中，数据取刚取回 block 里对应的那个字（否则会以"命中"投递垃圾字）。
+    val pending_offset = if(offset_bits <= 2) 0.U(1.W) else cache_raddr_reg(offset_bits - 1, 2)
+    val pending_tag    = cache_raddr_reg(31, offset_bits + index_bits)
+    val pending_index  = cache_raddr_reg(offset_bits + index_bits - 1, offset_bits)
+    val refill_words   = VecInit.tabulate(block_size / 4)(i => refill.block((i + 1) * 32 - 1, i * 32))
+    val pending_rehit  = cache_rdata_valid && !cache_hit_reg && refill.valid && !resp_new &&
+                         pending_tag === refill.tag && pending_index === refill.index &&
+                         !flush && !flush_cache
+
+    resp.data := Mux(resp_new, resp_new_data, Mux(pending_rehit, refill_words(pending_offset), cache_rdata_reg))
+    resp.hit := Mux(resp_new, resp_new_hit, Mux(pending_rehit, true.B, cache_hit_reg))
     resp.raddr := Mux(resp_new, req_addr_reg, cache_raddr_reg)
     resp.valid := (cache_rdata_valid | resp_new) & ~flush
 
@@ -81,6 +95,12 @@ class icache(block_size :Int, block_num :Int) extends Module{
         tag_array.write(refill.index, refill.tag)
         state_array(refill.index) := true.B
     }
+    // 组合旁路覆盖"这一拍就被取走"的情况；寄存器改写覆盖"之后某一拍才被取走"的情况
+    when(pending_rehit){
+        cache_rdata_reg := refill_words(pending_offset)
+        cache_hit_reg := true.B
+    }
+    PerfCounter("icache_refill_rehit") := pending_rehit
     when(flush_cache){
         state_array.foreach(_ := false.B)
     }
