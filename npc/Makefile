@@ -99,18 +99,21 @@ rebuild:
 	make clean
 	make
 
-.PHONY: bin test verilog help reformat checkformat clean
+.PHONY: bin test verilog help reformat checkformat clean perf
 
 sim:
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
-# 性能评估：运行 microbench train 规模（性能数据从运行输出中记录）
+# 性能评估：跑 microbench 并把 PMU 计数器记到 perf/ 下
+#   make perf                  # mainargs=test（默认）
+#   make perf PERF_ARGS=train  # 跑 train 规模
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
 PERF_ARCH ?= riscv32e-ysyxSoC
+PERF_ARGS ?= test
 perf:
-	$(MAKE) -C $(PERF_BENCH) ARCH=$(PERF_ARCH) mainargs=train run
+	tools/perf.sh -a $(PERF_ARGS) -n $(PERF_BENCH)
 
 -include ../Makefile
 

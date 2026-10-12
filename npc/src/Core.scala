@@ -45,6 +45,7 @@ class ysyx_26030092 extends Module{
 
 
     IFU_u.flush_icache := WBU_u.icache_flush
+    WBU_u.lsu_b_pending := LSU_u.b_pending_out
     IFU_u.flush := EXU_u.flush
     IFU_u.RedirectPC :=EXU_u.redirectPC
 
