@@ -95,6 +95,16 @@ class ysyx_26030092_LSU extends Module{
     val waddr_ready = RegInit(false.B)
     val wdata_ready = RegInit(false.B)
 
+    // store 的 B 响应不再串在状态机里等：AW/W 握手完就放行流水线，B 用标志异步收。
+    // 下一次访存在 in.ready 里被 !b_pending 挡住 → store→load 的顺序天然保住
+    // （不能只保证 W 握手：数据进 SDRAM 颗粒要等 core 的写流水和 B）。
+    val b_pending = RegInit(false.B)
+    val b_error = Reg(UInt(2.W))
+
+    // 给 WBU：有 store 未落地时，fence.i 必须等（否则 icache 重填可能读到旧代码）
+    val b_pending_out = IO(Output(Bool()))
+    b_pending_out := b_pending
+
     PerfCounter("LSU_access_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp)
     PerfCounter("LSU_wait_free") := (state === s_wait_mem_free)
     PerfCounter("LSU_wait_resp") := (state === s_wait_mem_resp)
@@ -110,7 +120,7 @@ class ysyx_26030092_LSU extends Module{
 
     switch(state){
         is(s_idle){
-            in.ready := true.B
+            in.ready := !b_pending   // 有 store 未确认时下一次访存要等（保 store→load 顺序）
             when(in.fire){
                 state := s_wait_mem_free
                 lsu_in_reg := in.bits
@@ -136,9 +146,15 @@ class ysyx_26030092_LSU extends Module{
                     }
                 }
                 when(waddr_ready && wdata_ready){
-                    state := s_wait_mem_resp
+                    // store：地址/数据都已交给写通道 → 立刻放行，不再等 bvalid
+                    state := s_wait_fetch
+                    b_pending := true.B
                     waddr_ready := false.B
                     wdata_ready := false.B
+                    mtrace_u.io.valid := true.B
+                    mtrace_u.io.is_write := true.B
+                    mtrace_u.io.size := mtrace_size
+                    mtrace_u.io.data := lsu_in_reg.wdata
                 }
 
             }.otherwise{
@@ -150,30 +166,16 @@ class ysyx_26030092_LSU extends Module{
 
             }
         }
-        is(s_wait_mem_resp){
-            when(is_write){
-                AXI4_port.bready := true.B
-                when(AXI4_port.bvalid){                    
-                    state := s_wait_fetch
-                    mtrace_u.io.valid := true.B
-                    mtrace_u.io.is_write := true.B
-                    mtrace_u.io.size := mtrace_size
-                    mtrace_u.io.data := lsu_in_reg.wdata
-                    lsu_out_reg.error := AXI4_port.bresp
-                    
-                }
-            }.otherwise{
-                AXI4_port.rready := true.B                
-                when(AXI4_port.rvalid){
-                    state := s_wait_fetch
-                    mtrace_u.io.valid := true.B
-                    mtrace_u.io.is_write := false.B
-                    mtrace_u.io.size := mtrace_size
-                    lsu_out_reg.rdata := rdata
-                    mtrace_u.io.data := rdata
-                    lsu_out_reg.error := AXI4_port.rresp
-                }
-
+        is(s_wait_mem_resp){ // 只剩 load 会进这个状态（store 在上面就放行了）
+            AXI4_port.rready := true.B                
+            when(AXI4_port.rvalid){
+                state := s_wait_fetch
+                mtrace_u.io.valid := true.B
+                mtrace_u.io.is_write := false.B
+                mtrace_u.io.size := mtrace_size
+                lsu_out_reg.rdata := rdata
+                mtrace_u.io.data := rdata
+                lsu_out_reg.error := AXI4_port.rresp
             }
         }
         is(s_wait_fetch){
@@ -184,8 +186,18 @@ class ysyx_26030092_LSU extends Module{
         }
     }
 
-    PerfCounter("LSU_get_data") := (is_write && AXI4_port.bvalid && AXI4_port.bready) ||
+    // B 响应：只要有 store 在途就一直准备接收；收到就清标志
+    AXI4_port.bready := b_pending
+    when(b_pending && AXI4_port.bvalid){
+        b_pending := false.B
+        b_error := AXI4_port.bresp
+    }
+
+    PerfCounter("LSU_get_data") := (b_pending && AXI4_port.bvalid && AXI4_port.bready) ||
                                    (!is_write && AXI4_port.rvalid && AXI4_port.rready)
     PerfCounter("LSU_load_get_data")  := (!is_write && AXI4_port.rvalid && AXI4_port.rready)
-    PerfCounter("LSU_store_get_data") := (is_write && AXI4_port.bvalid && AXI4_port.bready)
+    PerfCounter("LSU_store_get_data") := (b_pending && AXI4_port.bvalid && AXI4_port.bready)
+    // store 已放行流水线、在后台等 B 的拍数（以及其中真的挡住下一次访存的拍数）
+    PerfCounter("LSU_store_b_pending") := b_pending
+    PerfCounter("LSU_store_gate") := b_pending && in.valid && !in.ready
 }
