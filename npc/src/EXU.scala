@@ -51,8 +51,6 @@ class EXUCTLBundle extends Bundle{
 }
 
 class ysyx_26030092_EXU extends Module{
-    // ========== IO ==========
-    // 控制冒险：分支/跳转/异常判定点（接受拍），flush 与重定向目标从这里直接发出
     val flush = IO(Output(Bool()))
     val redirectPC = IO(Output(UInt(32.W)))
     val mtvec = IO(Input(UInt(32.W)))
@@ -60,6 +58,7 @@ class ysyx_26030092_EXU extends Module{
     val bpu_train = IO(Output(new BPUTrainBundle))
 
     val idu_out = IO(Flipped(Decoupled(new IDUBundle)))
+    val idu_out_valid = IO(Input(Bool()))
     val wbu_in = IO(Decoupled(new WriteBackPortBundle))
 
     val lsu_in = IO(Decoupled(new LSUBundle))
@@ -158,15 +157,10 @@ class ysyx_26030092_EXU extends Module{
     bpu_train.target := actual_target_pc.io.pc_next(31,2)
 
 
-    // val is_branch = idu_out.bits.exu_ctl.branch_op =/= BranchOp.none || is_jump
-    val flush_comb = (!pc_prediction_hit)
-    val redirect_pc_comb = actual_target_pc.io.pc
     val fire_and_hit = idu_out.fire && pc_prediction_hit
 
-    val flush_reg = RegInit(false.B)
-    val redirect_pc_reg = RegInit(0.U(32.W))
-    flush := flush_reg
-    redirectPC := redirect_pc_reg
+    flush := idu_out_valid && !pc_prediction_hit
+    redirectPC := actual_target_pc.io.pc
 
     val wb_data = Wire(new WriteBackPortBundle)
     wb_data := 0.U.asTypeOf(new WriteBackPortBundle)
@@ -209,12 +203,6 @@ class ysyx_26030092_EXU extends Module{
             ex_pending_commit.mem_addr := AluResult
             ex_pending_commit.pc := idu_out.bits.decode.pc
         }
-    }
-    when(idu_out.valid && !pc_prediction_hit){//锁存ex_pending时进行控制冒险检测
-        flush_reg := flush_comb
-        redirect_pc_reg := redirect_pc_comb
-    }.otherwise{
-        flush_reg := false.B
     }
 
     // mem 流水线 以及 lsu状态机
@@ -297,7 +285,7 @@ class ysyx_26030092_EXU extends Module{
     lsu_in.bits.pc := ex_pending.PC
 
     // 冲刷次数
-    PerfCounter("EXU_flush_count") := flush_reg
+    PerfCounter("EXU_flush_count") := flush
     // EX 被阻塞周期
     PerfCounter("EXU_ex_stall_cycles") := ex_pending_valid && !ex_pending_ready
 

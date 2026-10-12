@@ -79,6 +79,8 @@ class ysyx_26030092_IDU extends Module{
 
     val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
+    // 未受 flush 组合门控的 out_valid 寄存器（EXU 判控制冒险用，避免组合环）
+    val out_valid_o = IO(Output(Bool()))
     val out_comb = Wire(new IDUBundle)
 
     val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
@@ -140,6 +142,7 @@ class ysyx_26030092_IDU extends Module{
     ))
 
     val out_valid = RegInit(false.B)
+    out_valid_o := out_valid
     in.ready := false.B
     out.valid := out_valid
     out_comb.decode.inst := in.bits.inst
