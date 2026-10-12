@@ -65,18 +65,13 @@ class icache(block_size :Int, block_num :Int) extends Module{
     }
     .elsewhen(resp_new){ 
         cache_rdata_valid := true.B; 
-        cache_rdata_reg := resp_new_data; 
+        cache_rdata_reg := resp_new_data;
         cache_raddr_reg := req_addr_reg;
-        cache_hit_reg := resp_new_hit 
+        cache_hit_reg := resp_new_hit
     }
 
     req.ready := ~(cache_rdata_valid | resp_new) | cache_rdata_fire
 
-    // ---- 在途响应补判（refill 落地当拍）------------------------------------
-    // 缺失等 refill 期间取指还会往前走一格（mainPipe 占着它自己那个响应槽，本模块这个
-    // 暂存槽是空的），第二格查的是同一行、当时行还没回来，于是又被判成 miss —— 一行被
-    // 取两遍、读通道白烧一倍。refill 落地当拍就地补判：若暂存的响应正好属于刚取回的
-    // 行，直接改判命中，数据取刚取回 block 里对应的那个字（否则会以"命中"投递垃圾字）。
     val pending_offset = if(offset_bits <= 2) 0.U(1.W) else cache_raddr_reg(offset_bits - 1, 2)
     val pending_tag    = cache_raddr_reg(31, offset_bits + index_bits)
     val pending_index  = cache_raddr_reg(offset_bits + index_bits - 1, offset_bits)
