@@ -35,27 +35,10 @@ class icacheRefillUnit(block_size :Int) extends Module{
     // 一次 INCR burst 取回整个 block：beats 个 32 位 beat
     val beats = block_size / 4
 
-    // CWF（critical word first / early restart）：把逐 beat 的到达时刻/序号/数据引出来，
-    // 另外把本次 refill 锁存的行地址引出来 —— 行地址必须用锁存的，不能用"当前"响应地址：
-    // 早放行之后前端会往前跑，cache_raddr 可能已经换到别的行。
-    val idx_w = math.max(1, log2Ceil(beats))
-    val beat = IO(new Bundle {
-        val valid = Output(Bool())
-        val index = Output(UInt(idx_w.W))
-        val data  = Output(UInt(32.W))
-    })
-    val addr_out = IO(Output(UInt(32.W)))
-    val beat_cnt = RegInit(0.U(idx_w.W))
-    beat.valid := (state === s_wait_mem_data) && AXI4_port.rvalid
-    beat.index := beat_cnt
-    beat.data  := AXI4_port.rdata
-    addr_out   := req_addr_reg
-
     when(state === s_idle && req.valid){
         req.ready := true.B
         state := s_wait_mem_free
         req_addr_reg := block_addr
-        beat_cnt := 0.U
     }
     val block_reg = Reg(UInt((block_size*8).W))
     val block_valid = RegInit(false.B)
@@ -74,7 +57,6 @@ class icacheRefillUnit(block_size :Int) extends Module{
         is(s_wait_mem_data){
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
-                beat_cnt := beat_cnt + 1.U
                 // beat0 在最高 32 位，后续 beat 依次右移拼接
                 if(block_size > 4){
                     block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))

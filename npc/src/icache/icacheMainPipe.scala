@@ -100,63 +100,35 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     val index = cache_raddr(offset_bits + index_bits-1, offset_bits)
     val tag = cache_raddr(31, offset_bits + index_bits)
 
-    // 本次 refill 锁存的行地址。阵列写入/同一行判定必须用它，不能用上面的 index/tag：
-    // CWF 早放行后前端会继续往前跑，cache_raddr 可能已经换成别的行，用它写阵列会把
-    // 旧 burst 的数据按新行的 tag/index 写进去（缓存被污染）。
-    val refill_index = refill_unit.addr_out(offset_bits + index_bits - 1, offset_bits)
-    val refill_tag   = refill_unit.addr_out(31, offset_bits + index_bits)
-    // 响应槽里压着的那个缺失，是否正是这次 refill 的行
-    val pending_miss_same_line = cache_rdata_valid && !cache_hit &&
-                                 tag === refill_tag && index === refill_index
-
-    // refill 宽限窗口：miss 检测后先等 refill_grace 拍再发 refill 请求。
-    // 错误路径取指的 flush 就在它自己的 miss 检测同拍或之后 1~4 拍到达，落在窗口里就
-    // 整笔抑制（refill 单元连状态机都不进，一个 AR 都不发）；代价是每次真缺失多几拍。
-    val refill_grace = 2
-    val none_refill :: wait_grace :: wait_refill :: Nil = Enum(3)
+    // 缺失 → 立刻发 refill 请求；但同拍有 flush 就整笔抑制（refill 单元一旦握手就会把
+    // 整条 AXI burst 发出去、不可取消，而 mainPipe 已被 flush 打回 none_refill，拿不回数据）。
+    // 注：这里原来还有一个几拍的"宽限窗口"用来拦错误路径的 refill；但 flush 提前到 miss
+    // 同拍附近之后 icache_refill_grace_killed 一直是 0（窗口抓不到任何东西），窗口就只剩
+    // "每次真缺失多等几拍"的成本了，故去掉。
+    val none_refill :: wait_refill :: Nil = Enum(2)
     val refill_state = RegInit(none_refill)
-    val grace_cnt = RegInit(0.U((log2Ceil(refill_grace + 2)).W))
-    refilling := (refill_state =/= none_refill)
+    refilling := (refill_state === wait_refill)
     switch(refill_state){
         is(none_refill){
-            when(miss){
-                refill_state := wait_grace
-                grace_cnt := refill_grace.U
-            }
-        }
-        is(wait_grace){
-            when(grace_cnt === 0.U && !flush){
+            when(miss && !flush){
                 refill_unit.req.valid := true.B
                 when(refill_unit.req.valid & refill_unit.req.ready){
                     refill_state := wait_refill
                 }
-            }.otherwise{
-                grace_cnt := grace_cnt - 1.U
             }
         }
         is(wait_refill){
-            // CWF（early restart）：CPU 要的那个字一到就放行，不等整行。
-            // 此时行还没写进阵列 —— 前端继续往前取会再 miss，那个在途缺失会由
-            // icache 里的 pending_rehit（同一行、整行落地当拍）或下面这段整行交付补上。
-            when(refill_unit.beat.valid && refill_unit.beat.index === offset && pending_miss_same_line){
-                cache_rdata := refill_unit.beat.data
-                cache_hit := true.B
-            }
             when(refill_unit.resp.valid){
                 val refill_block = refill_unit.resp.block
                 val block_words = VecInit.tabulate(block_size/4)(i => {
                     refill_block((i + 1) * 32 - 1, i * 32)
                 })
                 icache.refill.valid := true.B
-                icache.refill.tag := refill_tag
-                icache.refill.index := refill_index
+                icache.refill.tag := tag
+                icache.refill.index := index
                 icache.refill.block := refill_block
-                // 整行落地：若响应槽里还压着这条行的缺失（CWF 后前端又踩到同一条行），
-                // 用刚取回的 block 里对应的那个字交付；压着别的行/已经是命中就什么都不做
-                when(pending_miss_same_line){
-                    cache_rdata := block_words(offset)
-                    cache_hit := true.B
-                }
+                cache_rdata := block_words(offset)
+                cache_hit := true.B
                 refill_state := none_refill
             }
         }
@@ -165,20 +137,14 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     when(flush) { 
         cache_rdata_valid := false.B
         refill_state := none_refill
-        grace_cnt := 0.U
     }
 
     // 归因用：一次错误路径 miss 的 flush 若落在同拍或 1~4 拍内，分别进下面三个计数；
     // 三者之和就是被抑制掉的"白烧通道"的 refill 数
-    // CWF 早放行次数（每次 refill 最多 1 次）
-    PerfCounter("icache_refill_cwf") := (refill_state === wait_refill) && refill_unit.beat.valid &&
-                                        refill_unit.beat.index === offset && pending_miss_same_line
     PerfCounter("icache_refill_flushed") := (refill_state === wait_refill) && flush
-    PerfCounter("icache_refill_grace_killed") := (refill_state === wait_grace) && flush
     PerfCounter("icache_refill_suppressed") := miss && flush && refill_unit.req.ready
     PerfCounter("icache_miss_killed_by_flush") := flush && icache.resp.valid && !icache.resp.hit
     PerfCounter("icache_stall_by_refill") := (refill_state === wait_refill)
-    PerfCounter("icache_refill_window") := (refill_state === wait_grace)
     PerfCounter("icache_stall_by_backend") := resp.valid && !resp.ready
     PerfCounter("icache_refill_req_stall") := refill_unit.req.valid && !refill_unit.req.ready
 
