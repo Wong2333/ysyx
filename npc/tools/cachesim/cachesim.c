@@ -37,6 +37,7 @@ typedef struct {
 typedef struct {
   uint64_t acc, hit, miss, refill, chan, cyc;
   uint64_t pf_issued, pf_useful, partial;
+  uint64_t off_hist[8];
 } Stat;
 
 // 直接映射 icache + （简化）单通道时序模型
@@ -49,6 +50,7 @@ static Stat simulate(const Geom *g, int lat, int ratio, int mode, int pol, const
   const int nbeats = g->bs / 4;
   const int refill_cyc = ratio * (lat + nbeats - 1);  // 一次 refill 占用读通道的拍数
 
+  memset(st.off_hist, 0, sizeof(st.off_hist));
   uint8_t *valid = calloc(g->bn, 1);
   uint32_t *tag = calloc(g->bn, sizeof(uint32_t));
   // CWF：正在逐 beat 填充的行（word j 在 fill0 + ratio*(lat+j) 可用）
@@ -83,6 +85,7 @@ static Stat simulate(const Geom *g, int lat, int ratio, int mode, int pol, const
       const int idx = (pc >> off) & (g->bn - 1);
       const uint32_t tg = pc >> (off + idxb);
       const int w = (pc >> 2) & (nbeats - 1);
+      (void)w;
 
       if (valid[idx] && tag[idx] == tg) {  // 命中
         st.hit++;
@@ -115,6 +118,7 @@ static Stat simulate(const Geom *g, int lat, int ratio, int mode, int pol, const
       // 真缺失：占用读通道一次 refill
       st.miss++;
       st.refill++;
+      st.off_hist[w & 7]++;
       uint64_t r_start = (t > chan_free) ? t : chan_free;
       st.chan += refill_cyc;
       chan_free = r_start + refill_cyc + 1;
@@ -182,6 +186,18 @@ static void report(const Geom *g, const Stat *st, int lat, int ratio, int mode, 
       printf("  prefetch issued = %lu, useful = %lu\n", (unsigned long)st->pf_issued,
              (unsigned long)st->pf_useful);
     if (st->partial) printf("  partial-line hits (CWF) = %lu\n", (unsigned long)st->partial);
+    {
+      uint64_t tot = 0;
+      for (int i = 0; i < nbeats; i++) tot += st->off_hist[i];
+      printf("  缺失的 行内字序号 分布（每次 refill 的潜在早放行量 = 8*(beats-1-offset) 拍）:\n");
+      for (int i = 0; i < nbeats; i++)
+        printf("    offset=%d : %10lu  %5.1f%%\n", i, (unsigned long)st->off_hist[i],
+               tot ? 100.0 * st->off_hist[i] / tot : 0.0);
+      double save = 0;
+      for (int i = 0; i < nbeats; i++) save += (double)(ratio * (nbeats - 1 - i)) * st->off_hist[i];
+      printf("    -> 潜在早放行量 平均 %.2f 拍/refill（上界，未计入 refill 单元的串行化）\n",
+             tot ? save / tot : 0.0);
+    }
   }
 }
 
