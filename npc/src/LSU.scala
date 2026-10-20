@@ -60,7 +60,7 @@ class ysyx_26030092_LSU extends Module{
         is(MemSize.half){ wmask := 3.U << lsu_in_reg.addr(1,0) }
         is(MemSize.word){ wmask := "b1111".U }
     }
-    // load 数据扩展（符号/零扩展由 mem_signed 决定）
+    // load 数据扩展
     switch(lsu_in_reg.mem_size){
         is(MemSize.byte){ rdata := Mux(lsu_in_reg.mem_signed,
             Cat(Fill(24, shifted_rdata(7)), shifted_rdata(7,0)),
