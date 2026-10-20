@@ -106,14 +106,16 @@ sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
-# 性能评估：跑 microbench 并把 PMU 计数器记到 perf/ 下
+# 性能评估：跑 microbench，把 PMU 计数器 + 综合面积/时序（make sta）记到 perf/ 下
 #   make perf                  # mainargs=test（默认）
 #   make perf PERF_ARGS=train  # 跑 train 规模
+#   make perf PERF_STA=0       # 跳过 make sta（RTL 没变时它本来也只是空转）
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
 PERF_ARCH ?= riscv32e-ysyxSoC
 PERF_ARGS ?= test
+PERF_STA ?= 1
 perf:
-	tools/perf.sh -a $(PERF_ARGS) -n $(PERF_BENCH)
+	PERF_STA=$(PERF_STA) tools/perf.sh -a $(PERF_ARGS) -n $(PERF_BENCH)
 
 -include ../Makefile
 

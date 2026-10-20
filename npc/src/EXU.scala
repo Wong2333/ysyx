@@ -64,7 +64,6 @@ class ysyx_26030092_EXU extends Module{
     val lsu_in = IO(Decoupled(new LSUBundle))
     val lsu_out = IO(Flipped(Decoupled(new Bundle {
         val rdata = Input(UInt(32.W))
-        val error = Input(Bool())
     })))
 
     // 提交指令信息
