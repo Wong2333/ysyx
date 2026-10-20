@@ -28,18 +28,16 @@ class LSUBundle extends Bundle{
 
 class ysyx_26030092_LSU extends Module{
     val in = IO(Flipped(Decoupled(new LSUBundle)))
+    // 完成拍即报告拍：数据当场交给 EXU 的 mem_pending 锁存，本模块不再留一份
     val out = IO(Decoupled(new Bundle {
         val rdata = Output(UInt(32.W))
-        val error = Output(Bool())
     }))
 
     val AXI4_port = IO(new AXI4Bundle)
 
+    // 事务描述符：EXU 在 in.fire 后的下一拍就可能覆盖 ex_mem_pending，
+    // 而响应期还要 addr(1,0)/size/signed（扩展）和 pc（mtrace），所以必须自己留一份
     val lsu_in_reg = Reg(Flipped(new LSUBundle))
-    val lsu_out_reg = Reg(new Bundle {
-        val rdata = Output(UInt(32.W))
-        val error = Output(Bool())
-    })
 
     val rdata = WireDefault(0.U(32.W))
     val shifted_rdata = AXI4_port.rdata >> (lsu_in_reg.addr(1,0) << 3)
@@ -77,11 +75,9 @@ class ysyx_26030092_LSU extends Module{
     mtrace_u.io.addr := lsu_in_reg.addr
     mtrace_u.io.pc := lsu_in_reg.pc
 
-    out.bits.rdata := DontCare
-
     in.ready := false.B
     out.valid := false.B
-    out.bits := lsu_out_reg
+    out.bits.rdata := rdata
 
     AXI4_port.initMaster()
     AXI4_port.araddr := lsu_in_reg.addr
@@ -89,68 +85,72 @@ class ysyx_26030092_LSU extends Module{
     AXI4_port.wdata := lsu_in_reg.wdata
     AXI4_port.wstrb := wmask
 
-    val s_idle :: s_wait_mem_free :: s_wait_mem_resp :: s_wait_fetch :: Nil = Enum(4)
+    // s_addr: 交地址（store 还要交数据）；s_data: 等读数据
+    val s_idle :: s_addr :: s_data :: Nil = Enum(3)
     val state = RegInit(s_idle)
 
-    val waddr_ready = RegInit(false.B)
-    val wdata_ready = RegInit(false.B)
+    // 写通道地址/数据各交一次（slave 可能不在同一拍收）
+    val aw_sent = RegInit(false.B)
+    val w_sent = RegInit(false.B)
+    val store_done = (aw_sent || AXI4_port.awready) && (w_sent || AXI4_port.wready)
 
     // store 的 B 响应不再串在状态机里等：AW/W 握手完就放行流水线，B 用标志异步收。
     // 下一次访存在 in.ready 里被 !b_pending 挡住 → store→load 的顺序天然保住
     // （不能只保证 W 握手：数据进 SDRAM 颗粒要等 core 的写流水和 B）。
     val b_pending = RegInit(false.B)
-    val b_error = Reg(UInt(2.W))
 
     // 给 WBU：有 store 未落地时，fence.i 必须等（否则 icache 重填可能读到旧代码）
     val b_pending_out = IO(Output(Bool()))
     b_pending_out := b_pending
 
-    PerfCounter("LSU_access_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp)
-    PerfCounter("LSU_wait_free") := (state === s_wait_mem_free)
-    PerfCounter("LSU_wait_resp") := (state === s_wait_mem_resp)
+    PerfCounter("LSU_access_latency") := (state === s_addr || state === s_data)
+    PerfCounter("LSU_wait_free") := (state === s_addr)
+    PerfCounter("LSU_wait_resp") := (state === s_data)
     // LSU 占用拍数 = 流水线被访存阻塞的拍数（EXU 在 lsu_busy 期间冻结 ex_pending）
     PerfCounter("LSU_busy") := state =/= s_idle
     // 读写通道分开归账：load 占读通道，store 占写通道
-    PerfCounter("LSU_load_latency")  := (state === s_wait_mem_free || state === s_wait_mem_resp) && !is_write
-    PerfCounter("LSU_store_latency") := (state === s_wait_mem_free || state === s_wait_mem_resp) && is_write
-    PerfCounter("LSU_load_wait_free")  := (state === s_wait_mem_free) && !is_write
-    PerfCounter("LSU_store_wait_free") := (state === s_wait_mem_free) && is_write
-    PerfCounter("LSU_load_wait_resp")  := (state === s_wait_mem_resp) && !is_write
-    PerfCounter("LSU_store_wait_resp") := (state === s_wait_mem_resp) && is_write
+    PerfCounter("LSU_load_latency")  := (state === s_addr || state === s_data) && !is_write
+    PerfCounter("LSU_store_latency") := (state === s_addr || state === s_data) && is_write
+    PerfCounter("LSU_load_wait_free")  := (state === s_addr) && !is_write
+    PerfCounter("LSU_store_wait_free") := (state === s_addr) && is_write
+    PerfCounter("LSU_load_wait_resp")  := (state === s_data)
+    PerfCounter("LSU_store_wait_resp") := false.B
+    // 完成拍必须被接收：EXU 在 lsu_busy 期间恒 ready，这里恒为 0
+    PerfCounter("LSU_report_lost") := out.valid && !out.ready
 
     switch(state){
         is(s_idle){
             in.ready := !b_pending   // 有 store 未确认时下一次访存要等（保 store→load 顺序）
             when(in.fire){
-                state := s_wait_mem_free
+                state := s_addr
                 lsu_in_reg := in.bits
             }
         }
-        is(s_wait_mem_free){
+        is(s_addr){
             when(is_write){
-                when(!waddr_ready){
+                when(!aw_sent){
                     AXI4_port.awaddr := lsu_in_reg.addr
                     AXI4_port.awsize := awsize
                     AXI4_port.awvalid := true.B
                     when(AXI4_port.awready){
-                        waddr_ready := true.B
+                        aw_sent := true.B
                     }
                 }
-                when(!wdata_ready){
+                when(!w_sent){
                     AXI4_port.wdata := shifted_wdata
                     AXI4_port.wstrb := wmask
                     AXI4_port.wlast := true.B
                     AXI4_port.wvalid := true.B
                     when(AXI4_port.wready){
-                        wdata_ready := true.B
+                        w_sent := true.B
                     }
                 }
-                when(waddr_ready && wdata_ready){
-                    // store：地址/数据都已交给写通道 → 立刻放行，不再等 bvalid
-                    state := s_wait_fetch
+                when(store_done){
+                    // 地址/数据都已交给写通道 → 这拍就放行，不再等 bvalid，也不再多占一拍报告
+                    state := s_idle
                     b_pending := true.B
-                    waddr_ready := false.B
-                    wdata_ready := false.B
+                    aw_sent := false.B
+                    w_sent := false.B
                     mtrace_u.io.valid := true.B
                     mtrace_u.io.is_write := true.B
                     mtrace_u.io.size := mtrace_size
@@ -161,36 +161,33 @@ class ysyx_26030092_LSU extends Module{
                 AXI4_port.arsize := awsize
                 AXI4_port.arvalid := true.B
                 when(AXI4_port.arready){
-                    state := s_wait_mem_resp
+                    state := s_data
                 }
 
             }
         }
-        is(s_wait_mem_resp){ // 只剩 load 会进这个状态（store 在上面就放行了）
-            AXI4_port.rready := true.B                
+        is(s_data){
+            AXI4_port.rready := true.B
             when(AXI4_port.rvalid){
-                state := s_wait_fetch
+                // rdata 是单拍脉冲，这拍就要交给 EXU（本模块没有输出数据寄存器）
+                state := s_idle
                 mtrace_u.io.valid := true.B
                 mtrace_u.io.is_write := false.B
                 mtrace_u.io.size := mtrace_size
-                lsu_out_reg.rdata := rdata
                 mtrace_u.io.data := rdata
-                lsu_out_reg.error := AXI4_port.rresp
             }
         }
-        is(s_wait_fetch){
-            out.valid := true.B
-            when(out.fire){
-                state := s_idle
-            }
-        }
+    }
+
+    // 完成拍即报告拍（省掉原来的 s_wait_fetch 那拍）
+    when((state === s_addr && is_write && store_done) || (state === s_data && AXI4_port.rvalid)){
+        out.valid := true.B
     }
 
     // B 响应：只要有 store 在途就一直准备接收；收到就清标志
     AXI4_port.bready := b_pending
     when(b_pending && AXI4_port.bvalid){
         b_pending := false.B
-        b_error := AXI4_port.bresp
     }
 
     PerfCounter("LSU_get_data") := (b_pending && AXI4_port.bvalid && AXI4_port.bready) ||
