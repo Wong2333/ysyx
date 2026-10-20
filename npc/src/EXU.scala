@@ -150,7 +150,7 @@ class ysyx_26030092_EXU extends Module{
     ))
 
     bpu_train.is_jal := is_jump
-    bpu_train.pc := actual_target_pc.io.pc
+    bpu_train.pc := actual_target_pc.io.pc(31,2)
     bpu_train.valid := (is_branch || is_jump) && idu_out.fire
     bpu_train.taken := taken
     bpu_train.target := actual_target_pc.io.pc_next(31,2)

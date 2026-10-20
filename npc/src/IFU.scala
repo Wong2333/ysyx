@@ -45,7 +45,7 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.pc_next := bpu_predict.next_pc
     PC_reg.io.pc_we := false.B        // 在下面取指握手处统一赋值（见 req.fire 门控）
     PC_reg.io.pc_4 := false.B
-    bpu_pc := PC_reg.io.pc
+    bpu_pc := PC_reg.io.pc(31,2)
 
     val inst_reg = RegInit(0.U(32.W))
     val error_reg = RegInit(false.B)
@@ -70,9 +70,7 @@ class ysyx_26030092_IFU extends Module{
     when(icache_main_pipe.req.ready & icache_main_pipe.req.valid){
         PC_reg.io.pc_4 := true.B
     }
-    // BTB 预测 taken → 把 PC 重定向到目标。必须等"这一拍取指真的被接受"（req.fire）：
-    // 否则若该拍 icache 忙，PC 会直接跳走，位于该 PC 的指令根本没被取到 —— 条件分支被跳过
-    // 架构上等价（difftest 抓不到，但提交指令数会漂），jal/jalr 会丢掉 rd=PC+4 的写入（真错）。
+
     PC_reg.io.pc_we := bpu_predict.valid && bpu_predict.take &&
                        icache_main_pipe.req.ready && icache_main_pipe.req.valid
     when(flush){                       // flush 优先级最高，放最后覆盖
@@ -88,8 +86,7 @@ class ysyx_26030092_IFU extends Module{
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B
     }
-    // 取指停顿归因：wait_miss 卡在 refill（真缺失）；wait_backend = 响应槽被未消费的
-    // 命中占住（后端反压）；两者之和恒等于 wait_icache
+
     PerfCounter("IFU_get_inst_cycles") := ~flush
     PerfCounter("IFU_wait_icache")  := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
     PerfCounter("IFU_wait_miss")    := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && icache_main_pipe.refilling
