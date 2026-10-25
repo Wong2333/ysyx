@@ -43,12 +43,16 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
     val r_idle :: r_ar :: r_busy :: Nil = Enum(3)
     val r_state = RegInit(r_idle)
     val r_sel   = RegInit(0.U(sel_bits.W))
+    val r_last  = RegInit(0.U(sel_bits.W))   // 上一笔读授给了谁（轮转用）
 
     switch(r_state){
         is(r_idle){
             val ar_reqs = VecInit(in.map(_.arvalid)).asUInt
             when(ar_reqs =/= 0.U){
-                r_sel := PriorityEncoder(ar_reqs)
+                // 轮转：两个 master 同时请求时，优先给上一笔没被授到的那个
+                val sel = Mux(ar_reqs.andR, ~r_last, PriorityEncoder(ar_reqs))
+                r_sel  := sel
+                r_last := sel
                 r_state := r_ar
             }
         }
@@ -117,8 +121,10 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
     // 0 = IFU（icache refill），1 = LSU（load/store）
     PerfCounter("AXI_read_busy")  := (r_state === r_busy)
     PerfCounter("AXI_write_busy") := (w_state === w_busy)
+    // 两个 master 同时抢读通道的拍数（判断轮转仲裁是否真的有用）
+    PerfCounter("AXI_read_contend") := VecInit(in.map(_.arvalid)).asUInt.andR
     for(i <- 0 until n_in){
-        PerfCounter(s"AXI_read_grant_$i")  := (r_state === r_busy) && (out.rid === i.U)
-        PerfCounter(s"AXI_write_grant_$i") := (w_state === w_busy) && (out.bid === i.U)
+        PerfCounter(s"AXI_read_grant_$i")  := (r_state === r_busy) && (r_sel === i.U)
+        PerfCounter(s"AXI_write_grant_$i") := (w_state === w_busy) && (w_sel === i.U)
     }
 }

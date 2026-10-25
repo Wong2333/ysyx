@@ -145,7 +145,6 @@ class icacheMainPipe(block_size :Int, block_num :Int) extends Module{
     PerfCounter("icache_refill_suppressed") := miss && flush && refill_unit.req.ready
     PerfCounter("icache_miss_killed_by_flush") := flush && icache.resp.valid && !icache.resp.hit
     PerfCounter("icache_stall_by_refill") := (refill_state === wait_refill)
-    PerfCounter("icache_stall_by_backend") := resp.valid && !resp.ready
     PerfCounter("icache_refill_req_stall") := refill_unit.req.valid && !refill_unit.req.ready
 
     val AXI4_port = IO(new AXI4Bundle)
