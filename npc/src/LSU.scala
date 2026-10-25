@@ -132,17 +132,20 @@ class ysyx_26030092_LSU extends Module{
     val b_pending_out = IO(Output(Bool()))
     b_pending_out := wr_busy
 
-    PerfCounter("LSU_access_latency") := rd_busy || (w_state === w_aw)
-    PerfCounter("LSU_wait_free") := (r_state === r_ar) || (w_state === w_aw)
-    PerfCounter("LSU_wait_resp") := (r_state === r_data)
-    // LSU 占用拍数（一笔访存从进来到交出去）
-    PerfCounter("LSU_busy") := rd_busy || wr_busy
+    // ---- 阻塞拍数 = in.ready 为低的拍数（读写双通道后，这才是"流水线被 LSU 挡住"）----
+    val lsu_blocked = in.valid && !in.ready
+    PerfCounter("LSU_busy")       := lsu_blocked
+    // store 被挡住 = 写通道忙着上一笔（通常是在等 B）
+    PerfCounter("LSU_store_gate") := lsu_blocked &&  (in.bits.mem_op === MemOp.store)
+    // load 被挡住 = 与在途 store 落在同一个 32 位字（顺序保护，正常应接近 0）
+    PerfCounter("LSU_load_gate")  := lsu_blocked && !(in.bits.mem_op === MemOp.store)
+    // ---- 在途拍数（两条通道可同时在途，不能相加当阻塞拍数看）----
     PerfCounter("LSU_load_latency")  := rd_busy
     PerfCounter("LSU_store_latency") := (w_state === w_aw)
     PerfCounter("LSU_load_wait_free")  := (r_state === r_ar)
     PerfCounter("LSU_store_wait_free") := (w_state === w_aw)
     PerfCounter("LSU_load_wait_resp")  := (r_state === r_data)
-    PerfCounter("LSU_store_wait_resp") := false.B
+    PerfCounter("LSU_store_b_pending") := (w_state === w_b)
     // 完成拍必须被接收：EXU 在 lsu_busy 期间恒 ready
     PerfCounter("LSU_report_lost") := out.valid && !out.ready
     // 两条通道同拍报告 = 不可能（EXU 一次只压一条），出现就是 bug
@@ -222,7 +225,4 @@ class ysyx_26030092_LSU extends Module{
                                    (r_state === r_data && AXI4_port.rvalid)
     PerfCounter("LSU_load_get_data")  := (r_state === r_data && AXI4_port.rvalid)
     PerfCounter("LSU_store_get_data") := (w_state === w_b && AXI4_port.bvalid)
-    // store 已放行流水线、在等 B 的拍数（以及其中真的挡住下一次访存的拍数）
-    PerfCounter("LSU_store_b_pending") := (w_state === w_b)
-    PerfCounter("LSU_store_gate") := in.valid && !in.ready
 }

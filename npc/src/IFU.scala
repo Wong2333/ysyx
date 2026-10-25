@@ -38,12 +38,11 @@ class ysyx_26030092_IFU extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
 
-    // PC 寄存器（架构 PC = 取指 PC，串行流水线下两者合一）
     val PC_reg = Module(new PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
     PC_reg.io.pc_next := bpu_predict.next_pc
-    PC_reg.io.pc_we := false.B        // 在下面取指握手处统一赋值（见 req.fire 门控）
+    PC_reg.io.pc_we := false.B       
     PC_reg.io.pc_4 := false.B
     bpu_pc := PC_reg.io.pc(31,2)
 
@@ -88,10 +87,8 @@ class ysyx_26030092_IFU extends Module{
     }
 
     PerfCounter("IFU_get_inst_cycles") := ~flush
-    PerfCounter("IFU_wait_icache")  := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready
     PerfCounter("IFU_wait_miss")    := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && icache_main_pipe.refilling
     PerfCounter("IFU_wait_backend") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && ~icache_main_pipe.refilling
     PerfCounter("IFU_wait_resp")    := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
-    PerfCounter("IFU_wait_idu")     := out.valid && ~out.fire
     PerfCounter("IFU_fetch")        := out.fire
 }
