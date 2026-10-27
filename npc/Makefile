@@ -22,6 +22,8 @@ endif
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
+SPLIT_DIR = $(BUILD_DIR)/split
+# 流片/CI 要求：所有 CPU 模块合并到一个文件，模块名统一加 ysyx_26030092_ 前缀
 CORE = $(BUILD_DIR)/ysyx_26030092.sv
 PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
@@ -56,10 +58,10 @@ ELF=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $(RESOURCES) ./$(BUILD_DIR)/*.sv $(CSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(CORE) $(CSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
 		-Iresources/include
@@ -68,10 +70,20 @@ test:
 	mill -i test
 
 verilog: $(CORE) $(PERF_NAMES_H)
+
+# firtool 按模块拆分输出，这里合并成单文件，并给未加前缀的模块补上 ysyx_26030092_
+UNPREFIXED_MODS = BPU|icache|icacheMainPipe|icacheRefillUnit|cache_8x128|ram_2x97|tag_array_8x25|Commit|EbreakBlackBox|InvalidInstructionBlackBox|mtrace|PCBlackBox|PerfCounterArray|RegBlackBox
+
 $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
-	mkdir -p $(BUILD_DIR)
-	mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+	mkdir -p $(SPLIT_DIR)
+	mill -i runMain Elaborate --target-dir $(SPLIT_DIR)
+	cat $(SPLIT_DIR)/*.sv > $@.tmp
+	sed -i -E 's/\b($(UNPREFIXED_MODS))\b/ysyx_26030092_\1/g' $@.tmp
+	# 手写资源的 DPI 函数名不能跟着改（C++ 侧按原名提供），只改 module 声明
+	for f in $(RESOURCES); do \
+	    sed -E 's/^([[:space:]]*module[[:space:]]+)($(UNPREFIXED_MODS))([[:space:](])/\1ysyx_26030092_\2\3/' $$f >> $@.tmp; done
+	mv $@.tmp $@
 
 # 从生成的 Verilog 提取 PerfCounterArray 实例路径（名称唯一来源：RTL 的 PerfCounter 声明）
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
@@ -99,7 +111,72 @@ rebuild:
 	make clean
 	make
 
-.PHONY: bin test verilog help reformat checkformat clean perf
+.PHONY: bin test verilog sim-iverilog sim-iverilog-netlist help reformat checkformat clean perf lint
+
+# 流片前静态检查（讲义要求）：只豁免 DECLFILENAME（与逻辑无关）和 UNUSEDSIGNAL（未用端口/位）
+lint: $(CORE)
+	verilator --lint-only -Wall -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL \
+		--top-module $(DESIGN) -Iresources/include $(CORE)
+	echo "lint OK"
+
+# ================= 四值仿真（iverilog）=================
+# CI 约定：make -C npc sim-iverilog IMG=xxx.bin，程序第一条指令在 0x80000000
+IVERILOG ?= iverilog
+VVP      ?= vvp
+SIM_DIR  = $(BUILD_DIR)/sim
+SIM_HEX  = $(SIM_DIR)/img.hex
+SIM_INC  = $(SIM_DIR)/include
+
+$(SIM_INC)/autoconfig.svh: $(KCONFIG_VERILOG_INCLUDE)
+	@mkdir -p $(SIM_INC)
+	python3 scripts/sim_autoconfig.py $< $@
+
+$(SIM_HEX): FORCE
+	@test -n "$(IMG)" || (echo "用法: make sim-iverilog IMG=xxx.bin" && exit 1)
+	@mkdir -p $(SIM_DIR)
+	python3 scripts/bin2hex.py $(IMG) $@
+FORCE:
+
+# iverilog 不支持 DPI-C：用 -DSYNTHESIS 去掉所有 DPI/黑盒行为；
+# PC 复位值通过替换后的 include 目录改成 0x80000000
+SIM_CYCLES ?= 2000000
+# 编译产物做成真实目标：换镜像跑的时候不必重新编译（scripts/run_tests.sh 依赖这一点）
+$(SIM_DIR)/tb.vvp: $(CORE) $(SIM_INC)/autoconfig.svh sim/tb_npc.v sim/axi_mem.v
+	@mkdir -p $(SIM_DIR)
+	$(IVERILOG) -g2012 -DSYNTHESIS -D__ICARUS__ \
+		-I$(SIM_INC) -Iresources/include -s tb_npc \
+		-o $@ $(CORE) sim/axi_mem.v sim/tb_npc.v
+
+sim-iverilog: $(SIM_HEX) $(SIM_DIR)/tb.vvp
+	$(VVP) $(SIM_DIR)/tb.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
+
+# 网表仿真：NETLIST=<yosys 综合出的网表> CELLS=<标准单元行为模型>
+#   make sim-iverilog-netlist IMG=xxx.bin NETLIST=result/<dir>/ysyx_26030092.netlist.v
+CELLS ?= /home/wjm/yosys-sta/pdk/nangate45/sim/cells.v
+NET_TB = $(SIM_DIR)/tb_netlist.v
+NETLIST_SIM_DIR = $(SIM_DIR)/netlist
+NETLIST_SIM_V   = $(NETLIST_SIM_DIR)/ysyx_26030092.netlist.v
+
+# 用 0x80000000 起始地址的那份 autoconfig.svh 重新综合，供网表仿真使用
+$(NETLIST_SIM_V): $(CORE) $(SIM_INC)/autoconfig.svh
+	@mkdir -p $(NETLIST_SIM_DIR)
+	echo tcl $(SCRIPT_DIR)/yosys.tcl $(DESIGN) $(PDK_NAME) \"$(CORE)\" $@ | \
+	  VERILOG_INCLUDE_DIRS=$(abspath $(SIM_INC)):$(abspath resources/include) \
+	  yosys -g -l $(NETLIST_SIM_DIR)/yosys.log -s -
+
+$(NET_TB): $(NETLIST_SIM_V)
+	@mkdir -p $(SIM_DIR)
+	python3 scripts/gen_netlist_tb.py $(NETLIST_SIM_V) $(NET_TB)
+
+$(SIM_DIR)/tb_net.vvp: $(NETLIST_SIM_V) $(CELLS) sim/axi_mem.v $(NET_TB)
+	@mkdir -p $(SIM_DIR)
+	$(IVERILOG) -g2012 -DSYNTHESIS -D__ICARUS__ -DNETLIST_SIM \
+		-I$(SIM_INC) -Iresources/include -s tb_netlist \
+		-o $@ $(NETLIST_SIM_V) $(CELLS) sim/axi_mem.v $(NET_TB)
+
+sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp
+	$(VVP) $(SIM_DIR)/tb_net.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
+
 
 sim:
 	make bin
@@ -121,7 +198,7 @@ perf:
 
 DESIGN = ysyx_26030092
 
-RTL_FILES = $(wildcard build/*.sv) $(RESOURCES)
+RTL_FILES = $(CORE)
 
 export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
 
