@@ -72,9 +72,12 @@ class ysyx_26030092_RFS extends Module {
 
     val mcycle = RegInit(0.U(64.W))
     mcycle := mcycle + 1.U
-    val mepc = Reg(UInt(32.W))
-    val mcause = Reg(UInt(32.W))
-    val mtvec = Reg(UInt(32.W))
+    // 这三个 CSR 是"先读后写"的（异常时读 mtvec 跳转、mret 读 mepc），
+    // 没有复位值的话四值仿真里一上电就是 X，ebreak 之后 PC 会跟着变 X。
+    // RegInit 会合成出 reset ? 0 : ...，不依赖任何其它状态。
+    val mepc = RegInit(0.U(32.W))
+    val mcause = RegInit(0.U(32.W))
+    val mtvec = RegInit(0.U(32.W))
     val mstatus = RegInit("h1800".U(32.W))
 
     mtvec_out := mtvec

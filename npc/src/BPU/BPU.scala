@@ -38,10 +38,11 @@ class BPU(ways :Int, tag_bits :Int) extends Module{
     val btb = Reg(Vec(ways, new BTBEntry(tag_bits)))
     // 4 路 tree-PLRU，3 位，每位指向"最久没用"的那一侧
     val plru = RegInit(VecInit(Seq.fill(3)(false.B)))
-    when(reset.asBool){
-        btb.foreach(_.valid := false.B)
-        plru.foreach(_ := false.B)
-    }
+    // 注意：复位必须放在本模块所有 when 的最后（Chisel 后写覆盖先写）。
+    // 否则 firtool 会合成 valid <= wr_en | (~reset & valid)：复位不是"清成常数"，
+    // 一旦 wr_en 依赖的其它状态是 X（门级网表上电时就是这样），valid 永远出不了 X，
+    // 四值网表仿真里 BPU 就一直是 X，PC 也跟着变 X。
+    // 放在最后 → valid <= reset ? 0 : (wr_en | valid)，复位优先级最高，能自愈。
 
     val tag = pc(tag_bits - 1, 0)
 
@@ -92,5 +93,11 @@ class BPU(ways :Int, tag_bits :Int) extends Module{
             plru(0) := true.B
             plru(1) := !wr_way(0)
         }
+    }
+
+    // 复位放在最后：优先级最高，合成出 reset ? 0 : ...，不依赖任何其它状态
+    when(reset.asBool){
+        btb.foreach(_.valid := false.B)
+        plru.foreach(_ := false.B)
     }
 }
