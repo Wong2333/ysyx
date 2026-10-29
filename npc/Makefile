@@ -151,11 +151,18 @@ sim-iverilog: $(SIM_HEX) $(SIM_DIR)/tb.vvp
 	$(VVP) $(SIM_DIR)/tb.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
 
 # 网表仿真：NETLIST=<yosys 综合出的网表> CELLS=<标准单元行为模型>
-#   make sim-iverilog-netlist IMG=xxx.bin NETLIST=result/<dir>/ysyx_26030092.netlist.v
+#   CI 约定：make -C npc sim-iverilog-netlist IMG=xxx NETLIST=yyy CELLS=zzz
+#   传了 NETLIST 就直接用 CI 给的那份网表；没传才自己综合（本地调试方便）
 CELLS ?= /home/wjm/yosys-sta/pdk/nangate45/sim/cells.v
 NET_TB = $(SIM_DIR)/tb_netlist.v
 NETLIST_SIM_DIR = $(SIM_DIR)/netlist
 NETLIST_SIM_V   = $(NETLIST_SIM_DIR)/ysyx_26030092.netlist.v
+
+ifeq ($(strip $(NETLIST)),)
+  NETLIST_USE = $(NETLIST_SIM_V)
+else
+  NETLIST_USE = $(abspath $(NETLIST))
+endif
 
 # 用 0x80000000 起始地址的那份 autoconfig.svh 重新综合，供网表仿真使用
 $(NETLIST_SIM_V): $(CORE) $(SIM_INC)/autoconfig.svh
@@ -164,15 +171,15 @@ $(NETLIST_SIM_V): $(CORE) $(SIM_INC)/autoconfig.svh
 	  VERILOG_INCLUDE_DIRS=$(abspath $(SIM_INC)):$(abspath resources/include) \
 	  yosys -g -l $(NETLIST_SIM_DIR)/yosys.log -s -
 
-$(NET_TB): $(NETLIST_SIM_V)
+$(NET_TB): $(NETLIST_USE)
 	@mkdir -p $(SIM_DIR)
-	python3 scripts/gen_netlist_tb.py $(NETLIST_SIM_V) $(NET_TB)
+	python3 scripts/gen_netlist_tb.py $(NETLIST_USE) $(NET_TB)
 
-$(SIM_DIR)/tb_net.vvp: $(NETLIST_SIM_V) $(CELLS) sim/axi_mem.v $(NET_TB)
+$(SIM_DIR)/tb_net.vvp: $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 	@mkdir -p $(SIM_DIR)
 	$(IVERILOG) -g2012 -DSYNTHESIS -D__ICARUS__ -DNETLIST_SIM \
 		-I$(SIM_INC) -Iresources/include -s tb_netlist \
-		-o $@ $(NETLIST_SIM_V) $(CELLS) sim/axi_mem.v $(NET_TB)
+		-o $@ $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 
 sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp
 	$(VVP) $(SIM_DIR)/tb_net.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
