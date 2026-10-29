@@ -1,4 +1,4 @@
-From 18919bde0342ea5539d593ee4592e4e62e2cbdd8 Mon Sep 17 00:00:00 2001
+From 63871b8738606779d4e60a1f5a75fe85a025fa5c Mon Sep 17 00:00:00 2001
 From: wangjingmin <3201884732@qq.com>
 Date: Thu, 29 Oct 2026 22:38:10 +0800
 Subject: [PATCH] =?UTF-8?q?=E9=80=82=E9=85=8D=E4=B8=80=E7=94=9F=E4=B8=80?=
@@ -20,7 +20,7 @@ Content-Transfer-Encoding: 8bit
  create mode 100644 bsp/abstract-machine/extra-npc.ld
 
 diff --git a/bsp/abstract-machine/Makefile b/bsp/abstract-machine/Makefile
-index 8d70f310b..8c4af81d1 100644
+index 8d70f310b..a38768f3e 100644
 --- a/bsp/abstract-machine/Makefile
 +++ b/bsp/abstract-machine/Makefile
 @@ -8,7 +8,16 @@ NAME = rtthread
@@ -32,8 +32,8 @@ index 8d70f310b..8c4af81d1 100644
 +# VMA 在 sdram，靠 boot 拷过去）。npc 的 linker.ld 没有这些段，直接挂 extra.ld 会让
 +# .data.extra 落到地址 0，运行到 rt_components_board_init 时从 0x168 读初始化表就读到空。
 +# 所以 npc 用 extra-npc.ld：段收集完全一样，只是不带段属性。
-+# ARCH 可能是 riscv32e-ysyxSoC，也可能是小写的 riscv32e-ysyxsoc（CI 讲义用的写法）
-+ifneq ($(or $(findstring ysyxSoC,$(ARCH)),$(findstring ysyxsoc,$(ARCH))),)
++# 统一使用小写的 ARCH=riscv32e-ysyxsoc（SoC 平台）
++ifneq ($(findstring ysyxsoc,$(ARCH)),)
 +  LDFLAGS += -T extra.ld
 +else
 +  LDFLAGS += -T extra-npc.ld

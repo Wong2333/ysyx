@@ -27,3 +27,7 @@ test_run_dir/
 !scripts/*.py
 !scripts/*.sh
 .tmp/
+
+# 性能评估脚本（make perf 依赖）
+!tools/perf.sh
+!tools/sta_summary.py

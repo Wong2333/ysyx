@@ -195,7 +195,7 @@ sim:
 #   make perf PERF_ARGS=train  # 跑 train 规模
 #   make perf PERF_STA=0       # 跳过 make sta（RTL 没变时它本来也只是空转）
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
-PERF_ARCH ?= riscv32e-ysyxSoC
+PERF_ARCH ?= riscv32e-ysyxsoc
 PERF_ARGS ?= test
 PERF_STA ?= 1
 perf:

@@ -24,7 +24,7 @@
 - 新增 `bsp/abstract-machine/extra-npc.ld`：段收集内容与 `extra.ld` 相同，只去掉
   `> sdram AT> flash` / `> sdram` 段属性，让段跟着 `.data` 落在 0x80000000 附近
 - `bsp/abstract-machine/Makefile` 按 `$(ARCH)` 选择：
-  - `riscv32e-ysyxSoC` / `riscv32e-ysyxsoc` → `extra.ld`（SoC 流程不受影响）
+  - `riscv32e-ysyxsoc` → `extra.ld`（SoC 流程不受影响）
   - 其它（npc）→ `extra-npc.ld`
 
 ### 2. 其它本地修改
