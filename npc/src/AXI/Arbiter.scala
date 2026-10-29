@@ -43,16 +43,12 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
     val r_idle :: r_ar :: r_busy :: Nil = Enum(3)
     val r_state = RegInit(r_idle)
     val r_sel   = RegInit(0.U(sel_bits.W))
-    val r_last  = RegInit(0.U(sel_bits.W))   // 上一笔读授给了谁（轮转用）
 
     switch(r_state){
         is(r_idle){
             val ar_reqs = VecInit(in.map(_.arvalid)).asUInt
             when(ar_reqs =/= 0.U){
-                // 轮转：两个 master 同时请求时，优先给上一笔没被授到的那个
-                val sel = Mux(ar_reqs.andR, ~r_last, PriorityEncoder(ar_reqs))
-                r_sel  := sel
-                r_last := sel
+                r_sel := PriorityEncoder(ar_reqs)
                 r_state := r_ar
             }
         }
