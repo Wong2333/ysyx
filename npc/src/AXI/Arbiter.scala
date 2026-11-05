@@ -88,46 +88,50 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
     //     }
     // }
 
-    // ================= 写通道 (AW / W / B) =================
-    val w_idle :: w_hs :: w_busy :: Nil = Enum(3)
-    val w_state = RegInit(w_idle)
-    val w_sel   = RegInit(0.U(sel_bits.W))
-    val aw_done = RegInit(false.B)
-    val w_done  = RegInit(false.B)
+    // AW & W
+    // val w_idle :: w_hs :: w_busy :: Nil = Enum(3)
+    // val w_state = RegInit(w_idle)
+    // val w_sel   = RegInit(0.U(sel_bits.W))
+    // val aw_done = RegInit(false.B)
+    // val w_done  = RegInit(false.B)
 
-    switch(w_state){
-        is(w_idle){
-            val aw_reqs = VecInit(master.map(_.awvalid)).asUInt
-            when(aw_reqs =/= 0.U){
-                w_sel := PriorityEncoder(aw_reqs)
-                aw_done := false.B
-                w_done  := false.B
-                w_state := w_hs
-            }
-        }
-        is(w_hs){
-            // 交出 AW / W，两个都握完就松手
-            slave.connectAWFrom(master(w_sel), true.B)
-            slave.connectWFrom(master(w_sel), true.B)
-            slave.awid := w_sel
-            when(slave.awvalid && slave.awready){ aw_done := true.B }
-            when(slave.wvalid  && slave.wready && slave.wlast){ w_done := true.B }
-            when((aw_done || (slave.awvalid && slave.awready)) &&
-                 (w_done  || (slave.wvalid && slave.wready && slave.wlast))){
-                w_state := w_busy
-            }
-        }
-        is(w_busy){
-            routeB(slave)
-            when(slave.bvalid && slave.bready){
-                w_state := w_idle
-                when(slave.bresp =/= 0.U){
-                    printf("Access Fault!\n")
-                    assert(false.B)
-                }
-            }
-        }
-    }
+    // switch(w_state){
+    //     is(w_idle){
+    //         val aw_reqs = VecInit(master.map(_.awvalid)).asUInt
+    //         when(aw_reqs =/= 0.U){
+    //             w_sel := PriorityEncoder(aw_reqs)
+    //             aw_done := false.B
+    //             w_done  := false.B
+    //             w_state := w_hs
+    //         }
+    //     }
+    //     is(w_hs){
+    //         // 交出 AW / W，两个都握完就松手
+    //         slave.connectAWFrom(master(w_sel), true.B)
+    //         slave.connectWFrom(master(w_sel), true.B)
+    //         slave.awid := w_sel
+    //         when(slave.awvalid && slave.awready){ aw_done := true.B }
+    //         when(slave.wvalid  && slave.wready && slave.wlast){ w_done := true.B }
+    //         when((aw_done || (slave.awvalid && slave.awready)) &&
+    //              (w_done  || (slave.wvalid && slave.wready && slave.wlast))){
+    //             w_state := w_busy
+    //         }
+    //     }
+    //     is(w_busy){
+    //         routeB(slave)
+    //         when(slave.bvalid && slave.bready){
+    //             w_state := w_idle
+    //             when(slave.bresp =/= 0.U){
+    //                 printf("Access Fault!\n")
+    //                 assert(false.B)
+    //             }
+    //         }
+    //     }
+    // }
+
+    slave.connectAWFrom(master(1), true.B)
+    slave.connectWFrom(master(1), true.B)
+    master(1).connectBFrom(slave, true.B)
 
     // AXI 通道占用：判断流水线是否已撞到"单通道带宽天花板"的总开关
     // 0 = IFU（icache refill），1 = LSU（load/store）
