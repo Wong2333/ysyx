@@ -89,23 +89,6 @@ module tb_npc;
     #1 reset = 1'b0;
   end
 
-  // 前 N 笔 AXI 事务打印出来，便于和网表仿真对比
-  integer n_ar = 0, n_aw = 0, n_r = 0, n_b = 0;
-  always @(posedge clock) begin
-    if (m_arvalid & m_arready & (n_ar < 10)) begin
-      $display("[axi] AR #%0d addr=0x%08x len=%0d", n_ar, m_araddr, m_arlen); n_ar <= n_ar + 1;
-    end
-    if (m_rvalid & m_rready & (n_r < 10)) begin
-      $display("[axi]  R #%0d data=0x%08x last=%0d", n_r, m_rdata, m_rlast); n_r <= n_r + 1;
-    end
-    if (m_awvalid & m_awready & (n_aw < 10)) begin
-      $display("[axi] AW #%0d addr=0x%08x", n_aw, m_awaddr); n_aw <= n_aw + 1;
-    end
-    if (m_bvalid & m_bready & (n_b < 10)) begin
-      $display("[axi]  B #%0d resp=%0d", n_b, m_bresp); n_b <= n_b + 1;
-    end
-  end
-
   // ---- 结束条件 ----
 `ifndef NETLIST_SIM
   // RTL 仿真：直接看 WBU 的 ebreak（层次引用在网表里不存在，所以网表仿真用下面的判据）
@@ -116,9 +99,6 @@ module tb_npc;
   end
   always @(posedge clock) begin
     cycles <= cycles + 1;
-    if (cycles % 200000 == 0 && cycles != 0)
-      $display("[trace] cycles=%0d pc=0x%08x a0=0x%08x", cycles,
-               dut.IFU_u.PC_reg.PC, dut.RFS_u.Reg_u.rf[10]);
     if (!reset && dut.WBU_u.ebreak.ebreak_trap) begin
       $display("[iverilog] EBREAK: 程序结束, a0 = 0x%08x, pc = 0x%08x, cycles = %0d",
                dut.RFS_u.Reg_u.rf[10], dut.IFU_u.PC_reg.PC, cycles);

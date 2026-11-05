@@ -144,23 +144,6 @@ module tb_netlist;
     #1 reset = 1'b0;
   end
 
-  // 前 10 笔 AXI 事务打印出来，便于和 RTL 仿真逐笔对比
-  integer n_ar = 0, n_aw = 0, n_r = 0, n_b = 0;
-  always @(posedge clock) begin
-    if (m_arvalid & m_arready & (n_ar < 10)) begin
-      $display("[axi] AR #%0d addr=0x%08x len=%0d", n_ar, m_araddr, m_arlen); n_ar <= n_ar + 1;
-    end
-    if (m_rvalid & m_rready & (n_r < 10)) begin
-      $display("[axi]  R #%0d data=0x%08x last=%0d", n_r, m_rdata, m_rlast); n_r <= n_r + 1;
-    end
-    if (m_awvalid & m_awready & (n_aw < 10)) begin
-      $display("[axi] AW #%0d addr=0x%08x", n_aw, m_awaddr); n_aw <= n_aw + 1;
-    end
-    if (m_bvalid & m_bready & (n_b < 10)) begin
-      $display("[axi]  B #%0d resp=%0d", n_b, m_bresp); n_b <= n_b + 1;
-    end
-  end
-
 @@STOP@@
 
   wire axi_active = (m_arvalid & m_arready) | (m_awvalid & m_awready) |

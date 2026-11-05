@@ -4,73 +4,89 @@ import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
 
-// 读写两条通道完全独立，并且**握手即松手**：
-//   1) AR / AW+W 一握手，仲裁器立刻断开该通道（不再 hold 到 rlast / B）；
-//   2) R / B 响应按 **ID 路由**回发起方（arid/awid 由仲裁器按被选中的 master 打上）；
-//   3) 只要 SoC 侧支持多 outstanding，把 req/busy 改成队列即可 —— 本模块的路由不依赖
-//      "当前借给谁"，所以天然可移植。
 class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
-    val in = IO(Vec(n_in, Flipped(new AXI4Bundle)))   // 接收多个 Master 的请求
-    val out = IO(new AXI4Bundle)    // 输出给单个 Slave
+    val master = IO(Vec(n_in, Flipped(new AXI4Bundle)))
+    val slave = IO(new AXI4Bundle)
 
     for(i <- 0 until n_in){
-        in(i).initSlave()
+        master(i).initSlave()
     }
-    out.initMaster()
+    slave.initMaster()
 
     val sel_bits = log2Ceil(n_in)
     def routeR(src: AXI4Bundle): Unit = {
-        // R 通道：Slave -> 按 rid 找到的 Master
-        src.rready := MuxCase(false.B, (0 until n_in).map(i => (src.rid === i.U) -> in(i).rready))
+        src.rready := MuxCase(false.B, (0 until n_in).map(i => (src.rid === i.U) -> master(i).rready))
         for(i <- 0 until n_in){
-            in(i).rvalid := src.rvalid && (src.rid === i.U)
-            in(i).rid    := src.rid
-            in(i).rdata  := src.rdata
-            in(i).rresp  := src.rresp
-            in(i).rlast  := src.rlast
+            master(i).rvalid := src.rvalid && (src.rid === i.U)
+            master(i).rid    := src.rid
+            master(i).rdata  := src.rdata
+            master(i).rresp  := src.rresp
+            master(i).rlast  := src.rlast
         }
     }
     def routeB(src: AXI4Bundle): Unit = {
-        src.bready := MuxCase(false.B, (0 until n_in).map(i => (src.bid === i.U) -> in(i).bready))
+        src.bready := MuxCase(false.B, (0 until n_in).map(i => (src.bid === i.U) -> master(i).bready))
         for(i <- 0 until n_in){
-            in(i).bvalid := src.bvalid && (src.bid === i.U)
-            in(i).bid    := src.bid
-            in(i).bresp  := src.bresp
+            master(i).bvalid := src.bvalid && (src.bid === i.U)
+            master(i).bid    := src.bid
+            master(i).bresp  := src.bresp
         }
     }
 
-    // ================= 读通道 (AR / R) =================
-    val r_idle :: r_ar :: r_busy :: Nil = Enum(3)
-    val r_state = RegInit(r_idle)
-    val r_sel   = RegInit(0.U(sel_bits.W))
-
-    switch(r_state){
-        is(r_idle){
-            val ar_reqs = VecInit(in.map(_.arvalid)).asUInt
-            when(ar_reqs =/= 0.U){
-                r_sel := PriorityEncoder(ar_reqs)
-                r_state := r_ar
-            }
-        }
-        is(r_ar){
-            // 只在这几拍接通 AR；握手后立刻松手
-            out.connectARFrom(in(r_sel), true.B)
-            out.arid := r_sel
-            when(out.arvalid && out.arready){
-                r_state := r_busy
-            }
-        }
-        is(r_busy){
-            routeR(out)
-            when(out.rvalid && out.rready && out.rlast){
-                r_state := r_idle
-                when(out.rresp =/= 0.U){
-                    printf("Access Fault!\n")
-                    assert(false.B)
-                }
-            }
-        }
+    // AR
+    val arLock  = RegInit(false.B)
+    val arLockSel = RegInit(0.U(sel_bits.W))
+    val ar_req_bits = VecInit(master.map(_.arvalid)).asUInt
+    val ar_sel  = Mux(arLock, arLockSel, PriorityEncoder(ar_req_bits))
+    when(slave.arvalid && !slave.arready && !arLock) { // 锁存ar_sel
+        arLock    := true.B
+        arLockSel := ar_sel
     }
+    when(slave.arvalid && slave.arready) {
+        arLock := false.B
+    }
+    slave.connectARFrom(master(ar_sel), true.B)
+    slave.arid := ar_sel
+
+    // R
+    for(i <- 0 until n_in){
+        master(i).rvalid := slave.rvalid && (slave.rid === i.U)
+        master(i).rid    := slave.rid
+        master(i).rdata  := slave.rdata
+        master(i).rresp  := slave.rresp
+        master(i).rlast  := slave.rlast
+    }
+    when(slave.rvalid){
+        slave.rready := master(slave.rid).rready
+    }
+    // R
+
+    // switch(ar_state){
+    //     is(ar_idle){
+    //         val ar_reqs = VecInit(master.map(_.arvalid)).asUInt
+    //         when(ar_reqs =/= 0.U){
+    //             ar_sel := PriorityEncoder(ar_reqs)
+    //             ar_state := ar_busy
+    //         }
+    //     }
+    //     is(ar_busy){
+    //         slave.connectARFrom(master(ar_sel), true.B)
+    //         slave.arid := ar_sel
+    //         when(slave.arvalid && slave.arready){
+    //             ar_state := ar_busy
+    //         }
+    //     }
+    //     is(r_busy){
+    //         routeR(slave)
+    //         when(slave.rvalid && slave.rready && slave.rlast){
+    //             r_state := r_idle
+    //             when(slave.rresp =/= 0.U){
+    //                 printf("Access Fault!\n")
+    //                 assert(false.B)
+    //             }
+    //         }
+    //     }
+    // }
 
     // ================= 写通道 (AW / W / B) =================
     val w_idle :: w_hs :: w_busy :: Nil = Enum(3)
@@ -81,7 +97,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
     switch(w_state){
         is(w_idle){
-            val aw_reqs = VecInit(in.map(_.awvalid)).asUInt
+            val aw_reqs = VecInit(master.map(_.awvalid)).asUInt
             when(aw_reqs =/= 0.U){
                 w_sel := PriorityEncoder(aw_reqs)
                 aw_done := false.B
@@ -91,21 +107,21 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
         }
         is(w_hs){
             // 交出 AW / W，两个都握完就松手
-            out.connectAWFrom(in(w_sel), true.B)
-            out.connectWFrom(in(w_sel), true.B)
-            out.awid := w_sel
-            when(out.awvalid && out.awready){ aw_done := true.B }
-            when(out.wvalid  && out.wready && out.wlast){ w_done := true.B }
-            when((aw_done || (out.awvalid && out.awready)) &&
-                 (w_done  || (out.wvalid && out.wready && out.wlast))){
+            slave.connectAWFrom(master(w_sel), true.B)
+            slave.connectWFrom(master(w_sel), true.B)
+            slave.awid := w_sel
+            when(slave.awvalid && slave.awready){ aw_done := true.B }
+            when(slave.wvalid  && slave.wready && slave.wlast){ w_done := true.B }
+            when((aw_done || (slave.awvalid && slave.awready)) &&
+                 (w_done  || (slave.wvalid && slave.wready && slave.wlast))){
                 w_state := w_busy
             }
         }
         is(w_busy){
-            routeB(out)
-            when(out.bvalid && out.bready){
+            routeB(slave)
+            when(slave.bvalid && slave.bready){
                 w_state := w_idle
-                when(out.bresp =/= 0.U){
+                when(slave.bresp =/= 0.U){
                     printf("Access Fault!\n")
                     assert(false.B)
                 }
@@ -115,12 +131,12 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
     // AXI 通道占用：判断流水线是否已撞到"单通道带宽天花板"的总开关
     // 0 = IFU（icache refill），1 = LSU（load/store）
-    PerfCounter("AXI_read_busy")  := (r_state === r_busy)
-    PerfCounter("AXI_write_busy") := (w_state === w_busy)
-    // 两个 master 同时抢读通道的拍数（判断轮转仲裁是否真的有用）
-    PerfCounter("AXI_read_contend") := VecInit(in.map(_.arvalid)).asUInt.andR
-    for(i <- 0 until n_in){
-        PerfCounter(s"AXI_read_grant_$i")  := (r_state === r_busy) && (r_sel === i.U)
-        PerfCounter(s"AXI_write_grant_$i") := (w_state === w_busy) && (w_sel === i.U)
-    }
+    // PerfCounter("AXI_read_busy")  := (r_state === r_busy)
+    // PerfCounter("AXI_write_busy") := (w_state === w_busy)
+    // // 两个 master 同时抢读通道的拍数（判断轮转仲裁是否真的有用）
+    // PerfCounter("AXI_read_contend") := VecInit(master.map(_.arvalid)).asUInt.andR
+    // for(i <- 0 until n_in){
+    //     PerfCounter(s"AXI_read_grant_$i")  := (r_state === r_busy) && (r_sel === i.U)
+    //     PerfCounter(s"AXI_write_grant_$i") := (w_state === w_busy) && (w_sel === i.U)
+    // }
 }
