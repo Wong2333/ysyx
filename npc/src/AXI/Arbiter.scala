@@ -131,7 +131,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
 
     slave.connectAWFrom(master(1), true.B)
     slave.connectWFrom(master(1), true.B)
-    master(1).connectBFrom(slave, true.B)
+    slave.connectBFrom(master(1), true.B)
 
     // AXI 通道占用：判断流水线是否已撞到"单通道带宽天花板"的总开关
     // 0 = IFU（icache refill），1 = LSU（load/store）
