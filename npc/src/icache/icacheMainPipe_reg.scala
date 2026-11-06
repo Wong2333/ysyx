@@ -66,7 +66,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     resp.raddr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     resp.rdata := icache.resp.data
     resp.valid := hit
-    resp.ready := req_fifo.io.deq.ready
+    req_fifo.io.deq.ready := resp.ready
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
