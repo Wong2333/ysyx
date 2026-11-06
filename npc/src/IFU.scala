@@ -53,7 +53,7 @@ class ysyx_26030092_IFU extends Module{
     out.valid := false.B
 
 
-    val icache_main_pipe = Module(new icacheMainPipe_reg(32,8))
+    val icache_main_pipe = Module(new icacheMainPipe_reg(16,8))
     icache_main_pipe.AXI4_port <> AXI4_port
     icache_main_pipe.req.valid := false.B
     icache_main_pipe.req.addr := DontCare
