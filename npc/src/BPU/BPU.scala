@@ -54,7 +54,7 @@ class BPU(ways :Int, tag_bits :Int) extends Module{
     val victim_way = Mux(invalid.reduce(_ || _), PriorityEncoder(invalid),
                     Mux(unused.reduce(_ || _), PriorityEncoder(unused), 0.U))
     
-    val wr_en  = train_port_s1.valid && (train_port_s1.taken || train_hit_any)
+    val wr_en  = train_port_s1.valid && (train_port_s1.taken || train_hit_any)// 不跳转并且未命中，就不写入
     val wr_way = Mux(train_hit_any, PriorityEncoder(train_hit), victim_way)
 
 
@@ -69,7 +69,7 @@ class BPU(ways :Int, tag_bits :Int) extends Module{
             when(train_hit_any && e.target === train_port_s1.target) { // 重复命中+1
                 when(e.counter =/= 3.U) { e.counter := e.counter + 1.U }
             }.otherwise {
-                e.counter := 2.U
+                e.counter := 2.U // 初始化 2
             }
         }.otherwise { // 不跳转 -1
             when(e.counter =/= 0.U) { e.counter := e.counter - 1.U }
