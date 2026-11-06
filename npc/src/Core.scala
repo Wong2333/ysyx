@@ -71,12 +71,12 @@ class ysyx_26030092 extends Module{
     RFS_u.WriteRegPort := WBU_u.WriteRegPort
     RFS_u.CSRWritePort := WBU_u.CSRWritePort
     RFS_u.ExceptionPort := WBU_u.ExceptionPort
-    IFU_u.AXI4_port <> AXI4Arbiter_u.in(0)
+    IFU_u.AXI4_port <> AXI4Arbiter_u.master(0)
     LSU_u.AXI4_port <> CLINT_AXI4Router_u.in
-    CLINT_AXI4Router_u.toSoC <> AXI4Arbiter_u.in(1)
+    CLINT_AXI4Router_u.toSoC <> AXI4Arbiter_u.master(1)
     CLINT_AXI4Router_u.toCLINT <> CLINT_u.AXI4_port
 
-    io.master <> AXI4Arbiter_u.out
+    io.master <> AXI4Arbiter_u.slave
 
     PerfCounter("total_cycles") := true.B
 }
