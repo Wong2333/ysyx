@@ -40,8 +40,8 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     req_fifo.io.enq.bits := req.addr(31,2)
 
     icache.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
-    val hit = icache.resp.hit & req_fifo.io.deq.valid // hit判断
-    val miss = !icache.resp.hit & req_fifo.io.deq.valid 
+
+
 
     val refill_unit = Module(new icacheRefillUnit_reg(block_size))
     refill_unit.req.valid := false.B
@@ -49,7 +49,9 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     val refilling = RegInit(false.B) // 标记miss的cache是否refilling
 
-    when(miss){ // 未命中就refill
+    val miss = !icache.resp.hit & req_fifo.io.deq.valid
+    val hit = icache.resp.hit & req_fifo.io.deq.valid
+    when(miss){
       refill_unit.req.valid := !refilling
       when(refill_unit.req.valid & refill_unit.req.ready){
         refilling := true.B
