@@ -82,8 +82,5 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     resp.excp_trap := excp_trap
 
     // flush
-
-    when(flush){
-      req_fifo.io.flush.get := flush
-    }
+    req_fifo.io.flush.get := flush
 }
