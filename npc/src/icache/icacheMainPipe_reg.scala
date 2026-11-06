@@ -57,6 +57,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     // }
 
     val refill_unit = Module(new icacheRefillUnit_reg(block_size))
+    refill_unit.flush := flush
     refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     refill_unit.req.valid := !hit
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
@@ -70,4 +71,17 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
+
+    // 错误处理
+    val excp_code = Reg(UInt(32.W))
+    val excp_trap = RegInit(false.B)
+    when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
+      excp_code := 0.U
+      excp_trap := true.B
+    }
+    when(resp.valid & resp.ready){
+      excp_trap := false.B
+    }
+    resp.excp_code := 0.U
+    resp.excp_trap := excp_trap
 }
