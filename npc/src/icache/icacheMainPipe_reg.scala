@@ -3,6 +3,7 @@ import chisel3._
 import chisel3.util._
 import npc.AXI._
 import npc.PMU._
+import chisel3.experimental.dataview.DataViewable
 
 class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
@@ -57,6 +58,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     // }
 
     val refill_unit = Module(new icacheRefillUnit_reg(block_size))
+    refill_unit.req.valid := false.B
     refill_unit.flush := flush
     refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     val refilling = RegInit(false.B) // 标记miss的cache是否refilling
