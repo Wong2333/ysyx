@@ -20,6 +20,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     })
     resp.block := DontCare
     resp.valid := false.B
+    req.ready := false.B
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port.initMaster()
