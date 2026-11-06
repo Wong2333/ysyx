@@ -33,29 +33,15 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.flush_cache := icache_flush
     icache.flush := flush
 
-    val req_fifo = Module(new Queue(UInt(30.W), 2))
+    // fifo
+    val req_fifo = Module(new Queue(UInt(30.W), 3, hasFlush = true))
     req_fifo.io.enq.valid := req.valid
     req.ready := req_fifo.io.enq.ready
     req_fifo.io.enq.bits := req.addr(31,2)
 
     icache.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
-    val hit = icache.resp.hit & req_fifo.io.deq.valid
+    val hit = icache.resp.hit & req_fifo.io.deq.valid // hit判断
 
-
-    // val fifo = Module(new InstFIFO(4))
-
-    // icache.req.addr := req.addr
-    // req.ready := fifo.io.init.ready
-    // when(req.valid && req.ready){ // icache 请求入队
-    //     fifo.io.init.valid := true.B
-    //     when(fifo.io.init.ready){ // fifo 写端口
-    //         fifo.io.init.bits.entry := req.addr
-    //         fifo.io.init.bits.needRefill := icache.resp.hit
-    //         fifo.io.init.bits.entry.rdata := icache.resp.data
-    //         fifo.io.init.bits.entry.excp_trap := DontCare
-    //         fifo.io.init.bits.entry.excp_code := DontCare
-    //     }
-    // }
 
     val refill_unit = Module(new icacheRefillUnit_reg(block_size))
     refill_unit.req.valid := false.B
@@ -63,7 +49,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     val refilling = RegInit(false.B) // 标记miss的cache是否refilling
 
-    when(!hit){
+    when(!hit){ // 未命中就refill
       refill_unit.req.valid := !refilling
       refilling := true.B 
     }.otherwise{
@@ -72,10 +58,10 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
-    icache.refill.valid := refill_unit.resp.valid
+    icache.refill.valid := refill_unit.resp.valid // icahce refill
 
     resp.raddr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
-    resp.rdata := icache.resp.data
+    resp.rdata := icache.resp.data // icache 直连 resp
     resp.valid := hit
     req_fifo.io.deq.ready := resp.ready
 
@@ -94,4 +80,10 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     }
     resp.excp_code := 0.U
     resp.excp_trap := excp_trap
+
+    // flush
+
+    when(flush){
+      req_fifo.io.flush.get := flush
+    }
 }
