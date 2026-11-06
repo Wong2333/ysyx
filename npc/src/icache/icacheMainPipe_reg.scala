@@ -67,7 +67,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     }.otherwise{
       refilling := false.B
     }
-    refill_unit.req.valid := !hit
+
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
     icache.refill.valid := refill_unit.resp.valid
