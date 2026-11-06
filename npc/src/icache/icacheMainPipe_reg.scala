@@ -8,8 +8,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     val icache = Module(new icache_reg(block_size, block_num))
     icache.refill.valid := false.B
-    icache.refill.index := DontCare
-    icache.refill.tag := DontCare
+    icache.refill.addr := DontCare
     icache.refill.block := DontCare
 
     val flush = IO(Input(Bool()))
@@ -33,28 +32,41 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.flush_cache := icache_flush
     icache.flush := flush
 
-    val fifo = Module(new InstFIFO(4))
+    val req_fifo = Module(new Queue(UInt(30.W), 4))
+    req_fifo.io.enq.valid := req.valid
+    req.ready := req_fifo.io.enq.ready
+    req_fifo.io.enq.bits := req.addr(31,2)
 
-    icache.req.addr := req.addr
-    req.ready := fifo.io.init.ready
-    when(req.valid && req.ready){ // icache 请求入队
-        fifo.io.init.valid := true.B
-        when(fifo.io.init.ready){ // fifo 写端口
-            fifo.io.init.bits.entry := req.addr
-            fifo.io.init.bits.needRefill := icache.resp.hit
-            fifo.io.init.bits.entry.rdata := icache.resp.data
-            fifo.io.init.bits.entry.excp_trap := DontCare
-            fifo.io.init.bits.entry.excp_code := DontCare
-        }
-    }
+    icache.req.addr := req_fifo.io.deq.bits
+    val hit = icache.resp.hit & req_fifo.io.deq.valid
+
+
+    // val fifo = Module(new InstFIFO(4))
+
+    // icache.req.addr := req.addr
+    // req.ready := fifo.io.init.ready
+    // when(req.valid && req.ready){ // icache 请求入队
+    //     fifo.io.init.valid := true.B
+    //     when(fifo.io.init.ready){ // fifo 写端口
+    //         fifo.io.init.bits.entry := req.addr
+    //         fifo.io.init.bits.needRefill := icache.resp.hit
+    //         fifo.io.init.bits.entry.rdata := icache.resp.data
+    //         fifo.io.init.bits.entry.excp_trap := DontCare
+    //         fifo.io.init.bits.entry.excp_code := DontCare
+    //     }
+    // }
 
     val refill_unit = Module(new icacheRefillUnit_reg(block_size))
-    refill_unit.req.valid := fifo.io.refill.need_refill
-    refill_unit.req.addr := fifo.io.refill.raddr
-    when(refill_unit.req.ready & refill_unit.req.valid){
-        
-    }
+    refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
+    refill_unit.req.valid := !hit
+    icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
+    icache.refill.block := refill_unit.resp.block
+    icache.refill.valid := refill_unit.resp.valid
 
+    resp.raddr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
+    resp.rdata := icache.resp.data
+    resp.valid := hit
+    resp.ready := req_fifo.io.deq.ready
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port

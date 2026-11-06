@@ -20,18 +20,17 @@ class icache_reg(block_size :Int, block_num :Int) extends Module{
         val hit = Output(Bool())
     })
     val refill = IO(new Bundle {
+        val addr = Input(UInt(32.W))
         val block = Input(UInt((block_size*8).W))
-        val tag = Input(UInt(tag_bits.W))
-        val index = Input(UInt(index_bits.W))
         val valid = Input(Bool())
     })
     val flush_cache = IO(Input(Bool()))
     val flush = IO(Input(Bool()))
 
     val req_addr = req.addr
-    val index = req_addr(offset_bits + index_bits + 1, offset_bits + 2)
     val offset = req_addr(offset_bits + 1, 2)
-
+    val index = req_addr(offset_bits + index_bits + 1, offset_bits + 2)
+    
     val block = cache(index)
     val taget_tag = tag_array(index)
 
@@ -47,10 +46,12 @@ class icache_reg(block_size :Int, block_num :Int) extends Module{
     resp.data := resp_data
     resp.hit := resp_hit
 
+    val refill_index = refill.addr(offset_bits + index_bits + 1, offset_bits + 2)
+    val refill_tag = refill.addr(31, offset_bits + index_bits + 2)
     when(refill.valid){ // 下一周期refill
-        cache(refill.index) := refill.block
-        tag_array(refill.index) := refill.tag
-        state_array(refill.index) := true.B
+        cache(refill_index) := refill.block
+        tag_array(refill_index) := refill_tag
+        state_array(refill_index) := true.B
     }
 
     when(flush_cache){ // flush cache优先级最大
