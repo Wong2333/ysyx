@@ -4,12 +4,14 @@ import chisel3._
 import chisel3.util._
 import npc.AXI._
 import npc.PMU._
+import scala.annotation.varargs
 
 class icacheRefillUnit_reg(block_size :Int) extends Module{
     val flush = IO(Input(Bool()))
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())
+        val ready = Output(Bool())
     })
 
     val resp = IO(new Bundle {
@@ -35,15 +37,18 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     val block_reg = Reg(UInt((block_size*8).W))
     val block_valid = RegInit(false.B)
+    val outstanding = RegInit(false.B)
 
     switch(state){
         is(s_idle){
             when(req.valid){
+                req.ready := !outstanding & !block_valid 
                 req_addr_reg := block_addr
                 state := s_wait_mem_free
             }
         }
         is(s_wait_mem_free){
+            outstanding := flush
             AXI4_port.arvalid := true.B
             AXI4_port.araddr := req_addr_reg
             AXI4_port.arlen := (beats - 1).U
@@ -54,6 +59,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
             }
         }
         is(s_wait_mem_data){
+            outstanding := flush
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 if(block_size > 4){
@@ -64,7 +70,8 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
                 when(AXI4_port.rlast){
                     state := s_idle
-                    block_valid := true.B
+                    block_valid := !outstanding
+                    outstanding := false.B
                 }
             }
         }
@@ -73,7 +80,13 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     resp.block := block_reg
     resp.valid := block_valid
 
+    when(block_valid){ 
+        block_valid := false.B 
+    }
 
-    when(block_valid){ block_valid := false.B }
+    when(flush){
+        resp.valid := false.B
+        block_valid := false.B
+    }
 
 }
