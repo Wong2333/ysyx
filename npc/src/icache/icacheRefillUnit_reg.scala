@@ -14,7 +14,6 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     val resp = IO(new Bundle {
         val block = Output(UInt((block_size*8).W))
-        val rdata = Output(UInt(32.W))
         val valid = Output(Bool())
     })
     resp.block := DontCare
@@ -74,12 +73,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     resp.block := block_reg
     resp.valid := block_valid
 
-    val offset_bits = log2Ceil(block_size / 4)
-    val offset = req_addr_reg(offset_bits + 1, 2)
-    val block_words = VecInit.tabulate(block_size/4)(i => {
-        block_reg((i + 1) * 32 - 1, i * 32)
-    })
-    resp.rdata := block_words(offset)
+
     when(block_valid){ block_valid := false.B }
 
 }

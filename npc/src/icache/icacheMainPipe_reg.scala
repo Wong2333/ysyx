@@ -83,4 +83,10 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     // flush
     req_fifo.io.flush.get := flush
+    when(flush){
+      resp.valid := false.B
+      icache.refill.valid := false.B
+      refill_unit.req.valid := false.B
+      req_fifo.io.enq.valid := false.B
+    }
 }
