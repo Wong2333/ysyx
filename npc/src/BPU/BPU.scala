@@ -71,7 +71,7 @@ class BPU(ways :Int, tag_bits :Int) extends Module{
             }.otherwise {
                 e.counter := 2.U
             }
-        }.otherwise {
+        }.otherwise { // 不跳转 -1
             when(e.counter =/= 0.U) { e.counter := e.counter - 1.U }
         }
     }
