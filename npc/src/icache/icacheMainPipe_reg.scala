@@ -51,7 +51,9 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     when(!hit){ // 未命中就refill
       refill_unit.req.valid := !refilling
-      refilling := true.B 
+      when(refill_unit.req.valid & refill_unit.req.ready){
+        refilling := true.B
+      }
     }.otherwise{
       refilling := false.B
     }
