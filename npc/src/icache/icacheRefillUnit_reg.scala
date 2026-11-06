@@ -41,16 +41,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
         is(s_idle){
             when(req.valid){
                 req_addr_reg := block_addr
-                when(AXI4_port.arready){
-                    AXI4_port.arvalid := true.B
-                    AXI4_port.araddr := block_addr
-                    AXI4_port.arlen := (beats - 1).U
-                    AXI4_port.arsize := 2.U
-                    AXI4_port.arburst := 1.U
-                    state := s_wait_mem_data
-                }.otherwise{
-                    state := s_wait_mem_free
-                }
+                state := s_wait_mem_free
             }
         }
         is(s_wait_mem_free){
