@@ -45,7 +45,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
         slave.rready := master(slave.rid).rready
     }
 
-
+    
     slave.connectAWFrom(master(1), true.B)
     slave.connectWFrom(master(1), true.B)
     slave.connectBFrom(master(1), true.B)

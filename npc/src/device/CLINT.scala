@@ -7,9 +7,6 @@ import npc.AXI.AXI4Bundle
 class ysyx_26030092_CLINT extends Module{
     val AXI4_port = IO(Flipped(new AXI4Bundle))
 
-    // val skip_difftest = Module(new SkipDifftest)
-    // skip_difftest.io.skip := port.W.wvalid
-
     AXI4_port.initSlave()
     val mtime = RegInit(0.U(64.W))
     mtime := mtime + 1.U
