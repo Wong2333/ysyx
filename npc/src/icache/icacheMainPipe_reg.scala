@@ -12,7 +12,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.refill.block := DontCare
 
     val flush = IO(Input(Bool()))
-    val refilling = IO(Output(Bool()))
+
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))
         val valid = Input(Bool())

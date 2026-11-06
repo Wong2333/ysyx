@@ -88,8 +88,6 @@ class ysyx_26030092_IFU extends Module{
     }
 
     PerfCounter("IFU_get_inst_cycles") := ~flush
-    PerfCounter("IFU_wait_miss")    := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && icache_main_pipe.refilling
-    PerfCounter("IFU_wait_backend") := icache_main_pipe.req.valid && ~icache_main_pipe.req.ready && ~icache_main_pipe.refilling
     PerfCounter("IFU_wait_resp")    := icache_main_pipe.req.ready && ~icache_main_pipe.resp.valid && ~flush
     PerfCounter("IFU_fetch")        := out.fire
 }
