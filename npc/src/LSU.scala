@@ -26,10 +26,6 @@ class LSUBundle extends Bundle{
     val pc    = Output(UInt(32.W))
 }
 
-// 读 / 写两条独立通道：
-//   读通道只做 load，写通道只做 store（含等 B）。
-//   写通道在等 B 期间不再挡住后面的 load —— 顺序只按"地址是否重叠"判断，
-//   这样 AXI 本身提供的读写并发就被用起来了（本 SoC 在 DRAM 侧仍然是串行的）。
 class ysyx_26030092_LSU extends Module{
     val in = IO(Flipped(Decoupled(new LSUBundle)))
     // 完成拍即报告拍：数据当场交给 EXU 的 mem_pending 锁存，本模块不再留一份
@@ -41,8 +37,6 @@ class ysyx_26030092_LSU extends Module{
 
     val to_store = in.bits.mem_op === MemOp.store
 
-    // 两条通道各自的描述符：EXU 在 in.fire 后的下一拍就可能覆盖 ex_mem_pending，
-    // 而响应期还要 addr(1,0)/size/signed（扩展）和 pc（mtrace），所以必须自己留一份
     val rd_addr = Reg(UInt(32.W))
     val rd_size = Reg(MemSize())
     val rd_signed = Reg(Bool())

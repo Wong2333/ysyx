@@ -45,17 +45,22 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     val miss = !icache.resp.hit & req_fifo.io.deq.valid
     val hit = icache.resp.hit & req_fifo.io.deq.valid
-    when(miss){ // refill FSM
-      refill_unit.req.valid := !refilling
-      when(refill_unit.req.valid & refill_unit.req.ready){
-        refilling := true.B
-      }
-    }.otherwise{
+
+    dontTouch(miss)
+    dontTouch(hit)
+    refill_unit.req.valid := miss && !refilling
+    when(refill_unit.req.valid & refill_unit.req.ready){
+      refilling := true.B
+    }
+    when(refill_unit.resp.valid){
       refilling := false.B
     }
+
+    val refill_match = refill_unit.resp.addr(31,2) === req_fifo.io.deq.bits
+    dontTouch(refill_match)    
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
-    icache.refill.valid := refill_unit.resp.valid
+    icache.refill.valid := refill_unit.resp.valid && refill_match // refill 需要比较地址是否正确
 
 
     resp.bits.pc := Cat(req_fifo.io.deq.bits, 0.U(2.W))
@@ -87,5 +92,6 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
       refill_unit.req.valid := false.B
       req_fifo.io.enq.valid := false.B
       req_fifo.io.deq.ready := false.B
+      refilling := false.B
     }
 }
