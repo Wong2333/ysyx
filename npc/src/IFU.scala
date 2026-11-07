@@ -44,7 +44,7 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
 
-    val inst_queue = Module(new Queue(new instEntry, 2, hasFlush = true))
+    val inst_queue = Module(new Queue(new instEntry, 1, hasFlush = true))
     inst_queue.io.flush.get := flush
     
     val icache_main_pipe = Module(new icacheMainPipe_reg(16,8))
