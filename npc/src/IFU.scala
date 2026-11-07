@@ -70,7 +70,6 @@ class ysyx_26030092_IFU extends Module{
     when(flush){                       // flush 优先级最高，放最后覆盖
         PC_reg.io.pc_we := true.B
         PC_reg.io.pc_next := RedirectPC
-        inst_queue.io.deq.ready := false.B
         out.valid := false.B
     }
 
