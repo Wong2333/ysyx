@@ -49,7 +49,6 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
             }
         }
         is(s_wait_mem_free){
-            outstanding := flush
             AXI4_port.arvalid := true.B
             AXI4_port.araddr := req_addr_reg
             AXI4_port.arlen := (beats - 1).U
@@ -60,7 +59,6 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
             }
         }
         is(s_wait_mem_data){
-            outstanding := flush
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 if(block_size > 4){
@@ -88,6 +86,9 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     when(flush){
         resp.valid := false.B
         block_valid := false.B
+        when(state === s_wait_mem_data || state === s_wait_mem_free){
+            outstanding := flush
+        }
     }
 
 }
