@@ -55,7 +55,6 @@ class ysyx_26030092_IFU extends Module{
     icache_main_pipe.flush := flush
 
     inst_queue.io.enq <> icache_main_pipe.resp
-    inst_queue.io.enq.valid := icache_main_pipe.resp.valid
 
     out <> inst_queue.io.deq
 

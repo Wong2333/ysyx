@@ -56,12 +56,12 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
-    icache.refill.valid := refill_unit.resp.valid // icahce refill
+    icache.refill.valid := refill_unit.resp.valid
 
     resp.bits.pc := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     resp.bits.inst := icache.resp.data // icache 直连 resp
     resp.valid := hit
-    req_fifo.io.deq.ready := resp.ready
+    req_fifo.io.deq.ready := resp.ready & resp.valid // 出队条件
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port <> refill_unit.AXI4_port
