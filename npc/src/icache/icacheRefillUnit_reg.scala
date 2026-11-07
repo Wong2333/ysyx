@@ -33,7 +33,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     val req_addr_reg = Reg(UInt(32.W))
 
     val block_bits = log2Ceil(block_size)
-    val block_addr = Cat(req.addr(31,block_bits),0.U(block_bits.W))
+    val block_addr = Cat(req_addr_reg(31,block_bits),0.U(block_bits.W))
     
     val beats = block_size / 4 //需要beats拍传回数据
 
@@ -44,13 +44,13 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
         is(s_idle){
             req.ready := !block_valid
             when(req.valid & req.ready){
-                req_addr_reg := block_addr
+                req_addr_reg := req.addr
                 state := s_wait_mem_free
             }
         }
         is(s_wait_mem_free){
             AXI4_port.arvalid := true.B
-            AXI4_port.araddr := req_addr_reg
+            AXI4_port.araddr := block_addr
             AXI4_port.arlen := (beats - 1).U
             AXI4_port.arsize := 2.U
             AXI4_port.arburst := 1.U
