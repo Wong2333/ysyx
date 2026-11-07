@@ -39,7 +39,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     req.ready := req_fifo.io.enq.ready
     req_fifo.io.enq.bits := req.addr(31,2)
 
-    icache.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
+    icache.req.addr := Mux(req_fifo.io.deq.valid, Cat(req_fifo.io.deq.bits, 0.U(2.W)), 0.U)
 
 
 
