@@ -16,6 +16,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     val resp = IO(new Bundle {
         val block = Output(UInt((block_size*8).W))
+        val addr = Output(UInt(32.W))
         val valid = Output(Bool())
     })
     resp.block := DontCare
@@ -38,11 +39,10 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     val block_reg = Reg(UInt((block_size*8).W))
     val block_valid = RegInit(false.B)
-    val outstanding = RegInit(false.B)
 
     switch(state){
         is(s_idle){
-            req.ready := !outstanding & !block_valid 
+            req.ready := !block_valid
             when(req.valid & req.ready){
                 req_addr_reg := block_addr
                 state := s_wait_mem_free
@@ -69,13 +69,13 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
                 when(AXI4_port.rlast){
                     state := s_idle
-                    block_valid := !outstanding
-                    outstanding := false.B
+                    block_valid := true.B
                 }
             }
         }
     }
 
+    resp.addr := req_addr_reg
     resp.block := block_reg
     resp.valid := block_valid
 
@@ -86,9 +86,6 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     when(flush){
         resp.valid := false.B
         block_valid := false.B
-        when(state === s_wait_mem_data || state === s_wait_mem_free){
-            outstanding := flush
-        }
     }
 
 }
