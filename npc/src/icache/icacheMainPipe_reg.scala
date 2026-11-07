@@ -4,6 +4,7 @@ import chisel3.util._
 import npc.AXI._
 import npc.PMU._
 import chisel3.experimental.dataview.DataViewable
+import npc.instEntry
 
 class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
@@ -20,14 +21,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
         val ready = Output(Bool())
     })
 
-    val resp = IO(new Bundle {
-        val rdata = Output(UInt(32.W))
-        val raddr = Output(UInt(32.W))
-        val excp_code = Output(UInt(32.W))
-        val excp_trap = Output(Bool())
-        val valid = Output(Bool())
-        val ready = Input(Bool())
-    })
+    val resp = IO(Decoupled(new instEntry))
 
     val icache_flush = IO(Input(Bool()))
     icache.flush_cache := icache_flush
@@ -64,8 +58,8 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.refill.block := refill_unit.resp.block
     icache.refill.valid := refill_unit.resp.valid // icahce refill
 
-    resp.raddr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
-    resp.rdata := icache.resp.data // icache 直连 resp
+    resp.bits.pc := Cat(req_fifo.io.deq.bits, 0.U(2.W))
+    resp.bits.inst := icache.resp.data // icache 直连 resp
     resp.valid := hit
     req_fifo.io.deq.ready := resp.ready
 
@@ -82,8 +76,8 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     when(resp.valid & resp.ready){
       excp_trap := false.B
     }
-    resp.excp_code := 0.U
-    resp.excp_trap := excp_trap
+    resp.bits.excp_code := 0.U
+    resp.bits.is_excp := excp_trap
 
     // flush
     req_fifo.io.flush.get := flush
