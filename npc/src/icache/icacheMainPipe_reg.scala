@@ -56,7 +56,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
     icache.refill.valid := refill_unit.resp.valid && 
-        refill_unit.resp.addr(31,2) === req_fifo.io.deq.bits
+        refill_unit.resp.addr(31,2) === req_fifo.io.deq.bits // refill 需要比较地址是否正确
 
 
     resp.bits.pc := Cat(req_fifo.io.deq.bits, 0.U(2.W))
@@ -88,5 +88,6 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
       refill_unit.req.valid := false.B
       req_fifo.io.enq.valid := false.B
       req_fifo.io.deq.ready := false.B
+      refilling := false.B
     }
 }
