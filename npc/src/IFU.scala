@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
-import npc.icache.icacheMainPipe
 import npc.BPU.BPUPredictBundle
 import npc.icache.icacheMainPipe_reg
 

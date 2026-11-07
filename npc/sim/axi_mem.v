@@ -71,6 +71,7 @@ module axi_mem #(
   assign wready  = !w_got  && !b_valid;
   assign bvalid  = b_valid;
   assign bresp   = 2'b00;
+  assign rresp   = 2'b00;   // 必须驱动：否则 iverilog 里是 z，|rresp 会算出 X
   assign bid     = aw_id;
 
   // ---------------- 读 ----------------

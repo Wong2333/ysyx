@@ -73,7 +73,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     AXI4_port <> refill_unit.AXI4_port
 
     // 错误处理
-    val excp_code = RegInit(0.U(32.W))
+    val excp_code = Reg(UInt(32.W))
     val excp_trap = RegInit(false.B)
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
       excp_code := 0.U
