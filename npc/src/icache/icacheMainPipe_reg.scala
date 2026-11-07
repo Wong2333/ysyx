@@ -34,7 +34,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     icache.flush := flush
 
     // fifo
-    val req_fifo = Module(new Queue(UInt(30.W), 2, hasFlush = true))
+    val req_fifo = Module(new Queue(UInt(30.W), 1, hasFlush = true))
     req_fifo.io.enq.valid := req.valid
     req.ready := req_fifo.io.enq.ready
     req_fifo.io.enq.bits := req.addr(31,2)
