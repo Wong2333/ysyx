@@ -42,8 +42,8 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     switch(state){
         is(s_idle){
+            req.ready := !outstanding & !block_valid 
             when(req.valid){
-                req.ready := !outstanding & !block_valid 
                 req_addr_reg := block_addr
                 state := s_wait_mem_free
             }
