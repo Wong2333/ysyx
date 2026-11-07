@@ -45,6 +45,7 @@ class ysyx_26030092_IFU extends Module{
     PC_reg.io.reset := reset
 
     val inst_queue = Module(new Queue(new instEntry, 2, hasFlush = true))
+    inst_queue.io.flush.get := flush
     
     val icache_main_pipe = Module(new icacheMainPipe_reg(16,8))
     icache_main_pipe.AXI4_port <> AXI4_port
@@ -70,7 +71,6 @@ class ysyx_26030092_IFU extends Module{
         PC_reg.io.pc_we := true.B
         PC_reg.io.pc_next := RedirectPC
         inst_queue.io.deq.ready := false.B
-        inst_queue.io.flush.get := true.B
         out.valid := false.B
     }
 
