@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import npc.AXI._
 import npc.PMU._
+import scala.annotation.varargs
 
 class icacheRefillUnit_reg(block_size :Int) extends Module{
     val flush = IO(Input(Bool()))
@@ -12,7 +13,6 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
         val valid = Input(Bool())
         val ready = Output(Bool())
     })
-    req.ready := false.B
 
     val resp = IO(new Bundle {
         val block = Output(UInt((block_size*8).W))
@@ -20,6 +20,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
     })
     resp.block := DontCare
     resp.valid := false.B
+    req.ready := false.B
 
     val AXI4_port = IO(new AXI4Bundle)
     AXI4_port.initMaster()
@@ -37,22 +38,14 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     val block_reg = Reg(UInt((block_size*8).W))
     val block_valid = RegInit(false.B)
+    val outstanding = RegInit(false.B)
 
     switch(state){
         is(s_idle){
-            req.ready := true.B
-            when(req.valid){
+            req.ready := !outstanding & !block_valid 
+            when(req.valid & req.ready){
                 req_addr_reg := block_addr
-                when(AXI4_port.arready){
-                    AXI4_port.arvalid := true.B
-                    AXI4_port.araddr := block_addr
-                    AXI4_port.arlen := (beats - 1).U
-                    AXI4_port.arsize := 2.U
-                    AXI4_port.arburst := 1.U
-                    state := s_wait_mem_data
-                }.otherwise{
-                    state := s_wait_mem_free
-                }
+                state := s_wait_mem_free
             }
         }
         is(s_wait_mem_free){
@@ -76,7 +69,8 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
                 when(AXI4_port.rlast){
                     state := s_idle
-                    block_valid := true.B
+                    block_valid := !outstanding
+                    outstanding := false.B
                 }
             }
         }
@@ -84,6 +78,17 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
 
     resp.block := block_reg
     resp.valid := block_valid
-    when(block_valid){ block_valid := false.B }
+
+    when(block_valid){ 
+        block_valid := false.B 
+    }
+
+    when(flush){
+        resp.valid := false.B
+        block_valid := false.B
+        when(state === s_wait_mem_data || state === s_wait_mem_free){
+            outstanding := flush
+        }
+    }
 
 }
