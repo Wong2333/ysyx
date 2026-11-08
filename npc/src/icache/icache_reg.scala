@@ -41,7 +41,7 @@ class icache_reg(block_size :Int, block_num :Int) extends Module{
     val block_words = VecInit.tabulate(block_size/4)(i => {
         block((i + 1) * 32 - 1, i * 32)
     })
-    val resp_data = block_words(offset ^ 1.U)
+    val resp_data = block_words(offset)
     val resp_hit = (tag === taget_tag) && state_array(index)
 
 
