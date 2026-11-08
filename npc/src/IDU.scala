@@ -105,7 +105,7 @@ class ysyx_26030092_IDU extends Module{
     ))
     val csr_read = out_comb.exu_ctl.sys_op === SysOp.mret || out_comb.exu_ctl.csr_op =/= CSROp.none
     
-    val stall_rs1 = conflict(inst.rs2, wb_info)
+    val stall_rs1 = conflict(inst.rs1, wb_info)
     val stall_rs2 = conflict(inst.rs2, wb_info)
     val stall_csr = csr_read && csr_info.wen && csr_read_addr === csr_info.addr
 
