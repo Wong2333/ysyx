@@ -31,7 +31,7 @@ class ysyx_26030092_AXI4Arbiter(n_in : Int) extends Module{
         arLock := false.B
     }
     slave.connectARFrom(master(ar_sel), true.B)
-    slave.arid := ar_sel
+    slave.arid := arLockSel
 
     // R
     for(i <- 0 until n_in){
