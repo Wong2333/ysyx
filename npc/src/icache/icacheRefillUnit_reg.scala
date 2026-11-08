@@ -62,7 +62,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 if(block_size > 4){
-                    block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
+                    block_reg := Cat(block_reg(block_size*8 - 1, 32), AXI4_port.rdata)
                 }else{
                     block_reg := AXI4_port.rdata
                 }
