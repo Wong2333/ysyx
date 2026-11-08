@@ -109,7 +109,7 @@ class ysyx_26030092_EXU extends Module{
     branch_u.pc        := idu_out.bits.decode.pc
     branch_u.alu       := AluResult
     branch_u.rs1       := idu_out.bits.rs1_data
-    branch_u.rs2       := idu_out.bits.rs1_data
+    branch_u.rs2       := idu_out.bits.rs2_data
     branch_u.csr_rdata := idu_out.bits.csr_rdata
     branch_u.mtvec     := mtvec
     branch_u.branch_op := idu_out.bits.exu_ctl.branch_op
