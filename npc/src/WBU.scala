@@ -61,7 +61,7 @@ class ysyx_26030092_WBU extends Module{
 
     // 写回数据已在 EXU 的 mem_pending 锁存，这里 fire 拍直出（不再二次锁存）
     when(in.fire){
-        WriteRegPort.waddr := in.bits.CSRAddr(4,0)
+        WriteRegPort.waddr := in.bits.RegWaddr
         WriteRegPort.wdata := in.bits.RegWdata
         WriteRegPort.wen := in.bits.RegWrite
 
