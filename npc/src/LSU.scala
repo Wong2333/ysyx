@@ -81,7 +81,7 @@ class ysyx_26030092_LSU extends Module{
             Cat(Fill(24, load_shift(7)),  load_shift(7,0)),
             Cat(0.U(24.W),                load_shift(7,0))),
         MemSize.half -> Mux(signed,
-            Cat(Fill(16, load_shift(7)),  load_shift(15,0)),
+            Cat(Fill(16, load_shift(15)),  load_shift(15,0)),
             Cat(0.U(16.W),                load_shift(15,0)))))
 
     val store_shift = wdata << (addr(1,0) << 3)
