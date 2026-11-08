@@ -79,17 +79,13 @@ class ysyx_26030092_IDU extends Module{
 
     val flush = IO(Input(Bool()))
     val out = IO(Decoupled(new IDUBundle))
-    // 未受 flush 组合门控的 out_valid 寄存器（EXU 判控制冒险用，避免组合环）
+
     val out_valid_o = IO(Output(Bool()))
     val out_comb = Wire(new IDUBundle)
 
-    val ex_wb_info  = IO(Flipped(new StageWriteInfoBundle))
-    val mem_wb_info = IO(Flipped(new StageWriteInfoBundle))
-    
-    val ex_csr_info = IO(Flipped(new CSRWriteInfoBundle))
-    val mem_csr_info = IO(Flipped(new CSRWriteInfoBundle))
+    val wb_info  = IO(Flipped(new StageWriteInfoBundle))
+    val csr_info = IO(Flipped(new CSRWriteInfoBundle))
 
-    // 寄存器堆读端口（译码阶段组合读取，读数据随流水线传入 EXU）
     val RFS_ReadPort = IO(new Bundle {
         val RegReadPort = new ReadRegPortBundle
         val CSRReadPort = new CSRReadPortBundle
@@ -109,37 +105,16 @@ class ysyx_26030092_IDU extends Module{
     ))
     val csr_read = out_comb.exu_ctl.sys_op === SysOp.mret || out_comb.exu_ctl.csr_op =/= CSROp.none
     
-    val stall_rs1 = conflict(inst.rs1, ex_wb_info) || conflict(inst.rs1, mem_wb_info)
-    val stall_rs2 = conflict(inst.rs2, ex_wb_info) || conflict(inst.rs2, mem_wb_info)
-    val stall_csr = (csr_read && ((ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) ||
-                      (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr)))
-    
-    val forward_rs1_data = MuxCase(0.U, Seq(
-        conflict(inst.rs1, ex_wb_info) -> ex_wb_info.value,
-        conflict(inst.rs1, mem_wb_info) -> mem_wb_info.value
-    ))
-    val forward_rs1_valid = MuxCase(false.B, Seq(
-        conflict(inst.rs1, ex_wb_info) -> ex_wb_info.valid,
-        conflict(inst.rs1, mem_wb_info) -> mem_wb_info.valid
-    ))
+    val stall_rs1 = conflict(inst.rs1, wb_info)
+    val stall_rs2 = conflict(inst.rs2, wb_info)
+    val stall_csr = csr_read && csr_info.wen && csr_read_addr === csr_info.addr
 
-    val forward_rs2_data = MuxCase(0.U, Seq(
-        conflict(inst.rs2, ex_wb_info) -> ex_wb_info.value,
-        conflict(inst.rs2, mem_wb_info) -> mem_wb_info.value
-    ))
-    val forward_rs2_valid = MuxCase(false.B, Seq(
-        conflict(inst.rs2, ex_wb_info) -> ex_wb_info.valid,
-        conflict(inst.rs2, mem_wb_info) -> mem_wb_info.valid
-    ))
-
-    val forward_csr_data = MuxCase(0.U, Seq(
-        (ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) -> ex_csr_info.value,
-        (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) -> mem_csr_info.value
-    ))
-    val forward_csr_valid = MuxCase(false.B, Seq(
-        (ex_csr_info.wen && csr_read_addr === ex_csr_info.addr) -> ex_csr_info.valid,
-        (mem_csr_info.wen && csr_read_addr === mem_csr_info.addr) -> mem_csr_info.valid
-    ))
+    val forward_rs1_data  = wb_info.value
+    val forward_rs1_valid = stall_rs1 && wb_info.valid
+    val forward_rs2_data  = wb_info.value
+    val forward_rs2_valid = stall_rs2 && wb_info.valid
+    val forward_csr_data  = csr_info.value
+    val forward_csr_valid = stall_csr && csr_info.valid
 
     val out_valid = RegInit(false.B)
     out_valid_o := out_valid

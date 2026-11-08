@@ -49,12 +49,10 @@ class ysyx_26030092_WBU extends Module{
     val CSRWritePort = IO(Output(new CSRWritePortBundle))
     val ExceptionPort = IO(Output(new ExceptionInfoBundle))
     val icache_flush = IO(Output(Bool()))
-    // LSU 有 store 未落地：fence.i 必须等它落地，否则 icache 重填可能读到旧代码
-    val lsu_b_pending = IO(Input(Bool()))
 
     val commit_info = IO(Input(new CommitInfoBundle))
 
-    in.ready := !(in.valid && in.bits.icache_flush && lsu_b_pending)
+    in.ready := true.B
 
     WriteRegPort := 0.U.asTypeOf(new WriteRegPortBundle)
     CSRWritePort := 0.U.asTypeOf(new CSRWritePortBundle)
