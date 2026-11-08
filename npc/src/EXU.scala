@@ -159,6 +159,7 @@ class ysyx_26030092_EXU extends Module{
     commit_info_comb.mem_addr := AluResult
     commit_info_comb.pc := idu_out.bits.decode.pc
 
+    // 非访存指令可以流水
     lsu_in.valid  := idu_out.valid && is_mem && !lsu_busy
     idu_out.ready := !lsu_busy && Mux(is_mem, lsu_in.ready, true.B)
     lsu_out.ready := lsu_busy
