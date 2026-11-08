@@ -60,7 +60,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
     dontTouch(refill_match)    
     icache.refill.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))
     icache.refill.block := refill_unit.resp.block
-    icache.refill.valid := refill_unit.resp.valid && refill_match// refill 需要比较地址是否正确
+    icache.refill.valid := refill_unit.resp.valid && refill_match // refill 需要比较地址是否正确
 
 
     resp.bits.pc := Cat(req_fifo.io.deq.bits, 0.U(2.W))
