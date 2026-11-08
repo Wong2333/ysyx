@@ -67,7 +67,7 @@ class ysyx_26030092_IFU extends Module{
     bpu_pc := PC_reg.io.pc(31,2)
 
     when(flush){                       // flush 优先级最高，放最后覆盖
-        PC_reg.io.pc_we := true.B
+        PC_reg.io.pc_we := false.B
         PC_reg.io.pc_next := RedirectPC
         out.valid := false.B
     }
