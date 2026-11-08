@@ -45,7 +45,6 @@ class ysyx_26030092 extends Module{
 
 
     IFU_u.flush_icache := WBU_u.icache_flush
-    WBU_u.lsu_b_pending := LSU_u.b_pending_out
     IFU_u.flush := EXU_u.flush
     IFU_u.RedirectPC :=EXU_u.redirectPC
 
@@ -53,11 +52,8 @@ class ysyx_26030092 extends Module{
     IDU_u.RFS_ReadPort <> RFS_u.RFS_ReadPort
     IDU_u.flush := EXU_u.flush
 
-    // RAW 冒险检测：各阶段写寄存器信息 → IDU
-    IDU_u.ex_wb_info <> EXU_u.ex_wb_info
-    IDU_u.mem_wb_info <> EXU_u.mem_wb_info
-    IDU_u.ex_csr_info <> EXU_u.ex_csr_info
-    IDU_u.mem_csr_info <> EXU_u.mem_csr_info
+    IDU_u.wb_info  <> EXU_u.wb_info
+    IDU_u.csr_info <> EXU_u.csr_info
 
     EXU_u.idu_out <> IDU_u.out
     EXU_u.idu_out_valid := IDU_u.out_valid_o
