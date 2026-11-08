@@ -62,7 +62,7 @@ class ysyx_26030092_RFS extends Module {
 
     val Reg_u = Module(new RegBlackBox())
     Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
-    Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr1
+    Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
     RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1
     RFS_ReadPort.RegReadPort.rdata2 := Reg_u.io.rdata2
     Reg_u.io.wdata := WriteRegPort.wdata
