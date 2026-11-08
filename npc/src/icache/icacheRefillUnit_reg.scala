@@ -51,7 +51,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
         is(s_wait_mem_free){
             AXI4_port.arvalid := true.B
             AXI4_port.araddr := block_addr
-            AXI4_port.arlen := (beats - 2).U
+            AXI4_port.arlen := (beats - 1).U
             AXI4_port.arsize := 2.U
             AXI4_port.arburst := 1.U
             when(AXI4_port.arready){
@@ -62,7 +62,7 @@ class icacheRefillUnit_reg(block_size :Int) extends Module{
             when(AXI4_port.rvalid){
                 AXI4_port.rready := true.B
                 if(block_size > 4){
-                    block_reg := Cat(block_reg(block_size*8 - 1, 32), AXI4_port.rdata)
+                    block_reg := Cat(AXI4_port.rdata, block_reg(block_size*8 - 1, 32))
                 }else{
                     block_reg := AXI4_port.rdata
                 }
