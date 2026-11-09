@@ -13,7 +13,7 @@ class InstDecode extends Bundle{
     def rd = inst(11,7)
     def funct3 = inst(14,12)
     def funct7 = inst(31,25)
-    def immI = Cat(Fill(20,inst(20)),inst(31,20))
+    def immI = Cat(Fill(20,inst(31)),inst(31,20))
     def immIU = Cat(Fill(20,0.U),inst(31,20))
     def immB = Cat(Fill(19, inst(31)), inst(31), inst(7), inst(30,25), inst(11,8), 0.U(1.W))
     def immU = Cat(inst(31,12),0.U(12.W))
