@@ -49,7 +49,7 @@ class icache_reg(block_size :Int, block_num :Int) extends Module{
     resp.hit := resp_hit
 
     // refill
-    val refill_index = refill.addr(offset_bits + index_bits + 1, offset_bits + 2) + 1.U
+    val refill_index = refill.addr(offset_bits + index_bits + 1, offset_bits + 2)
     val refill_tag = refill.addr(31, offset_bits + index_bits + 2)
     dontTouch(refill_index)
     dontTouch(refill_tag)
