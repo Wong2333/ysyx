@@ -148,7 +148,7 @@ class ysyx_26030092_EXU extends Module{
     // lsu接线
     lsu_in.bits := 0.U.asTypeOf(new LSUBundle)
     lsu_in.bits.addr := AluResult
-    lsu_in.bits.wdata := idu_out.bits.rs1_data
+    lsu_in.bits.wdata := idu_out.bits.rs2_data
     lsu_in.bits.mem_op := idu_out.bits.exu_ctl.mem_op
     lsu_in.bits.mem_size := idu_out.bits.exu_ctl.mem_size
     lsu_in.bits.mem_signed := idu_out.bits.exu_ctl.mem_signed
