@@ -258,6 +258,6 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
     return info;
 }
 void *ref_mem_ptr() { return flash; }
-uint32_t ref_mem_base() { return CONFIG_START_ADDR; }
+uint32_t ref_mem_base() { return 0x30000000u; }
 
 #endif

@@ -1,9 +1,8 @@
 TOPNAME = ysyxSoCFull
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?= $(NPC_HOME)/csrc/include
-INC_PATH += $(NPC_HOME)/tools/capstone/repo/include
+INC_PATH += $(NPC_HOME)/tools/capstone/include
 KCONFIG_INCLUDE = csrc/include/autoconfig.h
-KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
 VERILATOR_CFLAGS += --build -cc -O3 --noassert \
@@ -56,7 +55,7 @@ ELF=
 bin: 
 	make verilog
 	make $(BIN)
-$(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(addprefix -v , $(VSRCS)) \
 		--top-module $(TOPNAME) $(CORE) $(CSRCS) $(NVBOARD_ARCHIVE) \
@@ -66,22 +65,16 @@ $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(
 
 NPC_OBJ_DIR = $(BUILD_DIR)/obj_dir_npc
 NPC_BIN = $(BUILD_DIR)/npc_sim
-NPC_INC = $(BUILD_DIR)/npc/include
-NPC_AUTOCONFIG = $(NPC_INC)/autoconfig.svh
-$(NPC_AUTOCONFIG): $(KCONFIG_VERILOG_INCLUDE)
-	@mkdir -p $(NPC_INC)
-	python3 scripts/sim_autoconfig.py $< $@
-
 npc: $(NPC_BIN)
 
-$(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_AUTOCONFIG) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
+$(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
 	@rm -rf $(NPC_OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) --top-module $(TOPNAME) \
+	$(VERILATOR) $(VERILATOR_CFLAGS) -DNPC --top-module $(TOPNAME) \
 		$(CORE) $(NPC_VSRCS) $(filter-out $(SRC_AUTO_BIND),$(CSRCS)) \
 		$(addprefix -CFLAGS , $(CXXFLAGS) -DNPC) \
 		$(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(NPC_OBJ_DIR) --exe -o $(abspath $(NPC_BIN)) \
-		-I$(NPC_INC) -Iresources/include
+		-Iresources/include
 
 npc-run: npc
 	$(NPC_BIN) -b $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
@@ -136,12 +129,7 @@ IVERILOG ?= iverilog
 VVP      ?= vvp
 SIM_DIR  = $(BUILD_DIR)/sim
 SIM_HEX  = $(SIM_DIR)/img.hex
-SIM_INC  = $(SIM_DIR)/include
-IVERILOG_FLAGS = -g2012 -DSYNTHESIS -I$(SIM_INC) -Iresources/include
-
-$(SIM_INC)/autoconfig.svh: $(KCONFIG_VERILOG_INCLUDE)
-	@mkdir -p $(SIM_INC)
-	python3 scripts/sim_autoconfig.py $< $@
+IVERILOG_FLAGS = -g2012 -DSYNTHESIS -DNPC
 
 $(SIM_HEX): FORCE
 	@test -n "$(IMG)" || (echo "用法: make sim-iverilog IMG=xxx.bin" && exit 1)
@@ -151,7 +139,7 @@ FORCE:
 
 SIM_CYCLES ?= 2000000
 
-$(SIM_DIR)/tb.vvp: $(CORE) $(SIM_INC)/autoconfig.svh sim/tb_npc.v sim/axi_mem.v
+$(SIM_DIR)/tb.vvp: $(CORE) sim/tb_npc.v sim/axi_mem.v
 	@mkdir -p $(SIM_DIR)
 	$(IVERILOG) $(IVERILOG_FLAGS) -s tb_npc \
 		-o $@ $(CORE) sim/axi_mem.v sim/tb_npc.v
@@ -159,7 +147,8 @@ $(SIM_DIR)/tb.vvp: $(CORE) $(SIM_INC)/autoconfig.svh sim/tb_npc.v sim/axi_mem.v
 sim-iverilog: $(SIM_HEX) $(SIM_DIR)/tb.vvp
 	$(VVP) $(SIM_DIR)/tb.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
 
-CELLS ?= /home/wjm/yosys-sta/pdk/nangate45/sim/cells.v
+YOSYS_STA_HOME ?= /home/wjm/yosys-sta
+CELLS ?= $(YOSYS_STA_HOME)/pdk/nangate45/sim/cells.v
 NET_TB = $(SIM_DIR)/tb_netlist.v
 NETLIST_SIM_DIR = $(SIM_DIR)/netlist
 NETLIST_SIM_V   = $(NETLIST_SIM_DIR)/ysyx_26030092.netlist.v
@@ -170,14 +159,18 @@ else
   NETLIST_USE = $(abspath $(NETLIST))
 endif
 
-# 用 0x80000000 起始地址的那份 autoconfig.svh 重新综合，供网表仿真使用
-$(NETLIST_SIM_V): $(CORE) $(SIM_INC)/autoconfig.svh
+NET_CORE = $(SIM_DIR)/ysyx_26030092_netlist_sim.sv
+
+$(NET_CORE): $(CORE)
+	@mkdir -p $(SIM_DIR)
+	{ echo '`define NETLIST_SIM'; cat $<; } > $@
+
+$(NETLIST_SIM_V): $(NET_CORE)
 	@mkdir -p $(NETLIST_SIM_DIR)
-	echo tcl $(SCRIPT_DIR)/yosys.tcl $(DESIGN) $(PDK_NAME) \"$(CORE)\" $@ | \
-	  VERILOG_INCLUDE_DIRS=$(abspath $(SIM_INC)):$(abspath resources/include) \
+	echo tcl $(SCRIPT_DIR)/yosys.tcl $(DESIGN) $(PDK_NAME) \"$(NET_CORE)\" $@ | \
 	  yosys -g -l $(NETLIST_SIM_DIR)/yosys.log -s -
 
-$(NET_TB): $(NETLIST_USE)
+$(NET_TB): $(NETLIST_USE) scripts/gen_netlist_tb.py
 	@mkdir -p $(SIM_DIR)
 	python3 scripts/gen_netlist_tb.py $(NETLIST_USE) $(NET_TB)
 
@@ -193,7 +186,7 @@ sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp
 sim:
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
+	$(BUILD_DIR)/$(TOPNAME) -b $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
@@ -216,7 +209,7 @@ export CLK_PORT_NAME = clock
 
 CLK_FREQ_MHZ = 800
 
-include /home/wjm/yosys-sta/Makefile.common
+-include $(YOSYS_STA_HOME)/Makefile.common
 
 # 注意：必须在 include Makefile.common 之后覆盖
 PDK_NAME = nangate45
@@ -230,13 +223,6 @@ $(KCONFIG_INCLUDE): .config
 		--kconfig-list-out log.txt \
 		--configs-in .config
 
-$(KCONFIG_VERILOG_INCLUDE): .config
-	python3 scripts/kconfig.py \
-		--kconfig-file Kconfig \
-		--config-out .config \
-		--kconfig-list-out log.txt \
-		--configs-in .config \
-		--verilog-header resources/include/autoconfig.svh
 .config:
 	python -m menuconfig Kconfig
 menuconfig:

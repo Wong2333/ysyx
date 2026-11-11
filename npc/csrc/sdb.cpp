@@ -36,7 +36,7 @@ static int cmd_c(char *args) {
 
 static int cmd_q(char *args) {
   printf("quit npc\n");
-  return -1;
+  exit(0);
 }
 
 static int cmd_help(char *args);
@@ -212,17 +212,23 @@ void sdb_mainloop() {
 
     if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
   }
+  printf("quit npc (EOF)\n");
+  exit(0);
 }
 
 
 static uint32_t commit_pc;
 static bool has_commit = false;
+static bool ever_committed = false;
+static uint32_t last_commit_pc = 0;
 // commit 附带的访存信息（供 difftest 判断是否跳过 NEMU）
 int commit_mem_valid = 0;
 uint32_t commit_mem_addr = 0;
 
 extern "C" void commit(int pc, int mem_commit, int mem_addr){
   commit_pc = pc;
+  last_commit_pc = pc;
+  ever_committed = true;
   has_commit = true;
   commit_mem_valid = mem_commit;
   commit_mem_addr = (uint32_t)mem_addr;
@@ -261,9 +267,12 @@ void printInst(uint32_t pc){
 }
 
 void printNextInst(){
-  printf("next instruction: ");
-  uint32_t pc = read_pc_reg();
-  printInst(pc);
+  if (ever_committed) {
+    printf("commit:     ");
+    printInst(last_commit_pc);
+  }
+  printf("next fetch: ");
+  printInst(read_pc_reg());
 }
 
 void init_sdb() {

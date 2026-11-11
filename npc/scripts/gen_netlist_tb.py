@@ -141,7 +141,7 @@ module tb_netlist;
 `endif
     void'($value$plusargs("CYCLES=%d", max_cycles));
     $display("[netlist] 已装载镜像，开始仿真");
-    #1 reset = 1'b0;
+    #20 reset = 1'b0;
   end
 
 @@STOP@@
