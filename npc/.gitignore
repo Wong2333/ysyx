@@ -36,3 +36,4 @@ test_run_dir/
 !Kconfig
 !.config
 !resources/include/*.svh
+!constr/*.nxdc
