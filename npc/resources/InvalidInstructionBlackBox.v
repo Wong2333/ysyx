@@ -1,4 +1,4 @@
-module InvalidInstructionBlackBox (
+module ysyx_26030092_InvalidInstructionBlackBox (
     input [31:0] pc,
     input [31:0] inst,
     input invalid

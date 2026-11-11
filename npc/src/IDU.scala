@@ -23,13 +23,13 @@ class InstDecode extends Bundle{
 }
 
  
-class EbreakBlackBox extends ExtModule{
+class ysyx_26030092_EbreakBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
         val ebreak_trap = Input(Bool())
     })
     addResource("/EbreakBlackBox.v")
 }
-class InvalidInstructionBlackBox extends ExtModule{
+class ysyx_26030092_InvalidInstructionBlackBox extends ExtModule{
     val io = FlatIO(new Bundle{
         val pc = Input(UInt(32.W))
         val inst = Input(UInt(32.W))

@@ -6,9 +6,8 @@ KCONFIG_INCLUDE = csrc/include/autoconfig.h
 KCONFIG_VERILOG_INCLUDE = resources/include/autoconfig.svh
 
 VERILATOR = verilator
-VERILATOR_CFLAGS += --threads 1 -MMD --build -cc -CFLAGS -ggdb -LDFLAGS -ggdb \
-				-O3 --x-assign fast --x-initial fast --noassert \
-				--timescale "1ns/1ns" --no-timing --autoflush 
+VERILATOR_CFLAGS += --build -cc -O3 --noassert \
+				--timescale "1ns/1ns" --no-timing --autoflush
 
 VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
 
@@ -23,7 +22,8 @@ BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 SPLIT_DIR = $(BUILD_DIR)/split
-# 流片/CI 要求：所有 CPU 模块合并到一个文件，模块名统一加 ysyx_26030092_ 前缀
+# 流片/CI 要求：所有 CPU 模块合并到一个文件；模块名在 Scala/Verilog 源码里
+# 已经直接带上 ysyx_26030092_ 前缀，这里只做拼接
 CORE = $(BUILD_DIR)/ysyx_26030092.sv
 PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
@@ -71,18 +71,13 @@ test:
 
 verilog: $(CORE) $(PERF_NAMES_H)
 
-UNPREFIXED_MODS = BPU|icache|icacheMainPipe|icacheRefillUnit|cache_8x128|ram_2x97|tag_array_8x25|Commit|EbreakBlackBox|InvalidInstructionBlackBox|mtrace|PCBlackBox|PerfCounterArray|RegBlackBox
-
+# 每次从干净的 target-dir 重新生成，避免改名后残留旧的 .sv
 $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
+	rm -rf $(SPLIT_DIR)
 	mkdir -p $(SPLIT_DIR)
 	mill -i runMain Elaborate --target-dir $(SPLIT_DIR)
-	cat $(SPLIT_DIR)/*.sv > $@.tmp
-	sed -i -E 's/\b($(UNPREFIXED_MODS))\b/ysyx_26030092_\1/g' $@.tmp
-	# 手写资源的 DPI 函数名不能跟着改（C++ 侧按原名提供），只改 module 声明
-	for f in $(RESOURCES); do \
-	    sed -E 's/^([[:space:]]*module[[:space:]]+)($(UNPREFIXED_MODS))([[:space:](])/\1ysyx_26030092_\2\3/' $$f >> $@.tmp; done
-	mv $@.tmp $@
+	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
@@ -122,6 +117,7 @@ VVP      ?= vvp
 SIM_DIR  = $(BUILD_DIR)/sim
 SIM_HEX  = $(SIM_DIR)/img.hex
 SIM_INC  = $(SIM_DIR)/include
+IVERILOG_FLAGS = -g2012 -DSYNTHESIS -I$(SIM_INC) -Iresources/include
 
 $(SIM_INC)/autoconfig.svh: $(KCONFIG_VERILOG_INCLUDE)
 	@mkdir -p $(SIM_INC)
@@ -137,8 +133,7 @@ SIM_CYCLES ?= 2000000
 # 编译产物做成真实目标：换镜像跑的时候不必重新编译（scripts/run_tests.sh 依赖这一点）
 $(SIM_DIR)/tb.vvp: $(CORE) $(SIM_INC)/autoconfig.svh sim/tb_npc.v sim/axi_mem.v
 	@mkdir -p $(SIM_DIR)
-	$(IVERILOG) -g2012 -DSYNTHESIS -D__ICARUS__ \
-		-I$(SIM_INC) -Iresources/include -s tb_npc \
+	$(IVERILOG) $(IVERILOG_FLAGS) -s tb_npc \
 		-o $@ $(CORE) sim/axi_mem.v sim/tb_npc.v
 
 sim-iverilog: $(SIM_HEX) $(SIM_DIR)/tb.vvp
@@ -168,8 +163,7 @@ $(NET_TB): $(NETLIST_USE)
 
 $(SIM_DIR)/tb_net.vvp: $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 	@mkdir -p $(SIM_DIR)
-	$(IVERILOG) -g2012 -DSYNTHESIS -D__ICARUS__ -DNETLIST_SIM \
-		-I$(SIM_INC) -Iresources/include -s tb_netlist \
+	$(IVERILOG) $(IVERILOG_FLAGS) -DNETLIST_SIM -s tb_netlist \
 		-o $@ $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 
 sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp

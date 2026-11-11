@@ -33,7 +33,7 @@ class ReadRegPortBundle extends Bundle{
     val rdata2 = Input(UInt(32.W))
 }
 
-class RegBlackBox extends ExtModule{
+class ysyx_26030092_RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
     val clock = Input(Clock())
     val wdata  = Input(UInt(32.W))
@@ -48,19 +48,18 @@ class RegBlackBox extends ExtModule{
 }
 
 class ysyx_26030092_RFS extends Module {
-    // 读端口（EXU 使用，组合读）
     val RFS_ReadPort = IO(new Bundle {
         val RegReadPort = Flipped(new ReadRegPortBundle)
         val CSRReadPort = Flipped(new CSRReadPortBundle)
     })
-    // 写端口（WBU 驱动，仅在写回拍有效）
+
     val WriteRegPort = IO(Input(new WriteRegPortBundle))
     val CSRWritePort = IO(Input(new CSRWritePortBundle))
     val ExceptionPort = IO(Input(new ExceptionInfoBundle))
-    // trap 跳转目标，供 IFU 读取（PC 在 IFU，mtvec 存储在 RFS）
+
     val mtvec_out = IO(Output(UInt(32.W)))
 
-    val Reg_u = Module(new RegBlackBox())
+    val Reg_u = Module(new ysyx_26030092_RegBlackBox())
     Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
     Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
     RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1

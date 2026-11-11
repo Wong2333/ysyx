@@ -38,7 +38,7 @@ class ysyx_26030092_BranchUnit extends Module{
     val is_mret   = sys_op === SysOp.mret
     val taken     = branch_cond || is_jump
 
-    val shadow_pc = Module(new PCBlackBox)
+    val shadow_pc = Module(new ysyx_26030092_PCBlackBox)
     val pc_hit    = shadow_pc.io.pc === pc
     val jump      = lsu_trap || ((taken || is_mret || is_excp) && fire && pc_hit)
     val next_pc   = Mux(lsu_trap, mtvec, MuxCase(0.U, Seq(

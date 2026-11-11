@@ -1,4 +1,4 @@
-module PerfCounterArray(
+module ysyx_26030092_PerfCounterArray(
     input io_clock,
     input io_reset,
     input io_event

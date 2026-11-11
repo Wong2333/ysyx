@@ -6,7 +6,7 @@ import npc.AXI._
 import npc.PMU._
 import scala.annotation.varargs
 
-class icacheRefillUnit_reg(block_size :Int) extends Module{
+class ysyx_26030092_icacheRefillUnit_reg(block_size :Int) extends Module{
     val flush = IO(Input(Bool()))
     val req = IO(new Bundle {
         val addr = Input(UInt(32.W))

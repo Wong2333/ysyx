@@ -1,5 +1,5 @@
 // RV32E: 16 个通用寄存器（x0-x15）。端口保持 5 位地址，内部只用低 4 位。
-module RegBlackBox(
+module ysyx_26030092_RegBlackBox(
     input         clock,
     input  [31:0] wdata,
     input  [4:0]  waddr,

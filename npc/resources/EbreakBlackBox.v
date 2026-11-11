@@ -1,4 +1,4 @@
-module EbreakBlackBox (
+module ysyx_26030092_EbreakBlackBox (
     input ebreak_trap
 );
 `ifndef SYNTHESIS

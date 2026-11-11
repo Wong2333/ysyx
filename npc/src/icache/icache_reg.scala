@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import npc.PMU._
 
-class icache_reg(block_size :Int, block_num :Int) extends Module{
+class ysyx_26030092_icache_reg(block_size :Int, block_num :Int) extends Module{
     val cache = Reg(Vec(block_num, UInt((block_size*8).W)))
     val offset_bits = log2Ceil(block_size/4)
     val index_bits = log2Ceil(block_num)
