@@ -153,6 +153,7 @@ void init_engine(int argc, char **argv) {
     tfp->open("waveform.fst");
 #endif
     init_trace(trace_dir, elf_file ? elf_file : img_file);
+#ifdef CONFIG_ENABLE_DIFFTEST
     {
         const char *ref_so = diff_so_file;
         if (ref_so == NULL) {
@@ -163,6 +164,7 @@ void init_engine(int argc, char **argv) {
         }
         init_difftest(ref_so, img_size);
     }
+#endif
     running = false;
 }
 

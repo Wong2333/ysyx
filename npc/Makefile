@@ -77,7 +77,7 @@ $(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
 		-Iresources/include
 
 npc-run: npc
-	$(NPC_BIN) -b $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
+	$(NPC_BIN) $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
 
 test:
 	mill -i test
@@ -186,7 +186,7 @@ sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp
 sim:
 	make bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) -b $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
+	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 
 PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
