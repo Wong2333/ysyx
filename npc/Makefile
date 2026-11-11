@@ -150,7 +150,7 @@ $(SIM_HEX): FORCE
 FORCE:
 
 SIM_CYCLES ?= 2000000
-# 编译产物做成真实目标：换镜像跑的时候不必重新编译（scripts/run_tests.sh 依赖这一点）
+
 $(SIM_DIR)/tb.vvp: $(CORE) $(SIM_INC)/autoconfig.svh sim/tb_npc.v sim/axi_mem.v
 	@mkdir -p $(SIM_DIR)
 	$(IVERILOG) $(IVERILOG_FLAGS) -s tb_npc \

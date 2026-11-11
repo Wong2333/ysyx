@@ -75,15 +75,18 @@ void ebreak() {
     printPMU();
     if(status == 0){
         printf("\033[32mHIT GOOD TRAP\033[0m\n");
+        close_tfp();
         exit(0);
     }else{
         printf("\033[31mHIT BAD TRAP\033[0m\n");
+        close_tfp();
         exit(1);
     }
 }
 void my_assert(bool cond);
 void invalid_instruction(int pc,int inst){
     printf("invalid_instruction: 0x%x at 0x%x\n",(uint32_t)inst,(uint32_t)pc);
+    close_tfp();
     my_assert(0);
 }
 
