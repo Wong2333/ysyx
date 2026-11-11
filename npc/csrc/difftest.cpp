@@ -78,8 +78,14 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 
   ref_difftest_init(0);
 
+#ifdef NPC
+  extern uint8_t *npc_pmem_base();
+  void *img_ptr = npc_pmem_base();
+  ref_difftest_memcpy(0x80000000u, img_ptr, img_size, DIFFTEST_TO_REF);
+#else
   void *img_ptr = (uint8_t *)flash;
   ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
+#endif
 
   riscv32_CPU_state dut_state;
   // RV32E: RTL 只有 16 个寄存器，高 16 个清零且不再更新（软件不写 x16-x31）

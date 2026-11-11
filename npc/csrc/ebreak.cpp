@@ -6,7 +6,11 @@
 #include <utils.h>
 
 uint32_t read_rf_reg(int addr) {
-    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 
+#ifdef NPC
+    const char* scope_name = "TOP.ysyxSoCFull.cpu.RFS_u.Reg_u";
+#else
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u";
+#endif
     
     svScope scope = svGetScopeFromName(scope_name);
     if (!scope) {
@@ -22,7 +26,11 @@ uint32_t read_rf_reg(int addr) {
 }
 
 uint32_t read_pc_reg() {
+#ifdef NPC
+    const char* scope_name = "TOP.ysyxSoCFull.cpu.IFU_u.PC_reg";
+#else
     const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.IFU_u.PC_reg";
+#endif
     svScope scope = svGetScopeFromName(scope_name);
 
     if (!scope) {

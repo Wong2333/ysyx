@@ -1,6 +1,11 @@
 #include "svdpi.h"
 #include "VysyxSoCFull__Dpi.h"
 #include "perf_names.h"
+
+#ifdef NPC
+#undef PERF_PREFIX
+#define PERF_PREFIX "TOP.ysyxSoCFull.cpu."
+#endif
 #include <stdio.h>
 #include <string.h>
 

@@ -3,7 +3,9 @@
 #include <getopt.h>
 #include <time.h>
 #include <cassert>
+#ifndef NPC
 #include <nvboard.h>
+#endif
 #include <VysyxSoCFull.h>
 #include <autoconfig.h>
 
@@ -51,7 +53,9 @@ static void single_cycle() {
 
     top.clock = ~top.clock;
     eval();
+#ifndef NPC
     nvboard_update();
+#endif
 
     cycle++;
 }
@@ -112,8 +116,10 @@ void init_cpu(){
 
 
 void init_nvboard(){
+#ifndef NPC
     nvboard_bind_all_pins(&top);
     nvboard_init();
+#endif
 }
 
 void init_engine(int argc, char **argv) {

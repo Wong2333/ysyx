@@ -39,7 +39,6 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)/perip) -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
-VERILATOR_CFLAGS += $(addprefix -v , $(VSRCS))
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 CSRCS += $(SRC_AUTO_BIND)
@@ -60,11 +59,35 @@ bin:
 	make $(BIN)
 $(BIN): $(KCONFIG_INCLUDE) $(KCONFIG_VERILOG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) \
+	$(VERILATOR) $(VERILATOR_CFLAGS) $(addprefix -v , $(VSRCS)) \
 		--top-module $(TOPNAME) $(CORE) $(CSRCS) $(NVBOARD_ARCHIVE) \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
 		-Iresources/include
+
+NPC_OBJ_DIR = $(BUILD_DIR)/obj_dir_npc
+NPC_BIN = $(BUILD_DIR)/npc_sim
+NPC_INC = $(BUILD_DIR)/npc/include
+NPC_AUTOCONFIG = $(NPC_INC)/autoconfig.svh
+NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
+
+$(NPC_AUTOCONFIG): $(KCONFIG_VERILOG_INCLUDE)
+	@mkdir -p $(NPC_INC)
+	python3 scripts/sim_autoconfig.py $< $@
+
+npc: $(NPC_BIN)
+
+$(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_AUTOCONFIG) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
+	@rm -rf $(NPC_OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_CFLAGS) -DNPC --top-module $(TOPNAME) \
+		$(CORE) $(NPC_VSRCS) $(filter-out $(SRC_AUTO_BIND),$(CSRCS)) \
+		$(addprefix -CFLAGS , $(CXXFLAGS) -DNPC) \
+		$(addprefix -LDFLAGS , $(LDFLAGS)) \
+		--Mdir $(NPC_OBJ_DIR) --exe -o $(abspath $(NPC_BIN)) \
+		-I$(NPC_INC) -Iresources/include
+
+npc-run: npc
+	$(NPC_BIN) -b $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
 
 test:
 	mill -i test
@@ -105,7 +128,7 @@ rebuild:
 	make clean
 	make
 
-.PHONY: bin test verilog sim-iverilog sim-iverilog-netlist help reformat checkformat clean perf lint sim
+.PHONY: bin npc npc-run test verilog sim-iverilog sim-iverilog-netlist help reformat checkformat clean perf lint sim
 
 lint: $(CORE)
 	verilator --lint-only -Wall -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL \
