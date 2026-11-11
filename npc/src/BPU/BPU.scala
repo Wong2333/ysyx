@@ -26,7 +26,7 @@ class BPUPredictBundle extends Bundle{
     val valid = Bool()
 }
 
-class BPU(ways :Int, tag_bits :Int) extends Module{
+class ysyx_26030092_BPU(ways :Int, tag_bits :Int) extends Module{
 
     val train_port = IO(Input(new BPUTrainBundle))
     val pc = IO(Input(UInt(30.W)))

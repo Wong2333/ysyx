@@ -32,7 +32,7 @@ class RedirectBundle extends Bundle {
   val pc_next = Output(UInt(32.W))
 }
 
-class Commit extends ExtModule{
+class ysyx_26030092_Commit extends ExtModule{
     val clock = FlatIO(Input(Clock()))
     val reset = FlatIO(Input(Bool()))
     val pc = FlatIO(Input(UInt(32.W)))
@@ -80,7 +80,7 @@ class ysyx_26030092_WBU extends Module{
     PerfCounter("WBU_stall_cycle") := !in.valid
 
     // commit 通知：fire 锁存，下一拍触发 DPI-C（供 difftest/trace 消费）
-    val commit_u = Module(new Commit)
+    val commit_u = Module(new ysyx_26030092_Commit)
     commit_u.clock := clock
     commit_u.reset := reset
     commit_u.valid := false.B
@@ -92,13 +92,13 @@ class ysyx_26030092_WBU extends Module{
         commit_u.valid := true.B
     }
 
-    val invalid_instruction = Module(new InvalidInstructionBlackBox())
+    val invalid_instruction = Module(new ysyx_26030092_InvalidInstructionBlackBox())
     invalid_instruction.io.pc := ExceptionPort.PC
     invalid_instruction.io.inst := DontCare
     invalid_instruction.io.invalid := false.B
 
     // 访存错误 / ebreak 指令：仿真终止（BAD TRAP）
-    val ebreak = Module(new EbreakBlackBox())
+    val ebreak = Module(new ysyx_26030092_EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
     // when(lsu_out.fire && lsu_out.bits.error === true.B){
     //     ebreak.io.ebreak_trap := true.B

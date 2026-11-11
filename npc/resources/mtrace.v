@@ -1,4 +1,4 @@
-module mtrace (
+module ysyx_26030092_mtrace (
     input is_write,
     input [31:0] addr,
     input [31:0] data,

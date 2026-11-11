@@ -1,4 +1,4 @@
-module PCBlackBox(
+module ysyx_26030092_PCBlackBox(
     input clock,
     input reset,
     input [31:0] pc_next,

@@ -5,7 +5,7 @@ import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
 
-class mtrace extends ExtModule{
+class ysyx_26030092_mtrace extends ExtModule{
     val io = FlatIO(new Bundle {
         val is_write = Input(Bool())
         val addr = Input(UInt(32.W))
@@ -89,7 +89,7 @@ class ysyx_26030092_LSU extends Module{
         MemSize.byte -> ("b1".U(4.W)  << addr(1,0))(3,0),
         MemSize.half -> ("b11".U(4.W) << addr(1,0))(3,0)))
 
-    val mtrace_u = Module(new mtrace)
+    val mtrace_u = Module(new ysyx_26030092_mtrace)
     mtrace_u.io.is_write := true.B
     mtrace_u.io.addr     := addr
     mtrace_u.io.data     := wdata

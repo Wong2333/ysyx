@@ -6,9 +6,9 @@ import npc.PMU._
 import chisel3.experimental.dataview.DataViewable
 import npc.instEntry
 
-class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
+class ysyx_26030092_icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
-    val icache = Module(new icache_reg(block_size, block_num))
+    val icache = Module(new ysyx_26030092_icache_reg(block_size, block_num))
     icache.refill.valid := false.B
     icache.refill.addr := DontCare
     icache.refill.block := DontCare
@@ -37,7 +37,7 @@ class icacheMainPipe_reg(block_size :Int, block_num :Int) extends Module{
 
 
 
-    val refill_unit = Module(new icacheRefillUnit_reg(block_size))
+    val refill_unit = Module(new ysyx_26030092_icacheRefillUnit_reg(block_size))
     refill_unit.req.valid := false.B
     refill_unit.flush := flush
     refill_unit.req.addr := Cat(req_fifo.io.deq.bits, 0.U(2.W))

@@ -33,7 +33,7 @@ class ReadRegPortBundle extends Bundle{
     val rdata2 = Input(UInt(32.W))
 }
 
-class RegBlackBox extends ExtModule{
+class ysyx_26030092_RegBlackBox extends ExtModule{
   val io = FlatIO(new Bundle {
     val clock = Input(Clock())
     val wdata  = Input(UInt(32.W))
@@ -59,7 +59,7 @@ class ysyx_26030092_RFS extends Module {
 
     val mtvec_out = IO(Output(UInt(32.W)))
 
-    val Reg_u = Module(new RegBlackBox())
+    val Reg_u = Module(new ysyx_26030092_RegBlackBox())
     Reg_u.io.raddr1 := RFS_ReadPort.RegReadPort.raddr1
     Reg_u.io.raddr2 := RFS_ReadPort.RegReadPort.raddr2
     RFS_ReadPort.RegReadPort.rdata1 := Reg_u.io.rdata1

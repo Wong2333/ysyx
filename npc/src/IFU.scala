@@ -5,7 +5,7 @@ import chisel3.util._
 import npc.AXI.AXI4Bundle
 import npc.PMU._
 import npc.BPU.BPUPredictBundle
-import npc.icache.icacheMainPipe_reg
+import npc.icache.ysyx_26030092_icacheMainPipe_reg
 
 class instEntry extends Bundle{
     val inst = UInt(32.W)
@@ -14,7 +14,7 @@ class instEntry extends Bundle{
     val is_excp = Bool()
 }
 
-class PCBlackBox extends ExtModule{
+class ysyx_26030092_PCBlackBox extends ExtModule{
     val io = FlatIO(new Bundle {
         val clock = Input(Clock())
         val reset = Input(Reset())
@@ -40,14 +40,14 @@ class ysyx_26030092_IFU extends Module{
 
     val AXI4_port = IO(new AXI4Bundle)
 
-    val PC_reg = Module(new PCBlackBox())
+    val PC_reg = Module(new ysyx_26030092_PCBlackBox())
     PC_reg.io.clock := clock
     PC_reg.io.reset := reset
 
     val inst_queue = Module(new Queue(new instEntry, 2, hasFlush = true))
     inst_queue.io.flush.get := flush
     
-    val icache_main_pipe = Module(new icacheMainPipe_reg(16,8))
+    val icache_main_pipe = Module(new ysyx_26030092_icacheMainPipe_reg(16,8))
     icache_main_pipe.AXI4_port <> AXI4_port
     icache_main_pipe.icache_flush := flush_icache
     icache_main_pipe.req.valid := ~flush
@@ -77,7 +77,7 @@ class ysyx_26030092_IFU extends Module{
     PerfCounter("IFU_fetch")        := out.fire
 
     // 只用于仿真，检测访存错误
-    val ebreak = Module(new EbreakBlackBox())
+    val ebreak = Module(new ysyx_26030092_EbreakBlackBox())
     ebreak.io.ebreak_trap := false.B
     when(AXI4_port.rvalid && AXI4_port.rready && AXI4_port.rresp =/= 0.U){
         ebreak.io.ebreak_trap := true.B

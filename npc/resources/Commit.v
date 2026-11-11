@@ -1,4 +1,4 @@
-module Commit(
+module ysyx_26030092_Commit(
     input [31:0] pc,
     input valid,
     input clock,
