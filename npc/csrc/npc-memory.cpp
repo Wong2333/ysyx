@@ -11,9 +11,9 @@
 #define NPC_UART_BASE 0x10000000u
 #define NPC_RTC_BASE  (0x10000000u + 0x30u)
 
-extern uint32_t img_size;
-
 static uint8_t npc_pmem[NPC_PMEM_SIZE] __attribute__((aligned(4096)));
+
+uint32_t img_size = 0;
 
 static uint64_t npc_now_us() {
     struct timespec ts;
@@ -21,11 +21,7 @@ static uint64_t npc_now_us() {
     return (uint64_t)ts.tv_sec * 1000000ull + (uint64_t)ts.tv_nsec / 1000ull;
 }
 
-uint8_t *npc_pmem_base() {
-    return npc_pmem;
-}
-
-void npc_load_img(const char *path) {
+void load_img(const char *path) {
     FILE *fp = fopen(path, "r");
     if (fp == NULL) {
         printf("can't open this file: %s\n", path);
@@ -57,6 +53,22 @@ uint32_t npc_mem_read_word(uint32_t addr) {
         return (addr == NPC_RTC_BASE + 4) ? (uint32_t)(t >> 32) : (uint32_t)t;
     }
     return 0;
+}
+
+uint32_t mem_read(uint32_t addr) {
+    return npc_mem_read_word(addr);
+}
+
+bool in_mem(uint32_t addr) {
+    return addr >= NPC_PMEM_BASE && addr < NPC_PMEM_BASE + NPC_PMEM_SIZE;
+}
+
+void *ref_mem_ptr() {
+    return npc_pmem;
+}
+
+uint32_t ref_mem_base() {
+    return NPC_PMEM_BASE;
 }
 
 extern "C" void npc_mem_read(int addr, int *data) {

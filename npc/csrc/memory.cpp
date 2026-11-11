@@ -1,3 +1,4 @@
+#ifndef NPC
 #include <svdpi.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <stdint.h> // 引入 uint32_t, uint8_t 等标准类型
@@ -10,12 +11,6 @@
 #include <trace.h>
 #include <cassert>
 #include <npc-memory.h>
-
-#ifdef NPC
-extern uint8_t *npc_pmem_base();
-extern uint32_t npc_mem_read_word(uint32_t addr);
-extern void npc_load_img(const char *path);
-#endif
 
 extern struct timespec start, end;
 
@@ -30,10 +25,6 @@ uint32_t flash[FLASH_SIZE / 4];
 uint32_t img_size = 0;
 
 void load_img(const char* path){
-#ifdef NPC
-    npc_load_img(path);
-    return;
-#endif
 
     uint8_t *pmem_byte = (uint8_t *)flash;
     FILE* fp = fopen(path,"r");
@@ -137,9 +128,6 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
  * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
  */
 uint32_t mem_read(uint32_t addr) {
-#ifdef NPC
-    return npc_mem_read_word(addr);
-#endif
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return mrom[(addr - 0x20000000) >> 2];
     else if (addr >= 0x30000000 && addr < 0x40000000) {  // Flash XIP
@@ -163,9 +151,6 @@ uint32_t mem_read(uint32_t addr) {
 }
 
 bool in_mem(uint32_t addr){
-#ifdef NPC
-    return addr >= 0x80000000u && addr < 0x88000000u;
-#endif
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return true;
     else if (addr >= 0x30000000 && addr < 0x40000000)    // Flash XIP
@@ -272,3 +257,7 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
 
     return info;
 }
+void *ref_mem_ptr() { return flash; }
+uint32_t ref_mem_base() { return CONFIG_START_ADDR; }
+
+#endif

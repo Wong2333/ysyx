@@ -1,3 +1,4 @@
+#ifndef NPC
 #include "svdpi.h"
 #include "VysyxSoCFull__Dpi.h"
 #include <stdlib.h>
@@ -6,11 +7,7 @@
 #include <utils.h>
 
 uint32_t read_rf_reg(int addr) {
-#ifdef NPC
-    const char* scope_name = "TOP.ysyxSoCFull.cpu.RFS_u.Reg_u";
-#else
-    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u";
-#endif
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 
     
     svScope scope = svGetScopeFromName(scope_name);
     if (!scope) {
@@ -26,11 +23,7 @@ uint32_t read_rf_reg(int addr) {
 }
 
 uint32_t read_pc_reg() {
-#ifdef NPC
-    const char* scope_name = "TOP.ysyxSoCFull.cpu.IFU_u.PC_reg";
-#else
     const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.IFU_u.PC_reg";
-#endif
     svScope scope = svGetScopeFromName(scope_name);
 
     if (!scope) {
@@ -93,3 +86,5 @@ void invalid_instruction(int pc,int inst){
     printf("invalid_instruction: 0x%x at 0x%x\n",(uint32_t)inst,(uint32_t)pc);
     my_assert(0);
 }
+
+#endif
