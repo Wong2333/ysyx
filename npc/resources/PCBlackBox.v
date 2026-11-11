@@ -6,7 +6,13 @@ module ysyx_26030092_PCBlackBox(
     input pc_4,
     output [31:0]pc
 );
-    `include "autoconfig.svh"
+`ifdef NPC
+    localparam CONFIG_START_ADDR = 32'h80000000;
+`elsif NETLIST_SIM
+    localparam CONFIG_START_ADDR = 32'h80000000;
+`else
+    localparam CONFIG_START_ADDR = 32'h30000000;
+`endif
     reg [31:0] PC;
     assign pc = PC;
     always@(posedge clock) begin

@@ -88,7 +88,12 @@ module axi_mem #(
   wire r_is_rtc0 = (r_addr[31:2]  == 30'h0400_000C);   // 0x1000_0030
   wire r_is_rtc1 = (r_addr[31:2]  == 30'h0400_000D);   // 0x1000_0034
 
+  wire r_is_boot0 = (r_addr == 32'h3000_0000);
+  wire r_is_boot1 = (r_addr == 32'h3000_0004);
+
   wire [31:0] r_data_mux =
+      r_is_boot0 ? 32'h800002B7 :
+      r_is_boot1 ? 32'h00028067 :
       r_is_rtc0 ? uptime_us[31:0] :
       r_is_rtc1 ? uptime_us[63:32] :
       r_is_mem  ? mem[r_addr[25:2]] : 32'h0;

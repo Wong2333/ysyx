@@ -86,7 +86,7 @@ module tb_npc;
 `endif
     end
     $display("[iverilog] 已装载镜像，开始仿真");
-    #1 reset = 1'b0;
+    #20 reset = 1'b0;
   end
 
   // ---- 结束条件 ----

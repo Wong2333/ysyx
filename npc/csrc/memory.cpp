@@ -1,3 +1,4 @@
+#ifndef NPC
 #include <svdpi.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <stdint.h> // 引入 uint32_t, uint8_t 等标准类型
@@ -256,3 +257,7 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
 
     return info;
 }
+void *ref_mem_ptr() { return flash; }
+uint32_t ref_mem_base() { return 0x30000000u; }
+
+#endif

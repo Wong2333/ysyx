@@ -36,6 +36,8 @@ static bool difftest_on = false;
 /* NPC memory and register access */
 extern uint32_t *mem;
 extern uint32_t img_size;
+void *ref_mem_ptr();
+uint32_t ref_mem_base();
 extern uint32_t flash[1024];
 extern uint32_t img_size;
 uint32_t read_rf_reg(int addr);
@@ -78,8 +80,8 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 
   ref_difftest_init(0);
 
-  void *img_ptr = (uint8_t *)flash;
-  ref_difftest_memcpy(CONFIG_START_ADDR, img_ptr, img_size, DIFFTEST_TO_REF);
+  void *img_ptr = ref_mem_ptr();
+  ref_difftest_memcpy(ref_mem_base(), img_ptr, img_size, DIFFTEST_TO_REF);
 
   riscv32_CPU_state dut_state;
   // RV32E: RTL 只有 16 个寄存器，高 16 个清零且不再更新（软件不写 x16-x31）

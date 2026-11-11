@@ -1,3 +1,4 @@
+#ifndef NPC
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
@@ -198,6 +199,11 @@ void start_engine(){
 
 void close_tfp(){
 #ifdef CONFIG_ENABLE_FST_TRACE
-    tfp->close();
+    if (tfp) {
+        tfp->close();
+        tfp = NULL;
+    }
 #endif
 }
+
+#endif

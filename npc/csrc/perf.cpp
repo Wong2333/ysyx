@@ -1,3 +1,4 @@
+#ifndef NPC
 #include "svdpi.h"
 #include "VysyxSoCFull__Dpi.h"
 #include "perf_names.h"
@@ -24,3 +25,5 @@ void printPMU(){
         printf("[PERF] %s: %llu\n", name, (unsigned long long)data);
     }
 }
+
+#endif
