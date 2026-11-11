@@ -1,5 +1,3 @@
-`ifdef NPC
-
 module ysyxSoCFull(
   input clock,
   input reset
@@ -57,5 +55,3 @@ module ysyxSoCFull(
   );
 
 endmodule
-
-`endif

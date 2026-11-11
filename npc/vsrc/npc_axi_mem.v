@@ -1,5 +1,3 @@
-`ifdef NPC
-
 module npc_axi_mem(
   input  clock,
   input  reset,
@@ -76,5 +74,3 @@ module npc_axi_mem(
     end
   end
 endmodule
-
-`endif

@@ -22,8 +22,7 @@ BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 SPLIT_DIR = $(BUILD_DIR)/split
-# 流片/CI 要求：所有 CPU 模块合并到一个文件；模块名在 Scala/Verilog 源码里
-# 已经直接带上 ysyx_26030092_ 前缀，这里只做拼接
+
 CORE = $(BUILD_DIR)/ysyx_26030092.sv
 PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
@@ -36,7 +35,8 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # project source
-VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
+NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
+VSRCS = $(filter-out $(addprefix $(abspath .)/,$(NPC_VSRCS)),$(shell find $(abspath ./vsrc) -name "*.v"))
 VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)/perip) -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
@@ -44,10 +44,9 @@ CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*
 CSRCS += $(SRC_AUTO_BIND)
 CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
 RESOURCES = $(shell find $(abspath ./resources) -name "*.v")
-# rules for NVBoard
+# NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
-# rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH)) -I$(abspath $(BUILD_DIR))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
@@ -69,8 +68,6 @@ NPC_OBJ_DIR = $(BUILD_DIR)/obj_dir_npc
 NPC_BIN = $(BUILD_DIR)/npc_sim
 NPC_INC = $(BUILD_DIR)/npc/include
 NPC_AUTOCONFIG = $(NPC_INC)/autoconfig.svh
-NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
-
 $(NPC_AUTOCONFIG): $(KCONFIG_VERILOG_INCLUDE)
 	@mkdir -p $(NPC_INC)
 	python3 scripts/sim_autoconfig.py $< $@
@@ -79,7 +76,7 @@ npc: $(NPC_BIN)
 
 $(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_AUTOCONFIG) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
 	@rm -rf $(NPC_OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) -DNPC --top-module $(TOPNAME) \
+	$(VERILATOR) $(VERILATOR_CFLAGS) --top-module $(TOPNAME) \
 		$(CORE) $(NPC_VSRCS) $(filter-out $(SRC_AUTO_BIND),$(CSRCS)) \
 		$(addprefix -CFLAGS , $(CXXFLAGS) -DNPC) \
 		$(addprefix -LDFLAGS , $(LDFLAGS)) \

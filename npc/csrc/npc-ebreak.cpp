@@ -16,7 +16,6 @@ uint32_t read_rf_reg(int addr) {
     }
     svSetScope(scope);
 
-    //verilog 导出的 task
     int data = 0;
     read_reg(addr, &data); 
     return (uint32_t)data;
@@ -32,7 +31,6 @@ uint32_t read_pc_reg() {
     }
     svSetScope(scope);
 
-    //verilog 导出的 task
     int data = 0;
     read_pc(&data); 
     return (uint32_t)data;
@@ -68,7 +66,6 @@ void isa_reg_display(){
 extern uint64_t cycle;
 extern u_int64_t inst_counter;
 void printPMU();
-// DPI-C 函数实现
 void ebreak() {
     uint32_t status = read_rf_reg(10);
     printf("cycle: %llu, InstCounter: %llu, IPC: %f\n",cycle, inst_counter , 1.0 * inst_counter / cycle);
