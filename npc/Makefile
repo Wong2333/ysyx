@@ -77,7 +77,7 @@ $(NPC_BIN): $(CORE) $(PERF_NAMES_H) $(NPC_VSRCS) $(CSRCS) $(KCONFIG_INCLUDE)
 		-Iresources/include
 
 npc-run: npc
-	$(NPC_BIN) -b $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
+	$(NPC_BIN) $(if $(IMG),-i $(IMG)) $(if $(ELF),-e $(ELF)) $(if $(DIFF_REF),-d $(DIFF_REF))
 
 test:
 	mill -i test

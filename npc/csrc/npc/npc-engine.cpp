@@ -115,7 +115,7 @@ void init_engine(int argc, char **argv) {
     int o;
     while ((o = getopt_long(argc, argv, "-bhi:d:t:e:", table, NULL)) != -1) {
         switch (o) {
-            case 'b': batch_mode = true; break;
+            case 'b': batch_mode = true; sdb_set_batch_mode(); break;
             case 'i': img_file = optarg; break;
             case 'd': diff_so_file = optarg; break;
             case 't': trace_dir = optarg; break;
@@ -153,6 +153,7 @@ void init_engine(int argc, char **argv) {
     tfp->open("waveform.fst");
 #endif
     init_trace(trace_dir, elf_file ? elf_file : img_file);
+#ifdef CONFIG_ENABLE_DIFFTEST
     {
         const char *ref_so = diff_so_file;
         if (ref_so == NULL) {
@@ -163,15 +164,14 @@ void init_engine(int argc, char **argv) {
         }
         init_difftest(ref_so, img_size);
     }
+#endif
     running = false;
 }
 
 void sdb_mainloop();
 
 void start_engine() {
-    while (1) {
-        sdb_mainloop();
-    }
+    sdb_mainloop();
 }
 
 void close_tfp() {

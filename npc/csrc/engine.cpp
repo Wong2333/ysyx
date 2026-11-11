@@ -137,7 +137,7 @@ void init_engine(int argc, char **argv) {
     int o;
     while ((o = getopt_long(argc, argv, "-bhi:d:t:e:", table, NULL)) != -1) {
         switch (o) {
-            case 'b': batch_mode = true; break;
+            case 'b': batch_mode = true; sdb_set_batch_mode(); break;
             case 'i': img_file = optarg; break;
             case 'd': diff_so_file = optarg; break;
             case 't': trace_dir = optarg; break;
@@ -192,9 +192,7 @@ void init_engine(int argc, char **argv) {
 void sdb_mainloop();
 
 void start_engine(){
-    while(1) {
-        sdb_mainloop();
-    }
+    sdb_mainloop();
 }
 
 void close_tfp(){
