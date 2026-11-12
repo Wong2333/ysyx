@@ -61,12 +61,12 @@ bin: $(BIN)
 $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
-		--top-module $(TOPNAME) $(NET_CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
 		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \
 		-Iresources/include
 
-sim: bin
+sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/ysyxSoCFull $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
