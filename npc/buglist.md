@@ -46,7 +46,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B28 | 参数 | `$(BIN)` 的 verilator 命令 | `--top-module` 拼成 `--top_module` | verilator 报未知选项、直接退出，构建失败 | 恢复拼写 | 未用 |
 | B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报未知选项，构建失败 | 恢复拼写 | 未用 |
 | B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 未用 |
-| B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎不认识 `-E`，打印 usage 后 `exit 1` | 恢复 `-e` | 未用 |
+| B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | 编译阶段 gcc 报 `unrecognized command-line option '-O'`，构建失败 | 恢复 `-O3` | 未用 |
 
 ## 备选（需要时替换进上表）
@@ -73,6 +73,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 7 | B06 | `build/auto_bind.cpp:2:10: fatal error: VysyxSoCFull.h`（生成的 mk 变成 `Vysyx_26030092.mk`） | 恢复 `--top-module $(TOPNAME)` |
 | 8 | B25 | `Error: top module 'ysyx_26030092' not found in build/perf_names.h`（参数顺序反了） | 恢复 `gen_perf_names.py $(BUILD_DIR) $@` |
 | 9 | B22 | `cat: 'build/split/*.sv': 没有那个文件或目录` | 恢复 `--target-dir $(SPLIT_DIR)` |
+| 10 | B31 | `build/ysyxSoCFull: invalid option -- 'E'` + `make: *** [Makefile:71：sim] 错误 1` | 恢复 `-e $(ELF)` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
