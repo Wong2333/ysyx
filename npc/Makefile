@@ -18,7 +18,7 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
 INCFLAGS = $(addprefix -I,$(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(DESIGN)\""
 LDFLAGS += -lreadline -ldl
 
 # kconfig
@@ -30,7 +30,7 @@ $(KCONFIG_INCLUDE): .config
 
 # Verilator 公共参数 
 VERILATOR = verilator
-VERILATOR_CFLAGS += -cc -O3 --noassert \
+VERILATOR_CFLAGS += --build -cc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
 VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/uart16550/rtl -I$(YSYX_SoC_HOME)/perip/spi/rtl

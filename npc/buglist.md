@@ -41,13 +41,16 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 已用（第 14 轮） |
 | B24 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `-I$(YSYX_SoC_HOME)/perip/uart16550/rtl` | verilator 报 `Cannot find include file: 'uart_defines.v'`（uart 源码里的 `` `include `` 依赖这个路径） | 恢复该 `-I` | 未用 |
 | B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把 `perf_names.h` 当成 build 目录去解析，报 `Error: top module 'ysyx_26030092' not found in build/perf_names.h`，`perf_names.h` 生成失败 | 恢复参数顺序 | 已用（第 8 轮） |
-| B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 未用 |
+| B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 已用（第 16 轮） |
 | B27 | 参数 | `$(BIN)` 的 verilator 命令 | `-CFLAGS "$(CXXFLAGS)"` 改成 `-CFLAGS "$(CXXFLAGS) -DNPC"` | SoC 构建里 `#ifdef NPC` 的 `npc-*.cpp` 被激活，链接期 `multiple definition of 'init_engine'`（和 SoC 版引擎重复） | 去掉 `-DNPC` | 已用（第 15 轮） |
 | B28 | 参数 | `$(BIN)` 的 verilator 命令 | `--top-module` 拼成 `--top_module` | verilator 报未知选项、直接退出，构建失败 | 恢复拼写 | 未用 |
 | B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报未知选项，构建失败 | 恢复拼写 | 未用 |
 | B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 已用（第 13 轮） |
 | B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | 编译阶段 gcc 报 `unrecognized command-line option '-O'`，构建失败 | 恢复 `-O3` | 未用 |
+| B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 未用 |
+| B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
+| B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 未用 |
 
 ## 备选（需要时替换进上表）
 
@@ -79,9 +82,10 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 13 | B30 | `%Warning-MODDUP: vsrc/npc_top.v:1:8: Duplicate declaration of module: 'ysyxSoCFull'` | 去掉追加的 `vsrc/npc_top.v` |
 | 14 | B23 | `csrc/perf.cpp:4:10: fatal error: perf_names.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` |
 | 15 | B27 | 链接期重复定义（SoC 构建混入 `-DNPC`，`npc-*.cpp` 被激活） | 去掉 `-DNPC` |
+| 16 | B26 | `make` 显示成功但没生成 `build/ysyxSoCFull`，随后 `make sim` 报找不到可执行文件 | 恢复 `--build` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
 - **易**：B01、B05、B07、B10、B11、B15、B20、B28、B29、B31、B32、X01（报错信息基本直接指向问题）
-- **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、B27、B30、X04、X05（需要看懂依赖关系或命令行）
+- **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、B27、B30、B33、B35、X04、X05（需要看懂依赖关系或命令行）
 - **难**：B02、B12、B13、B18、X02、X03、X06（静默错误：需要自己触发重建或对比行为才能发现）
