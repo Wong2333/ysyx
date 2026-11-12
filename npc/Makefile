@@ -61,7 +61,7 @@ bin: $(BIN)
 $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
-		--top-module $(DESIGN) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
 		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \
 		-Iresources/include
@@ -98,7 +98,7 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
-	python3 scripts/gen_perf_names.py $(BUILD_DIR) $@
+	python3 scripts/gen_perf_names.py $@ $(BUILD_DIR)
 
 # 四值仿真
 IVERILOG ?= iverilog

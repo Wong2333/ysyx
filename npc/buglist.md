@@ -21,7 +21,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B03 | 路径 | `INC_PATH` | 删掉 `INC_PATH += $(NPC_HOME)/include/generated` | 编译 csrc 报 `autoconf.h: No such file or directory`（两种仿真都编不出来） | 恢复该行 | 已用（第 1 轮） |
 | B04 | 链接 | `$(BIN)` 的 verilator 命令 | 参数里的 `$(NVBOARD_ARCHIVE)` 删掉 | 链接期一堆 `undefined reference to nvboard_*`（nvboard 没链进来） | 保留 `$(NVBOARD_ARCHIVE)` | 未用 |
 | B05 | 源文件 | `VSRCS` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | verilator 报 `Cannot find file containing module: 'ysyxSoCFull'`（perip 和 SoC 顶层都没进源列表） | 改回 `*.v` | 未用 |
-| B06 | 顶层 | `$(BIN)` 的 verilator 命令 | `--top-module $(TOPNAME)` 改成 `--top-module $(DESIGN)` | 生成的 C++ 头是 `Vysyx_26030092.h`，`main.cpp` 找不到 `VysyxSoCFull.h`，编译直接失败 | 恢复 `$(TOPNAME)` | 未用 |
+| B06 | 顶层 | `$(BIN)` 的 verilator 命令 | `--top-module $(TOPNAME)` 改成 `--top-module $(DESIGN)` | 生成的 C++ 头是 `Vysyx_26030092.h`，`main.cpp` 找不到 `VysyxSoCFull.h`，编译直接失败 | 恢复 `$(TOPNAME)` | 已用（第 7 轮） |
 | B07 | 生成 | `$(CORE)` 的 recipe | `cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@` 里删掉 `$(RESOURCES)` | 交付文件里缺 `PCBlackBox`/`perf` 等 resources，verilator 报缺模块（`ysyx_26030092_PCBlackBox`） | 恢复 `$(RESOURCES)` | 未用 |
 | B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 未用 |
 | B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
@@ -36,6 +36,12 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 改了 RTL 后 `make bin` 不重新 verilate，仿真跑旧核（静默） | 恢复依赖 | 未用 |
 | B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | C++ 里 `VysyxSoCFull.h` 找不到，`main.cpp` 编译失败 | 恢复 `$(TOPNAME)` | 未用 |
 | B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`，SoC 版构建失败 | 恢复路径 | 未用 |
+| B21 | 源文件 | `$(BIN)` 的 verilator 命令 | 命令里的 `$(SOC_CSRCS)` 改成 `$(CSRCS)` | 链接期 `undefined reference to nvboard_bind_all_pins`（`auto_bind.cpp` 没参与编译） | 恢复 `$(SOC_CSRCS)` | 未用 |
+| B22 | 生成 | `$(CORE)` 的 recipe | `--target-dir $(SPLIT_DIR)` 改成 `--target-dir out` | `cat build/split/*.sv` 匹配不到文件，报 `cat: build/split/*.sv: No such file`，`ysyx_26030092.sv` 生成失败 | 恢复 `$(SPLIT_DIR)` | 未用 |
+| B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 未用 |
+| B24 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `-I$(YSYX_SoC_HOME)/perip/uart16550/rtl` | verilator 报 `Cannot find include file: 'uart_defines.v'`（uart 源码里的 `` `include `` 依赖这个路径） | 恢复该 `-I` | 未用 |
+| B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把目录当输出文件，抛 `IsADirectoryError`，`perf_names.h` 生成失败 | 恢复参数顺序 | 未用 |
+| B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 未用 |
 
 ## 备选（需要时替换进上表）
 
@@ -58,9 +64,10 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 4 | X05 | `make sim` 不带镜像，空内存跑飞；在 C++ 层加了“无 `-i` 直接报错”的防护 | 恢复 `$(if $(IMG),-i $(IMG))` |
 | 5 | B17 | `%Error: Cannot find file containing module: 'build/sim/ysyx_26030092_netlist_sim.sv'` | 恢复 `$(CORE)` |
 | 6 | B09 | 干净状态直接 `make sim` 报 `build/ysyxSoCFull: 没有那个文件或目录` | 恢复 `sim: bin` |
+| 7 | B06 | `build/auto_bind.cpp:2:10: fatal error: VysyxSoCFull.h`（生成的 mk 变成 `Vysyx_26030092.mk`） | 恢复 `--top-module $(TOPNAME)` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
 - **易**：B01、B05、B07、B10、B11、B15、B20、X01（报错信息基本直接指向问题）
-- **中**：B04、B06、B08、B09、B14、B17、B19、X04、X05（需要看懂依赖关系或命令行）
+- **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、X04、X05（需要看懂依赖关系或命令行）
 - **难**：B02、B12、B13、B18、X02、X03、X06（静默错误：需要自己触发重建或对比行为才能发现）
