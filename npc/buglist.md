@@ -31,7 +31,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 不重新 elaborate，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
 | B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 每次叠加写入，`ysyx_26030092.sv` 里模块重复定义，verilator 报重复声明 | 改回 `>` | 未用 |
 | B15 | 命令 | `$(BIN)` 的 verilator 命令 | 删掉 `--exe` | 只生成库不生成可执行文件，链接/运行失败（找不到 `main`） | 恢复 `--exe` | 未用 |
-| B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 未用 |
+| B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 已用（第 2 轮） |
 | B17 | 源文件 | `$(BIN)` 的 verilator 命令 | 参数里 `$(CORE)` 改成 `$(NET_CORE)` | verilator 报找不到 `build/sim/ysyx_26030092_netlist_sim.sv`（只有跑过网表流程才有该文件） | 恢复 `$(CORE)` | 未用 |
 | B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 改了 RTL 后 `make bin` 不重新 verilate，仿真跑旧核（静默） | 恢复依赖 | 未用 |
 | B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | C++ 里 `VysyxSoCFull.h` 找不到，`main.cpp` 编译失败 | 恢复 `$(TOPNAME)` | 未用 |
@@ -53,3 +53,10 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 轮次 | 编号 | 现象 | 修法 |
 |---|---|---|---|
 | 1 | B03 | `csrc/difftest.cpp:8:10: fatal error: autoconf.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(NPC_HOME)/include/generated/`（用户写成了带尾斜杠，等价） |
+| 2 | B16 | `make sim` 跑的是 `build/npc_sim` | 恢复 `$(BUILD_DIR)/$(TOPNAME)` |
+
+## 难度分组（后续优先抽「中 / 难」）
+
+- **易**：B01、B05、B07、B10、B11、B15、B20、X01（报错信息基本直接指向问题）
+- **中**：B04、B06、B08、B09、B14、B17、B19、X04、X05（需要看懂依赖关系或命令行）
+- **难**：B02、B12、B13、B18、X02、X03、X06（静默错误：需要自己触发重建或对比行为才能发现）

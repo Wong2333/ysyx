@@ -18,7 +18,7 @@ INC_PATH += $(NPC_HOME)/include/generated/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
 # nvboard.mk 会往 INC_PATH 追加头文件目录，所以这里统一加 -I
-INCFLAGS = $(addprefix -I,$(INC_PATH))
+INCFLAGS := $(addprefix -I,$(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 
