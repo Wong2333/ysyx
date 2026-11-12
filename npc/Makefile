@@ -94,7 +94,7 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	rm -rf $(SPLIT_DIR)
 	mkdir -p $(SPLIT_DIR)
-	mill -i runMain Elaborate --target-dir out
+	mill -i runMain Elaborate --target-dir $(SPLIT_DIR)
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
