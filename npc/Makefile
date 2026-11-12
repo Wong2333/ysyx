@@ -1,11 +1,10 @@
-default:
-	$(MAKE) bin
+default: bin
 
 # 基本配置
 TOPNAME = ysyxSoCFull
 NXDC_FILES = constr/top.nxdc
 
-BUILD_DIR = ./build
+BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 SPLIT_DIR = $(BUILD_DIR)/split
@@ -14,16 +13,13 @@ PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/include
-INC_PATH += $(NPC_HOME)/include/generated
+INC_PATH += $(CURDIR)/$(BUILD_DIR)
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
-INCFLAGS = $(addprefix -I, $(INC_PATH)) -I$(abspath $(BUILD_DIR))
+# nvboard.mk 会往 INC_PATH 追加头文件目录，所以这里统一加 -I
+INCFLAGS = $(addprefix -I,$(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
-
-IMG =
-DIFF_REF =
-ELF =
 
 # kconfig
 -include include/config/auto.conf
@@ -37,8 +33,7 @@ VERILATOR = verilator
 VERILATOR_CFLAGS += --build -cc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
-VERILATOR_INC_PATH = $(YSYX_SoC_HOME)/perip/uart16550/rtl $(YSYX_SoC_HOME)/perip/spi/rtl
-VERILATOR_CFLAGS += $(addprefix -I, $(VERILATOR_INC_PATH))
+VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/uart16550/rtl -I$(YSYX_SoC_HOME)/perip/spi/rtl
 
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
 VERILATOR_CFLAGS += --trace-fst
@@ -46,36 +41,32 @@ endif
 
 # 源文件 
 NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
-VSRCS = $(filter-out $(addprefix $(abspath .)/,$(NPC_VSRCS)),$(shell find $(abspath ./vsrc) -name "*.v"))
-VSRCS += $(shell find $(abspath $(YSYX_SoC_HOME)/perip) -name "*.v")
+VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CHISEL_SRC = $(shell find $(abspath ./src) -name "*.scala")
-RESOURCES = $(shell find $(abspath ./resources) -name "*.v")
+CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
+CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
+RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-CSRCS += $(SRC_AUTO_BIND)
+SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
+SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # SoC
-bin:
-	$(MAKE) verilog
-	$(MAKE) $(BIN)
+bin: $(BIN)
 
-$(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) $(addprefix -v , $(VSRCS)) \
-		--top-module $(TOPNAME) $(CORE) $(CSRCS) $(NVBOARD_ARCHIVE) \
-		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
+	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
+		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
+		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
+		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \
 		-Iresources/include
 
-sim:
-	$(MAKE) bin
+sim: bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
@@ -88,10 +79,9 @@ npc: $(NPC_BIN)
 $(NPC_BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(NPC_VSRCS) $(CSRCS)
 	@rm -rf $(NPC_OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) -DNPC --top-module $(TOPNAME) \
-		$(CORE) $(NPC_VSRCS) $(filter-out $(SRC_AUTO_BIND),$(CSRCS)) \
-		$(addprefix -CFLAGS , $(CXXFLAGS) -DNPC) \
-		$(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(NPC_OBJ_DIR) --exe -o $(abspath $(NPC_BIN)) \
+		$(CORE) $(NPC_VSRCS) $(CSRCS) \
+		-CFLAGS "$(CXXFLAGS) -DNPC" -LDFLAGS "$(LDFLAGS)" \
+		--Mdir $(NPC_OBJ_DIR) --exe -o $(CURDIR)/$(NPC_BIN) \
 		-Iresources/include
 
 npc-run: npc
@@ -129,7 +119,7 @@ $(SIM_DIR)/tb.vvp: $(CORE) sim/tb_npc.v sim/axi_mem.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -s tb_npc -o $@ $(CORE) sim/axi_mem.v sim/tb_npc.v
 
 sim-iverilog: $(SIM_HEX) $(SIM_DIR)/tb.vvp
-	$(VVP) $(SIM_DIR)/tb.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
+	$(VVP) $(SIM_DIR)/tb.vvp +HEX=$(CURDIR)/$(SIM_HEX) +CYCLES=$(SIM_CYCLES)
 
 # 网表仿真
 YOSYS_STA_HOME ?= /home/wjm/yosys-sta
@@ -139,10 +129,10 @@ NETLIST_SIM_DIR = $(SIM_DIR)/netlist
 NETLIST_SIM_V = $(NETLIST_SIM_DIR)/ysyx_26030092.netlist.v
 NET_CORE = $(SIM_DIR)/ysyx_26030092_netlist_sim.sv
 
-ifeq ($(strip $(NETLIST)),)
-  NETLIST_USE = $(NETLIST_SIM_V)
+ifeq ($(NETLIST),)
+NETLIST_USE = $(NETLIST_SIM_V)
 else
-  NETLIST_USE = $(abspath $(NETLIST))
+NETLIST_USE = $(abspath $(NETLIST))
 endif
 
 $(NET_CORE): $(CORE)
@@ -163,7 +153,7 @@ $(SIM_DIR)/tb_net.vvp: $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 	$(IVERILOG) $(IVERILOG_FLAGS) -DNETLIST_SIM -s tb_netlist -o $@ $(NETLIST_USE) $(CELLS) sim/axi_mem.v $(NET_TB)
 
 sim-iverilog-netlist: $(SIM_HEX) $(SIM_DIR)/tb_net.vvp
-	$(VVP) $(SIM_DIR)/tb_net.vvp +HEX=$(abspath $(SIM_HEX)) +CYCLES=$(SIM_CYCLES)
+	$(VVP) $(SIM_DIR)/tb_net.vvp +HEX=$(CURDIR)/$(SIM_HEX) +CYCLES=$(SIM_CYCLES)
 
 # 静态检查
 lint: $(CORE)
@@ -198,8 +188,7 @@ rebuild:
 	$(MAKE) clean
 	$(MAKE)
 
-PERF_BENCH ?= $(abspath ../am-kernels/benchmarks/microbench)
-PERF_ARCH ?= riscv32e-ysyxsoc
+PERF_BENCH ?= $(CURDIR)/../am-kernels/benchmarks/microbench
 PERF_ARGS ?= test
 PERF_STA ?= 1
 perf:
@@ -208,7 +197,7 @@ perf:
 # yosys-sta（面积和时序）
 DESIGN = ysyx_26030092
 RTL_FILES = $(CORE)
-export VERILOG_INCLUDE_DIRS = $(abspath resources/include)
+export VERILOG_INCLUDE_DIRS = $(CURDIR)/resources/include
 export CLK_PORT_NAME = clock
 CLK_FREQ_MHZ = 800
 
