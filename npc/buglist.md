@@ -38,7 +38,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`，SoC 版构建失败 | 恢复路径 | 未用 |
 | B21 | 源文件 | `$(BIN)` 的 verilator 命令 | 命令里的 `$(SOC_CSRCS)` 改成 `$(CSRCS)` | 链接期 `undefined reference to nvboard_bind_all_pins`（`auto_bind.cpp` 没参与编译） | 恢复 `$(SOC_CSRCS)` | 已用（第 12 轮，给了线索） |
 | B22 | 生成 | `$(CORE)` 的 recipe | `--target-dir $(SPLIT_DIR)` 改成 `--target-dir out` | `cat build/split/*.sv` 匹配不到文件，报 `cat: build/split/*.sv: No such file`，`ysyx_26030092.sv` 生成失败 | 恢复 `$(SPLIT_DIR)` | 已用（第 9 轮） |
-| B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 未用 |
+| B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 已用（第 14 轮） |
 | B24 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `-I$(YSYX_SoC_HOME)/perip/uart16550/rtl` | verilator 报 `Cannot find include file: 'uart_defines.v'`（uart 源码里的 `` `include `` 依赖这个路径） | 恢复该 `-I` | 未用 |
 | B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把 `perf_names.h` 当成 build 目录去解析，报 `Error: top module 'ysyx_26030092' not found in build/perf_names.h`，`perf_names.h` 生成失败 | 恢复参数顺序 | 已用（第 8 轮） |
 | B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 未用 |
@@ -77,6 +77,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 11 | B08 | `Error: Constraint file doesn't exist:`（`$@ $^` 顺序反了，把生成的 cpp 当约束文件） | 恢复 `$^ $@` |
 | 12 | B21 | `undefined reference to nvboard_bind_all_pins(VysyxSoCFull*)`（`auto_bind.cpp` 没进编译） | 命令里 `$(CSRCS)` 恢复成 `$(SOC_CSRCS)` |
 | 13 | B30 | `%Warning-MODDUP: vsrc/npc_top.v:1:8: Duplicate declaration of module: 'ysyxSoCFull'` | 去掉追加的 `vsrc/npc_top.v` |
+| 14 | B23 | `csrc/perf.cpp:4:10: fatal error: perf_names.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
