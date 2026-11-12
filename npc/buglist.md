@@ -45,7 +45,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） |
 | X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） |
 | X04 | 目录 | `$(BIN)` 的 verilator 命令 | `--Mdir $(OBJ_DIR)` 改成 `--Mdir $(NPC_OBJ_DIR)` | SoC 版和 NPC 版共用输出目录，互相覆盖，构建报错或跑成另一版 |
-| X05 | 参数 | `sim` 的 recipe | 去掉 `$(if $(IMG),-i $(IMG))` | 没有指定镜像，内存是空的，复位后取指全错，很快卡到周期上限 |
+| X05 | 参数 | `sim` 的 recipe | 去掉 `$(if $(IMG),-i $(IMG))` | 没有指定镜像，内存是空的，复位后取指全错，很快卡到周期上限（已在 C++ 层加了“无镜像直接报错”的防护） | 已用（第 4 轮） |
 | X06 | 依赖 | `$(PERF_NAMES_H)` 的依赖 | 去掉 `$(CORE)` | RTL 重新生成后 perf 名字表不更新，PMU 统计名字错乱（不影响程序功能，静默） |
 
 ## 轮次记录
@@ -54,7 +54,8 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 |---|---|---|---|
 | 1 | B03 | `csrc/difftest.cpp:8:10: fatal error: autoconf.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(NPC_HOME)/include/generated/`（用户写成了带尾斜杠，等价） |
 | 2 | B16 | `make sim` 跑的是 `build/npc_sim` | 恢复 `$(BUILD_DIR)/$(TOPNAME)` |
-| 3 | B02 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h` | 把 `include nvboard.mk` 提前到 `INCFLAGS` 之前（等价于恢复 `=`），但留下了重复 include，待清理 |
+| 3 | B02 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h` | 把 `include nvboard.mk` 提前到 `INCFLAGS` 之前（等价于恢复 `=`），事后已清理重复 include 并恢复 `INCFLAGS =` |
+| 4 | X05 | `make sim` 不带镜像，空内存跑飞；在 C++ 层加了“无 `-i` 直接报错”的防护 | 恢复 `$(if $(IMG),-i $(IMG))` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

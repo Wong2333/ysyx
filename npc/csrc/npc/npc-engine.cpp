@@ -140,6 +140,11 @@ void init_engine(int argc, char **argv) {
         init_sdb();
     }
 #endif
+    if (img_file == NULL) {
+        fprintf(stderr, "错误: 未指定镜像文件，请用 -i <image.bin> 指定\n");
+        exit(1);
+    }
+
     if (img_file) {
         init_mem(img_file);
     } else {

@@ -17,7 +17,7 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)
 INC_PATH += $(NPC_HOME)/include/generated/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
-INCFLAGS := $(addprefix -I,$(INC_PATH))
+INCFLAGS = $(addprefix -I,$(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 
@@ -61,7 +61,7 @@ bin: $(BIN)
 $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
-		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(NET_CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
 		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \
 		-Iresources/include
