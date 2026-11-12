@@ -42,7 +42,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B24 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `-I$(YSYX_SoC_HOME)/perip/uart16550/rtl` | verilator 报 `Cannot find include file: 'uart_defines.v'`（uart 源码里的 `` `include `` 依赖这个路径） | 恢复该 `-I` | 未用 |
 | B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把 `perf_names.h` 当成 build 目录去解析，报 `Error: top module 'ysyx_26030092' not found in build/perf_names.h`，`perf_names.h` 生成失败 | 恢复参数顺序 | 已用（第 8 轮） |
 | B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 未用 |
-| B27 | 参数 | `$(BIN)` 的 verilator 命令 | `-CFLAGS "$(CXXFLAGS)"` 改成 `-CFLAGS "$(CXXFLAGS) -DNPC"` | SoC 构建里 `#ifdef NPC` 的 `npc-*.cpp` 被激活，链接期 `multiple definition of 'init_engine'`（和 SoC 版引擎重复） | 去掉 `-DNPC` | 未用 |
+| B27 | 参数 | `$(BIN)` 的 verilator 命令 | `-CFLAGS "$(CXXFLAGS)"` 改成 `-CFLAGS "$(CXXFLAGS) -DNPC"` | SoC 构建里 `#ifdef NPC` 的 `npc-*.cpp` 被激活，链接期 `multiple definition of 'init_engine'`（和 SoC 版引擎重复） | 去掉 `-DNPC` | 已用（第 15 轮） |
 | B28 | 参数 | `$(BIN)` 的 verilator 命令 | `--top-module` 拼成 `--top_module` | verilator 报未知选项、直接退出，构建失败 | 恢复拼写 | 未用 |
 | B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报未知选项，构建失败 | 恢复拼写 | 未用 |
 | B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 已用（第 13 轮） |
@@ -78,6 +78,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 12 | B21 | `undefined reference to nvboard_bind_all_pins(VysyxSoCFull*)`（`auto_bind.cpp` 没进编译） | 命令里 `$(CSRCS)` 恢复成 `$(SOC_CSRCS)` |
 | 13 | B30 | `%Warning-MODDUP: vsrc/npc_top.v:1:8: Duplicate declaration of module: 'ysyxSoCFull'` | 去掉追加的 `vsrc/npc_top.v` |
 | 14 | B23 | `csrc/perf.cpp:4:10: fatal error: perf_names.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` |
+| 15 | B27 | 链接期重复定义（SoC 构建混入 `-DNPC`，`npc-*.cpp` 被激活） | 去掉 `-DNPC` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
