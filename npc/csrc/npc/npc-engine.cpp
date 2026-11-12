@@ -6,7 +6,7 @@
 #include <time.h>
 #include <cassert>
 #include <VysyxSoCFull.h>
-#include <autoconfig.h>
+#include <autoconf.h>
 
 #ifdef CONFIG_ENABLE_FST_TRACE
 #include <verilated_fst_c.h>

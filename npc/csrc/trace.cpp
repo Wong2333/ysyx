@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <elf.h>
-#include <autoconfig.h>
+#include <autoconf.h>
 #include "trace.h"
 #include "disasm.h"
 #include <npc-memory.h>

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <assert.h>
 #include <difftest.h>
-#include <autoconfig.h>
+#include <autoconf.h>
 #include <trace.h>
 #include <sdb.h>
 #include <utils.h>

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sdb.h>
-#include <autoconfig.h>
+#include <autoconf.h>
 #include <difftest.h>
 #include <disasm.h>
 #include <trace.h>
