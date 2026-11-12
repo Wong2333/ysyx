@@ -17,7 +17,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 编号 | 类别 | 位置 | 注入方式（一处） | 现象 | 正确写法 | 状态 |
 |---|---|---|---|---|---|---|
 | B01 | 语法 | `$(BIN)` 的 recipe | 某行行首 tab 改成 4 个空格 | 任何 `make` 都直接报 `Makefile:NN: *** 缺失分隔符` | 恢复 tab | 未用 |
-| B02 | 变量展开 | `INCFLAGS` 定义 | `INCFLAGS = ...` 改成 `INCFLAGS := ...` | 编译 `build/auto_bind.cpp` 报 `nvboard.h: 没有那个文件或目录`（`nvboard.mk` 在后面才往 `INC_PATH` 追加目录，`:=` 提前展开丢了它） | 用 `=` | 未用 |
+| B02 | 变量展开 | `INCFLAGS` 定义 | `INCFLAGS = ...` 改成 `INCFLAGS := ...` | 编译 `build/auto_bind.cpp` 报 `nvboard.h: 没有那个文件或目录`（`nvboard.mk` 在后面才往 `INC_PATH` 追加目录，`:=` 提前展开丢了它） | 用 `=` | 已用（第 3 轮） |
 | B03 | 路径 | `INC_PATH` | 删掉 `INC_PATH += $(NPC_HOME)/include/generated` | 编译 csrc 报 `autoconf.h: No such file or directory`（两种仿真都编不出来） | 恢复该行 | 已用（第 1 轮） |
 | B04 | 链接 | `$(BIN)` 的 verilator 命令 | 参数里的 `$(NVBOARD_ARCHIVE)` 删掉 | 链接期一堆 `undefined reference to nvboard_*`（nvboard 没链进来） | 保留 `$(NVBOARD_ARCHIVE)` | 未用 |
 | B05 | 源文件 | `VSRCS` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | verilator 报 `Cannot find file containing module: 'ysyxSoCFull'`（perip 和 SoC 顶层都没进源列表） | 改回 `*.v` | 未用 |
@@ -54,6 +54,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 |---|---|---|---|
 | 1 | B03 | `csrc/difftest.cpp:8:10: fatal error: autoconf.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(NPC_HOME)/include/generated/`（用户写成了带尾斜杠，等价） |
 | 2 | B16 | `make sim` 跑的是 `build/npc_sim` | 恢复 `$(BUILD_DIR)/$(TOPNAME)` |
+| 3 | B02 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h` | 把 `include nvboard.mk` 提前到 `INCFLAGS` 之前（等价于恢复 `=`），但留下了重复 include，待清理 |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

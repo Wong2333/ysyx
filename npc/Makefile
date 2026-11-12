@@ -17,7 +17,7 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)
 INC_PATH += $(NPC_HOME)/include/generated/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
-# nvboard.mk 会往 INC_PATH 追加头文件目录，所以这里统一加 -I
+include $(NVBOARD_HOME)/scripts/nvboard.mk
 INCFLAGS := $(addprefix -I,$(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
@@ -69,7 +69,7 @@ $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOA
 
 sim: bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/ysyxSoCFull $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
+	$(BUILD_DIR)/ysyxSoCFull $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 # NPC
 NPC_OBJ_DIR = $(BUILD_DIR)/obj_dir_npc
