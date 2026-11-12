@@ -17,7 +17,6 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)
 INC_PATH += $(NPC_HOME)/include/generated/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
-include $(NVBOARD_HOME)/scripts/nvboard.mk
 INCFLAGS := $(addprefix -I,$(INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
