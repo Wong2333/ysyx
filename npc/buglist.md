@@ -24,7 +24,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B06 | 顶层 | `$(BIN)` 的 verilator 命令 | `--top-module $(TOPNAME)` 改成 `--top-module $(DESIGN)` | 生成的 C++ 头是 `Vysyx_26030092.h`，`main.cpp` 找不到 `VysyxSoCFull.h`，编译直接失败 | 恢复 `$(TOPNAME)` | 未用 |
 | B07 | 生成 | `$(CORE)` 的 recipe | `cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@` 里删掉 `$(RESOURCES)` | 交付文件里缺 `PCBlackBox`/`perf` 等 resources，verilator 报缺模块（`ysyx_26030092_PCBlackBox`） | 恢复 `$(RESOURCES)` | 未用 |
 | B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 未用 |
-| B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 未用 |
+| B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
 | B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 链接期 `undefined reference to 'readline'` / `'add_history'`（两种仿真都编不出来） | 恢复 `-lreadline` | 未用 |
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，链接期 `undefined reference to nvboard_*` | 恢复 include | 未用 |
 | B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
@@ -57,6 +57,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 3 | B02 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h` | 把 `include nvboard.mk` 提前到 `INCFLAGS` 之前（等价于恢复 `=`），事后已清理重复 include 并恢复 `INCFLAGS =` |
 | 4 | X05 | `make sim` 不带镜像，空内存跑飞；在 C++ 层加了“无 `-i` 直接报错”的防护 | 恢复 `$(if $(IMG),-i $(IMG))` |
 | 5 | B17 | `%Error: Cannot find file containing module: 'build/sim/ysyx_26030092_netlist_sim.sv'` | 恢复 `$(CORE)` |
+| 6 | B09 | 干净状态直接 `make sim` 报 `build/ysyxSoCFull: 没有那个文件或目录` | 恢复 `sim: bin` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
