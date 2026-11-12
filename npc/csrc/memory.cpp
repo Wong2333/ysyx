@@ -7,7 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <mmio.h>
-#include <autoconfig.h>
+#include <autoconf.h>
 #include <trace.h>
 #include <cassert>
 #include <npc-memory.h>

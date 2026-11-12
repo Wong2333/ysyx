@@ -36,3 +36,10 @@ test_run_dir/
 !Kconfig
 !.config
 !resources/include/*.svh
+!constr/*.nxdc
+include/config/
+!include/generated/
+!include/generated/*.h
+tools/kconfig/build/
+!tools/kconfig/*.l
+!tools/kconfig/*.y
