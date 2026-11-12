@@ -23,7 +23,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B05 | 源文件 | `VSRCS` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | verilator 报 `Cannot find file containing module: 'ysyxSoCFull'`（perip 和 SoC 顶层都没进源列表） | 改回 `*.v` | 未用 |
 | B06 | 顶层 | `$(BIN)` 的 verilator 命令 | `--top-module $(TOPNAME)` 改成 `--top-module $(DESIGN)` | 生成的 C++ 头是 `Vysyx_26030092.h`，`main.cpp` 找不到 `VysyxSoCFull.h`，编译直接失败 | 恢复 `$(TOPNAME)` | 已用（第 7 轮） |
 | B07 | 生成 | `$(CORE)` 的 recipe | `cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@` 里删掉 `$(RESOURCES)` | 交付文件里缺 `PCBlackBox`/`perf` 等 resources，verilator 报缺模块（`ysyx_26030092_PCBlackBox`） | 恢复 `$(RESOURCES)` | 未用 |
-| B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 未用 |
+| B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 已用（第 11 轮） |
 | B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
 | B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 链接期 `undefined reference to 'readline'` / `'add_history'`（两种仿真都编不出来） | 恢复 `-lreadline` | 未用 |
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，链接期 `undefined reference to nvboard_*` | 恢复 include | 未用 |
@@ -74,6 +74,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 8 | B25 | `Error: top module 'ysyx_26030092' not found in build/perf_names.h`（参数顺序反了） | 恢复 `gen_perf_names.py $(BUILD_DIR) $@` |
 | 9 | B22 | `cat: 'build/split/*.sv': 没有那个文件或目录` | 恢复 `--target-dir $(SPLIT_DIR)` |
 | 10 | B31 | `build/ysyxSoCFull: invalid option -- 'E'` + `make: *** [Makefile:71：sim] 错误 1` | 恢复 `-e $(ELF)` |
+| 11 | B08 | `Error: Constraint file doesn't exist:`（`$@ $^` 顺序反了，把生成的 cpp 当约束文件） | 恢复 `$^ $@` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
