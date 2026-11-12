@@ -13,7 +13,6 @@ PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/include
-INC_PATH += $(CURDIR)/$(BUILD_DIR)
 INC_PATH += $(NPC_HOME)/include/generated/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
@@ -60,7 +59,7 @@ bin: $(BIN)
 
 $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) vsrc/npc_top.v \
+	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
 		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
 		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \

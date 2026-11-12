@@ -45,7 +45,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B27 | 参数 | `$(BIN)` 的 verilator 命令 | `-CFLAGS "$(CXXFLAGS)"` 改成 `-CFLAGS "$(CXXFLAGS) -DNPC"` | SoC 构建里 `#ifdef NPC` 的 `npc-*.cpp` 被激活，链接期 `multiple definition of 'init_engine'`（和 SoC 版引擎重复） | 去掉 `-DNPC` | 未用 |
 | B28 | 参数 | `$(BIN)` 的 verilator 命令 | `--top-module` 拼成 `--top_module` | verilator 报未知选项、直接退出，构建失败 | 恢复拼写 | 未用 |
 | B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报未知选项，构建失败 | 恢复拼写 | 未用 |
-| B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 未用 |
+| B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 已用（第 13 轮） |
 | B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | 编译阶段 gcc 报 `unrecognized command-line option '-O'`，构建失败 | 恢复 `-O3` | 未用 |
 
@@ -76,6 +76,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 10 | B31 | `build/ysyxSoCFull: invalid option -- 'E'` + `make: *** [Makefile:71：sim] 错误 1` | 恢复 `-e $(ELF)` |
 | 11 | B08 | `Error: Constraint file doesn't exist:`（`$@ $^` 顺序反了，把生成的 cpp 当约束文件） | 恢复 `$^ $@` |
 | 12 | B21 | `undefined reference to nvboard_bind_all_pins(VysyxSoCFull*)`（`auto_bind.cpp` 没进编译） | 命令里 `$(CSRCS)` 恢复成 `$(SOC_CSRCS)` |
+| 13 | B30 | `%Warning-MODDUP: vsrc/npc_top.v:1:8: Duplicate declaration of module: 'ysyxSoCFull'` | 去掉追加的 `vsrc/npc_top.v` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
