@@ -94,11 +94,11 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	rm -rf $(SPLIT_DIR)
 	mkdir -p $(SPLIT_DIR)
-	mill -i runMain Elaborate --target-dir $(SPLIT_DIR)
+	mill -i runMain Elaborate --target-dir out
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
-	python3 scripts/gen_perf_names.py $@ $(BUILD_DIR)
+	python3 scripts/gen_perf_names.py $(BUILD_DIR) $@
 
 # 四值仿真
 IVERILOG ?= iverilog

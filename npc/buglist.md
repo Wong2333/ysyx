@@ -40,7 +40,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B22 | 生成 | `$(CORE)` 的 recipe | `--target-dir $(SPLIT_DIR)` 改成 `--target-dir out` | `cat build/split/*.sv` 匹配不到文件，报 `cat: build/split/*.sv: No such file`，`ysyx_26030092.sv` 生成失败 | 恢复 `$(SPLIT_DIR)` | 未用 |
 | B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 未用 |
 | B24 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `-I$(YSYX_SoC_HOME)/perip/uart16550/rtl` | verilator 报 `Cannot find include file: 'uart_defines.v'`（uart 源码里的 `` `include `` 依赖这个路径） | 恢复该 `-I` | 未用 |
-| B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把目录当输出文件，抛 `IsADirectoryError`，`perf_names.h` 生成失败 | 恢复参数顺序 | 未用 |
+| B25 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 改成 `gen_perf_names.py $@ $(BUILD_DIR)` | 脚本把 `perf_names.h` 当成 build 目录去解析，报 `Error: top module 'ysyx_26030092' not found in build/perf_names.h`，`perf_names.h` 生成失败 | 恢复参数顺序 | 已用（第 8 轮） |
 | B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 未用 |
 
 ## 备选（需要时替换进上表）
@@ -65,6 +65,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 5 | B17 | `%Error: Cannot find file containing module: 'build/sim/ysyx_26030092_netlist_sim.sv'` | 恢复 `$(CORE)` |
 | 6 | B09 | 干净状态直接 `make sim` 报 `build/ysyxSoCFull: 没有那个文件或目录` | 恢复 `sim: bin` |
 | 7 | B06 | `build/auto_bind.cpp:2:10: fatal error: VysyxSoCFull.h`（生成的 mk 变成 `Vysyx_26030092.mk`） | 恢复 `--top-module $(TOPNAME)` |
+| 8 | B25 | `Error: top module 'ysyx_26030092' not found in build/perf_names.h`（参数顺序反了） | 恢复 `gen_perf_names.py $(BUILD_DIR) $@` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
