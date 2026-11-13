@@ -26,7 +26,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 已用（第 11 轮） |
 | B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
 | B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 只在 `CONFIG_ENABLE_SDB=y` 时链接失败；当前 CI 配置 SDB 关，readline 调用被编掉，**无现象，作废** | — | 作废 |
-| B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，链接期 `undefined reference to nvboard_*` | 恢复 include | 未用 |
+| B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，编译 `auto_bind.cpp` 先报 `nvboard.h: No such file`（INC_PATH 也少了 nvboard 目录），其后才是链接错误 | 恢复 include | 已用（第 27 轮） |
 | B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
 | B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 不重新 elaborate，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
 | B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 每次叠加写入，`ysyx_26030092.sv` 里模块重复定义，verilator 报重复声明 | 改回 `>` | 未用 |
@@ -98,6 +98,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 24 | B39 | `undefined reference to 'main'`（`CSRCS` 的 find 匹配不到 `.cpp`） | 改回 `-name "*.cpp"` |
 | 25 | B20 | `make: *** 没有规则可制作目标“constr/old_top.nxdc”`（`NXDC_FILES` 改名） | 恢复 `constr/top.nxdc` |
 | 26 | B05 | `%Error-MODMISSING: ... Cannot find file containing module: 'sdram_top_axi' / 'psram_top_apb' / 'flash'` | `VSRCS` 的 find 改回 `*.v` |
+| 27 | B11 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h: 没有那个文件或目录` | 恢复 `include $(NVBOARD_HOME)/scripts/nvboard.mk` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

@@ -30,7 +30,7 @@ $(KCONFIG_INCLUDE): .config
 
 # Verilator 公共参数 
 VERILATOR = verilator
-VERILATOR_CFLAGS += --build -cc -O3 --noassert \
+VERILATOR_CFLAGS += --build -sc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
 VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/spi/rtl -I$(YSYX_SoC_HOME)/perip/uart16550/rtl
@@ -48,7 +48,7 @@ CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
 RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
-
+include $(NVBOARD_HOME)/scripts/nvboard.mk
 SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
 SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
