@@ -33,7 +33,7 @@ VERILATOR = verilator
 VERILATOR_CFLAGS += --build -cc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
-VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/uart16550/rtl -I$(YSYX_SoC_HOME)/perip/spi/rtl
+VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/spi/rtl
 
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
 VERILATOR_CFLAGS += --trace-fst
