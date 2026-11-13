@@ -50,7 +50,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | 编译阶段 gcc 报 `unrecognized command-line option '-O'`，构建失败 | 恢复 `-O3` | 未用 |
 | B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 未用 |
 | B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
-| B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 未用 |
+| B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 已用（第 18 轮） |
 
 ## 备选（需要时替换进上表）
 
@@ -84,6 +84,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 15 | B27 | 链接期重复定义（SoC 构建混入 `-DNPC`，`npc-*.cpp` 被激活） | 去掉 `-DNPC` |
 | 16 | B26 | `make` 显示成功但没生成 `build/ysyxSoCFull`，随后 `make sim` 报找不到可执行文件 | 恢复 `--build` |
 | 17 | B19 | `‘Vysyx_26030092’ does not name a type` + `nvboard_bind_all_pins 声明为 void`（`-DTOP_NAME` 用了 `$(DESIGN)`） | 恢复 `-DTOP_NAME="\"V$(TOPNAME)\""` |
+| 18 | B35 | `IndexError: list index out of range`（`gen_perf_names.py` 少了输出参数） | 恢复 `$@` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

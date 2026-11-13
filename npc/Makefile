@@ -46,7 +46,7 @@ VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
 CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
-RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
+RESOURCES = $(shell find $(CURDIR)/resources -name "*.sv")
 
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
@@ -98,7 +98,7 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
-	python3 scripts/gen_perf_names.py $(BUILD_DIR)
+	python3 scripts/gen_perf_names.py $(BUILD_DIR) $@
 
 # 四值仿真
 IVERILOG ?= iverilog
