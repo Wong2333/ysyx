@@ -37,7 +37,7 @@ void load_img(const char* path){
     while((len = fread(pmem_byte+idx,1,1024,fp)) > 0){
         idx += len;
     }
-    img_size = idx;
+    img_size = idx / 2;
     fclose(fp);
 }
 
