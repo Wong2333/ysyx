@@ -136,6 +136,7 @@ uint32_t mem_read(uint32_t addr) {
             printf("Error: mem_read out of range: addr=0x%08x\n", addr);
             assert(0);
         }
+        printf("read flush: %x\n",flash[off]);
         return flash[off];
     }
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM

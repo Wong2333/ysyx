@@ -47,7 +47,6 @@ void eval(){
 }
 uint64_t cycle = 0;
 static void single_cycle() {
-    printf("single step\n");
     top.clock = ~top.clock;
     eval();
 
@@ -93,7 +92,6 @@ void init_mem(const char* img_path){
 }
 
 void init_cpu(){
-    printf("init cpu\n");
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     //eval();
     top.reset = 1;
@@ -120,7 +118,6 @@ void init_nvboard(){
 }
 
 void init_engine(int argc, char **argv) {
-    printf("init engine\n");
     Verilated::commandArgs(argc, argv);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
