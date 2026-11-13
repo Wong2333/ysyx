@@ -44,7 +44,7 @@ NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
 VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
-CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
+CSRCS = $(shell find $(CURDIR)/csrc -name "*.cc")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
 RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
@@ -63,7 +63,7 @@ $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOA
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
 		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
-		--mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
+		--Mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
 		-Iresources/include
 
 sim: bin

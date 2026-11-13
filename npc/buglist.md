@@ -25,7 +25,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B07 | 生成 | `$(CORE)` 的 recipe | `cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@` 里删掉 `$(RESOURCES)` | 交付文件里缺 `PCBlackBox`/`perf` 等 resources，verilator 报缺模块（`ysyx_26030092_PCBlackBox`） | 恢复 `$(RESOURCES)` | 未用 |
 | B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 已用（第 11 轮） |
 | B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
-| B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 链接期 `undefined reference to 'readline'` / `'add_history'`（两种仿真都编不出来） | 恢复 `-lreadline` | 未用 |
+| B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 只在 `CONFIG_ENABLE_SDB=y` 时链接失败；当前 CI 配置 SDB 关，readline 调用被编掉，**无现象，作废** | — | 作废 |
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，链接期 `undefined reference to nvboard_*` | 恢复 include | 未用 |
 | B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
 | B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 不重新 elaborate，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
@@ -44,7 +44,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B26 | Verilator 参数 | `VERILATOR_CFLAGS` | 删掉 `--build` | verilator 只生成 `obj_dir` 里的 Makefile 不编译，`make` 看起来成功却没有 `build/ysyxSoCFull`，紧接着 `make sim` 报找不到可执行文件 | 恢复 `--build` | 已用（第 16 轮） |
 | B27 | 参数 | `$(BIN)` 的 verilator 命令 | `-CFLAGS "$(CXXFLAGS)"` 改成 `-CFLAGS "$(CXXFLAGS) -DNPC"` | SoC 构建里 `#ifdef NPC` 的 `npc-*.cpp` 被激活，链接期 `multiple definition of 'init_engine'`（和 SoC 版引擎重复） | 去掉 `-DNPC` | 已用（第 15 轮） |
 | B28 | 参数 | `$(BIN)` 的 verilator 命令 | `--top-module` 拼成 `--top_module` | verilator 报 `Invalid option: --top_module... Suggested alternative: '-top-module'`，构建失败 | 恢复拼写 | 已用（第 21 轮） |
-| B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报未知选项，构建失败 | 恢复拼写 | 未用 |
+| B29 | 参数 | `$(BIN)` 的 verilator 命令 | `--Mdir` 拼成 `--mdir` | verilator 报 `Invalid option: --mdir... Suggested alternative: '-Mdir'`，构建失败 | 恢复拼写 | 已用（第 23 轮） |
 | B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 已用（第 13 轮） |
 | B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | ~~gcc 报 unrecognized option~~ 实测 g++ 接受 `-O`（等同 -O1），**无现象，作废** | — | 作废 |
@@ -94,6 +94,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 20 | B24 | `Cannot find include file: 'uart_defines.v'` + `` `UART_FIFO_WIDTH `` 未定义 | 恢复 `-I.../perip/uart16550/rtl` |
 | 21 | B28 | `%Error: Invalid option: --top_module... Suggested alternative: '-top-module'` | 恢复 `--top-module` |
 | 22 | X01 | `-o build/ysyxSoCFull` 相对 `obj_dir` 解析，链接失败、没有可执行文件 | 恢复 `-o $(CURDIR)/$(BIN)` |
+| 23 | B29 | `%Error: Invalid option: --mdir... Suggested alternative: '-Mdir'` | 恢复 `--Mdir` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
