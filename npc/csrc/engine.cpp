@@ -118,7 +118,6 @@ void init_nvboard(){
 }
 
 void init_engine(int argc, char **argv) {
-    printf("init engine\n");
     Verilated::commandArgs(argc, argv);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
@@ -136,7 +135,6 @@ void init_engine(int argc, char **argv) {
         {0, 0, NULL, 0},
     };
     int o;
-    printf("args\n");
     while ((o = getopt_long(argc, argv, "-bhi:d:t:e:", table, NULL)) != -1) {
         switch (o) {
             case 'b': batch_mode = true; sdb_set_batch_mode(); break;
@@ -158,7 +156,6 @@ void init_engine(int argc, char **argv) {
                 exit(1);
         }
     }
-    printf("args finish\n");
     if (img_file == NULL) {
         fprintf(stderr, "错误: 未指定镜像文件，请用 -i <image.bin> 指定\n");
         exit(1);
@@ -170,11 +167,12 @@ void init_engine(int argc, char **argv) {
         init_sdb();
     }
 #endif
-    printf("init mem\n");
+    printf("init memory\n");
     if (img_file)
         init_mem(img_file);
     else
         init_mem(NULL);
+    printf("init cpu");
     init_cpu();
 #ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
