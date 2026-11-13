@@ -41,7 +41,7 @@ endif
 
 # 源文件 
 NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
-VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.sv")
+VSRCS = $(shell find $(YSYX_SoC_HOME)/ -name "*.sv")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
 CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
