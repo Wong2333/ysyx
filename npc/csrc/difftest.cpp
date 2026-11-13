@@ -137,7 +137,7 @@ void check_difftest(uint32_t pc) {
   }
   dut_state.inst = commit_inst;
 
-  if (is_skip_ref(pc)) {
+  if (!is_skip_ref(pc)) {
     dut_state.pc = pc + 4;
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
     ref_next_pc = dut_state.pc;
