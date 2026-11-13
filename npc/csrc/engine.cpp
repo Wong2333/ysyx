@@ -172,8 +172,7 @@ void init_engine(int argc, char **argv) {
         init_mem(img_file);
     else
         init_mem(NULL);
-    printf("init cpu\n");
-    init_cpu();
+
 #ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
     Verilated::traceEverOn(true);
@@ -181,6 +180,8 @@ void init_engine(int argc, char **argv) {
     top.trace(tfp, 99);  // trace 99 levels of hierarchy
     tfp->open("waveform.fst");
 #endif
+    printf("init cpu\n");
+    init_cpu();
     init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {
