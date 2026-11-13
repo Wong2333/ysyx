@@ -34,7 +34,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 已用（第 2 轮） |
 | B17 | 源文件 | `$(BIN)` 的 verilator 命令 | 参数里 `$(CORE)` 改成 `$(NET_CORE)` | verilator 报找不到 `build/sim/ysyx_26030092_netlist_sim.sv`（只有跑过网表流程才有该文件） | 恢复 `$(CORE)` | 已用（第 5 轮） |
 | B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 改了 RTL 后 `make bin` 不重新 verilate，仿真跑旧核（静默） | 恢复依赖 | 未用 |
-| B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | C++ 里 `VysyxSoCFull.h` 找不到，`main.cpp` 编译失败 | 恢复 `$(TOPNAME)` | 未用 |
+| B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | `engine.cpp` 里 `static TOP_NAME top;` 展开成 `Vysyx_26030092`，报 `‘Vysyx_26030092’ does not name a type`（类型名来自命令行宏） | 恢复 `$(TOPNAME)` | 已用（第 17 轮；首猜未中） |
 | B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`，SoC 版构建失败 | 恢复路径 | 未用 |
 | B21 | 源文件 | `$(BIN)` 的 verilator 命令 | 命令里的 `$(SOC_CSRCS)` 改成 `$(CSRCS)` | 链接期 `undefined reference to nvboard_bind_all_pins`（`auto_bind.cpp` 没参与编译） | 恢复 `$(SOC_CSRCS)` | 已用（第 12 轮，给了线索） |
 | B22 | 生成 | `$(CORE)` 的 recipe | `--target-dir $(SPLIT_DIR)` 改成 `--target-dir out` | `cat build/split/*.sv` 匹配不到文件，报 `cat: build/split/*.sv: No such file`，`ysyx_26030092.sv` 生成失败 | 恢复 `$(SPLIT_DIR)` | 已用（第 9 轮） |
@@ -83,6 +83,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 14 | B23 | `csrc/perf.cpp:4:10: fatal error: perf_names.h: 没有那个文件或目录` | 恢复 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` |
 | 15 | B27 | 链接期重复定义（SoC 构建混入 `-DNPC`，`npc-*.cpp` 被激活） | 去掉 `-DNPC` |
 | 16 | B26 | `make` 显示成功但没生成 `build/ysyxSoCFull`，随后 `make sim` 报找不到可执行文件 | 恢复 `--build` |
+| 17 | B19 | `‘Vysyx_26030092’ does not name a type` + `nvboard_bind_all_pins 声明为 void`（`-DTOP_NAME` 用了 `$(DESIGN)`） | 恢复 `-DTOP_NAME="\"V$(TOPNAME)\""` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

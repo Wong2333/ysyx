@@ -18,7 +18,7 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
 INCFLAGS = $(addprefix -I,$(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(DESIGN)\""
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 LDFLAGS += -lreadline -ldl
 
 # kconfig
@@ -98,7 +98,7 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
-	python3 scripts/gen_perf_names.py $(BUILD_DIR) $@
+	python3 scripts/gen_perf_names.py $(BUILD_DIR)
 
 # 四值仿真
 IVERILOG ?= iverilog
