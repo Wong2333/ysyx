@@ -46,7 +46,7 @@ VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
 CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
-RESOURCES = $(shell find $(CURDIR)/resources -name "*.sv")
+RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
