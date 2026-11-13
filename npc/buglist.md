@@ -20,7 +20,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B02 | 变量展开 | `INCFLAGS` 定义 | `INCFLAGS = ...` 改成 `INCFLAGS := ...` | 编译 `build/auto_bind.cpp` 报 `nvboard.h: 没有那个文件或目录`（`nvboard.mk` 在后面才往 `INC_PATH` 追加目录，`:=` 提前展开丢了它） | 用 `=` | 已用（第 3 轮） |
 | B03 | 路径 | `INC_PATH` | 删掉 `INC_PATH += $(NPC_HOME)/include/generated` | 编译 csrc 报 `autoconf.h: No such file or directory`（两种仿真都编不出来） | 恢复该行 | 已用（第 1 轮） |
 | B04 | 链接 | `$(BIN)` 的 verilator 命令 | 参数里的 `$(NVBOARD_ARCHIVE)` 删掉 | 链接期一堆 `undefined reference to nvboard_*`（nvboard 没链进来） | 保留 `$(NVBOARD_ARCHIVE)` | 未用 |
-| B05 | 源文件 | `VSRCS` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | verilator 报 `Cannot find file containing module: 'ysyxSoCFull'`（perip 和 SoC 顶层都没进源列表） | 改回 `*.v` | 未用 |
+| B05 | 源文件 | `VSRCS` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | verilator 报 `Cannot find file containing module: 'ysyxSoCFull'`（perip 和 SoC 顶层都没进源列表） | 改回 `*.v` | 已用（第 26 轮） |
 | B06 | 顶层 | `$(BIN)` 的 verilator 命令 | `--top-module $(TOPNAME)` 改成 `--top-module $(DESIGN)` | 生成的 C++ 头是 `Vysyx_26030092.h`，`main.cpp` 找不到 `VysyxSoCFull.h`，编译直接失败 | 恢复 `$(TOPNAME)` | 已用（第 7 轮） |
 | B07 | 生成 | `$(CORE)` 的 recipe | `cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@` 里删掉 `$(RESOURCES)` | 交付文件里缺 `PCBlackBox`/`perf` 等 resources，verilator 报缺模块（`ysyx_26030092_PCBlackBox`） | 恢复 `$(RESOURCES)` | 未用 |
 | B08 | nvboard | `$(SRC_AUTO_BIND)` 的 recipe | `... auto_pin_bind.py $^ $@` 改成 `... auto_pin_bind.py $@ $^` | 引脚绑定脚本参数反了：生成失败或 `auto_bind.cpp` 内容错乱，nvboard 编译/链接失败（贪吃蛇键盘、VGA 都受影响） | 恢复 `$^ $@` | 已用（第 11 轮） |
@@ -97,6 +97,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 23 | B29 | `%Error: Invalid option: --mdir... Suggested alternative: '-Mdir'` | 恢复 `--Mdir` |
 | 24 | B39 | `undefined reference to 'main'`（`CSRCS` 的 find 匹配不到 `.cpp`） | 改回 `-name "*.cpp"` |
 | 25 | B20 | `make: *** 没有规则可制作目标“constr/old_top.nxdc”`（`NXDC_FILES` 改名） | 恢复 `constr/top.nxdc` |
+| 26 | B05 | `%Error-MODMISSING: ... Cannot find file containing module: 'sdram_top_axi' / 'psram_top_apb' / 'flash'` | `VSRCS` 的 find 改回 `*.v` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

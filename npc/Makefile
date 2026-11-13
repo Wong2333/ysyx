@@ -41,14 +41,13 @@ endif
 
 # 源文件 
 NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
-VSRCS = $(shell find $(YSYX_SoC_HOME)/ -name "*.sv")
+VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
 CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
 RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
-include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
 SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
