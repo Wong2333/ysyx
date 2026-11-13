@@ -107,7 +107,7 @@ void init_cpu(){
         eval();
 
     }
-    top.reset = 0;
+    top.reset = 1;
     // top.eval(); // 立即更新组合逻辑状态
 }
 
