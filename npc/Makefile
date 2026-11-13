@@ -44,7 +44,7 @@ NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
 VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.v")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
-CSRCS = $(shell find $(CURDIR)/csrc -name "*.cc")
+CSRCS = $(shell find $(CURDIR)/csrc -name "*.c")
 CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
 RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
