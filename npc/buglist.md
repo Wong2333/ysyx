@@ -63,7 +63,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 |---|---|---|---|---|---|
 | X01 | 输出路径 | `$(BIN)` 的 recipe | `-o $(CURDIR)/$(BIN)` 改成 `-o $(BIN)` | 可执行文件生成到 `build/obj_dir/build/...` 里，`make sim` 报找不到 `build/ysyxSoCFull` | 已用（第 22 轮） |
 | X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 已用（第 34 轮） |
-| X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） | 未用 |
+| X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） | 已用（第 35 轮） |
 | X04 | 目录 | `$(BIN)` 的 verilator 命令 | `--Mdir $(OBJ_DIR)` 改成 `--Mdir $(NPC_OBJ_DIR)` | SoC 版和 NPC 版共用输出目录，互相覆盖，构建报错或跑成另一版 | 未用 |
 | X05 | 参数 | `sim` 的 recipe | 去掉 `$(if $(IMG),-i $(IMG))` | 没有指定镜像，内存是空的，复位后取指全错，很快卡到周期上限（已在 C++ 层加了“无镜像直接报错”的防护） | 已用（第 4 轮） |
 | X06 | 依赖 | `$(PERF_NAMES_H)` 的依赖 | 去掉 `$(CORE)` | RTL 重新生成后 perf 名字表不更新，PMU 统计名字错乱（不影响程序功能，静默） | 未用 |
@@ -106,6 +106,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 32 | B14 | 第二次 `make` 后 CORE 从 313713 变成 627426 字节，`%Warning-MODDUP: Duplicate declaration of module: 'ysyx_26030092'` | `>>` 改回 `>` |
 | 33 | B13 | `touch src/IFU.scala` 后 `make` 不重新 elaborate（CORE 时间戳不变） | 恢复 `$(CHISEL_SRC)` 依赖 |
 | 34 | X02 | `touch resources/PCBlackBox.v` 后 `make` 不重新拼 CORE（大小/时间戳不变） | 恢复 `$(RESOURCES)` 依赖 |
+| 35 | X03 | `touch ../ysyxSoC/build/ysyxSoCFull.v` 后 `make` 不重新 verilate | 恢复 `$(VSRCS)` 依赖 |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
