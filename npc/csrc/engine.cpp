@@ -113,8 +113,7 @@ void init_cpu(){
 
 
 void init_nvboard(){
-    nvboard_bind_all_pins(NULL);
-    nvboard_init();
+    nvboard_bind_all_pins(&top);
 }
 
 void init_engine(int argc, char **argv) {
