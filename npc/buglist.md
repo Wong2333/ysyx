@@ -49,13 +49,19 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | ~~gcc 报 unrecognized option~~ 实测 g++ 接受 `-O`（等同 -O1），**无现象，作废** | — | 作废 |
 | B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 已用（第 19 轮） |
-| B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
+| B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 与 X02 完全重复（X02 已练），作废 | — | 作废（重复） |
 | B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 已用（第 18 轮） |
 | B36 | 参数 | `$(BIN)` 的 verilator 命令 | `-cc` 改成 `-sc` | `%Error: Need $SYSTEMC_INCLUDE in environment...`，没法按 SystemC 模式生成 | 恢复 `-cc` | 已用（第 28 轮） |
 | B37 | 参数 | `$(BIN)` 的 verilator 命令 | `--timescale "1ns/1ns"` 改成 `--timescale "1ns/1ps"` | 时间单位与 tb/仿真预期不一致，波形和超时判断异常（仿真变慢或提前结束） | 恢复 `1ns/1ns` | 未用 |
-| B38 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(NVBOARD_ARCHIVE)` | 改了 nvboard 源码后不会重新链接，仿真里 nvboard 行为是旧的（静默） | 恢复依赖 | 未用 |
+| B38 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(NVBOARD_ARCHIVE)` | 改了 nvboard 源码后不会重新链接，仿真里 nvboard 行为是旧的（静默） | 恢复依赖 | 已用（第 37 轮） |
 | B39 | 源文件 | `CSRCS` 的 `find` | `-name "*.cpp"` 改成 `-name "*.cc"` | 没有任何 C++ 源码进编译，verilator 报找不到 `main`/一堆 `undefined reference` | 改回 `*.cpp` | 已用（第 24 轮） |
 | B40 | 变量展开 | `CORE` 定义 | `CORE = $(BUILD_DIR)/ysyx_26030092.sv` 改成 `CORE := $(BUILD_DIR)/ysyx_26030092.sv` | 表面等价，但如果你后续改了 `BUILD_DIR`/依赖顺序，`CORE` 会指向旧路径（当前配置下不报错，属于埋雷型） | 用 `=` | 未用 |
+| B41 | 依赖 | `$(BIN)` 的依赖列表 | 去掉 `$(KCONFIG_INCLUDE)` | `make menuconfig` 改配置后 `make` 不重编，行为仍是旧配置（实测：打开 SDB 后没有 `(npc)` 提示符，verilator 重编次数 0） | 恢复依赖 | 已用（第 36 轮） |
+| B42 | 参数缺失 | `$(BIN)` 的 verilator 命令 | 删掉 `-CFLAGS "$(CXXFLAGS)"` | 编译 csrc 时没有 `-I`，直接报 `sdb.h`/`nvboard.h`: No such file，构建失败 | 恢复 `-CFLAGS` | 未用 |
+| B43 | 参数缺失 | `$(BIN)` 的 verilator 命令 | 删掉 `-LDFLAGS "$(LDFLAGS)"` | 链接期一堆 `undefined reference`（`SDL_*`/nvboard 依赖的库），构建失败 | 恢复 `-LDFLAGS` | 未用 |
+| B44 | 参数缺失 | `$(BIN)` 的 verilator 命令 | 删掉源文件参数里的 `$(CORE)` | verilator 报 `Cannot find file containing module: 'ysyx_26030092'`，构建失败 | 恢复 `$(CORE)` | 未用 |
+| B45 | 参数缺失 | `$(BIN)` 的 verilator 命令 | 删掉源文件参数里的 `$(VSRCS)` | verilator 报 `Cannot find module: 'ysyxSoCFull'`，构建失败 | 恢复 `$(VSRCS)` | 未用 |
+| B46 | 参数缺失 | `$(BIN)` 的 verilator 命令 | 删掉 `--top-module $(TOPNAME)` | 多个候选顶层，verilator 报 `Multiple top level modules` 并退出 | 恢复 `--top-module` | 未用 |
 
 ## 备选（需要时替换进上表）
 
@@ -111,5 +117,5 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 ## 难度分组（后续优先抽「中 / 难」）
 
 - **易**：B01、B05、B07、B10、B11、B15、B20、B28、B29、B36、B39、X01（报错信息基本直接指向问题）
-- **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、B27、B30、B33、B35、X04、X05（需要看懂依赖关系或命令行）
+- **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、B27、B30、B33、B35、B42、B43、B44、B45、B46、X04、X05（需要看懂依赖关系或命令行）
 - **难**：B02、B12、B13、B18、B37、B38、B40、X02、X03、X06（静默或不易察觉：需要自己触发重建或对比行为）
