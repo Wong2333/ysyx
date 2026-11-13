@@ -28,7 +28,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 只在 `CONFIG_ENABLE_SDB=y` 时链接失败；当前 CI 配置 SDB 关，readline 调用被编掉，**无现象，作废** | — | 作废 |
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，编译 `auto_bind.cpp` 先报 `nvboard.h: No such file`（INC_PATH 也少了 nvboard 目录），其后才是链接错误 | 恢复 include | 已用（第 27 轮） |
 | B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
-| B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 不重新 elaborate，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
+| B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 显示“无需做任何事”，`ysyx_26030092.sv` 不更新、仿真用旧 RTL（静默） | 恢复依赖 | 已用（第 33 轮） |
 | B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 第一次正常；触发重新生成后内容叠加（实测 313713 → 627426 字节），verilator 报 `Duplicate declaration of module: 'ysyx_26030092'` | 改回 `>` | 已用（第 32 轮） |
 | B15 | 命令 | `$(BIN)` 的 verilator 命令 | 删掉 `--exe` | 只生成库不生成可执行文件：`make` 退出码 0 但没有 `build/ysyxSoCFull`，随后 `make sim` 报 `错误 127` | 恢复 `--exe` | 已用（第 29 轮） |
 | B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 已用（第 2 轮） |
@@ -104,6 +104,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 30 | B01 | `Makefile:61: *** 缺失分隔符`（tab 变空格） | 恢复 tab |
 | 31 | B07 | `Cannot find module: 'ysyx_26030092_PCBlackBox'` / `PerfCounterArray` | `cat` 恢复 `$(RESOURCES)` |
 | 32 | B14 | 第二次 `make` 后 CORE 从 313713 变成 627426 字节，`%Warning-MODDUP: Duplicate declaration of module: 'ysyx_26030092'` | `>>` 改回 `>` |
+| 33 | B13 | `touch src/IFU.scala` 后 `make` 不重新 elaborate（CORE 时间戳不变） | 恢复 `$(CHISEL_SRC)` 依赖 |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
