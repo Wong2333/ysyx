@@ -89,7 +89,7 @@ npc-run: npc
 # Verilog 生成 
 verilog: $(CORE) $(PERF_NAMES_H)
 
-$(CORE): $(RESOURCES)
+$(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	rm -rf $(SPLIT_DIR)
 	mkdir -p $(SPLIT_DIR)
