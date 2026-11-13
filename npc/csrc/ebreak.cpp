@@ -7,7 +7,7 @@
 #include <utils.h>
 
 uint32_t read_rf_reg(int addr) {
-    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg_u"; 
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.RFS_u.Reg"; 
     
     svScope scope = svGetScopeFromName(scope_name);
     if (!scope) {
