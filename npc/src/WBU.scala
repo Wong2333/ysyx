@@ -37,6 +37,7 @@ class ysyx_26030092_Commit extends ExtModule{
     val clock = FlatIO(Input(Clock()))
     val reset = FlatIO(Input(Bool()))
     val pc = FlatIO(Input(UInt(32.W)))
+    val inst = FlatIO(Input(UInt(32.W)))
     val valid = FlatIO(Input(Bool()))
     val mem_commit = FlatIO(Input(Bool()))
     val mem_addr = FlatIO(Input(UInt(32.W)))
