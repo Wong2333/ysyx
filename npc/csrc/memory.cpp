@@ -102,7 +102,7 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
     uint16_t new_data = current_data;
     //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
-    uint8_t low_enable = (mask & 0x1);
+    uint8_t low_enable = !(mask & 0x1);
     uint8_t high_enable = !(mask & 0x2);
     if (low_enable) {
         new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
