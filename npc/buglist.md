@@ -35,7 +35,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B17 | 源文件 | `$(BIN)` 的 verilator 命令 | 参数里 `$(CORE)` 改成 `$(NET_CORE)` | verilator 报找不到 `build/sim/ysyx_26030092_netlist_sim.sv`（只有跑过网表流程才有该文件） | 恢复 `$(CORE)` | 已用（第 5 轮） |
 | B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 改了 RTL 后 `make bin` 不重新 verilate，仿真跑旧核（静默） | 恢复依赖 | 未用 |
 | B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | `engine.cpp` 里 `static TOP_NAME top;` 展开成 `Vysyx_26030092`，报 `‘Vysyx_26030092’ does not name a type`（类型名来自命令行宏） | 恢复 `$(TOPNAME)` | 已用（第 17 轮；首猜未中） |
-| B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`，SoC 版构建失败 | 恢复路径 | 未用 |
+| B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`（中文 locale 下是 `没有规则可制作目标`），SoC 版构建失败 | 恢复路径 | 已用（第 25 轮） |
 | B21 | 源文件 | `$(BIN)` 的 verilator 命令 | 命令里的 `$(SOC_CSRCS)` 改成 `$(CSRCS)` | 链接期 `undefined reference to nvboard_bind_all_pins`（`auto_bind.cpp` 没参与编译） | 恢复 `$(SOC_CSRCS)` | 已用（第 12 轮，给了线索） |
 | B22 | 生成 | `$(CORE)` 的 recipe | `--target-dir $(SPLIT_DIR)` 改成 `--target-dir out` | `cat build/split/*.sv` 匹配不到文件，报 `cat: build/split/*.sv: No such file`，`ysyx_26030092.sv` 生成失败 | 恢复 `$(SPLIT_DIR)` | 已用（第 9 轮） |
 | B23 | 头文件路径 | `INC_PATH` | 删掉 `INC_PATH += $(CURDIR)/$(BUILD_DIR)` | 编译 `ebreak.cpp`/`perf.cpp` 报 `perf_names.h: No such file or directory`（它在 `build/` 下） | 恢复该行 | 已用（第 14 轮） |
@@ -96,6 +96,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 22 | X01 | `-o build/ysyxSoCFull` 相对 `obj_dir` 解析，链接失败、没有可执行文件 | 恢复 `-o $(CURDIR)/$(BIN)` |
 | 23 | B29 | `%Error: Invalid option: --mdir... Suggested alternative: '-Mdir'` | 恢复 `--Mdir` |
 | 24 | B39 | `undefined reference to 'main'`（`CSRCS` 的 find 匹配不到 `.cpp`） | 改回 `-name "*.cpp"` |
+| 25 | B20 | `make: *** 没有规则可制作目标“constr/old_top.nxdc”`（`NXDC_FILES` 改名） | 恢复 `constr/top.nxdc` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

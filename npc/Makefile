@@ -2,7 +2,7 @@ default: bin
 
 # 基本配置
 TOPNAME = ysyxSoCFull
-NXDC_FILES = constr/old_top.nxdc
+NXDC_FILES = constr/top.nxdc
 
 BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
@@ -41,7 +41,7 @@ endif
 
 # 源文件 
 NPC_VSRCS = vsrc/npc_top.v vsrc/npc_axi_mem.v
-VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.v")
+VSRCS = $(shell find $(YSYX_SoC_HOME)/perip -name "*.sv")
 VSRCS += $(YSYX_SoC_HOME)/build/ysyxSoCFull.v
 
 CSRCS = $(shell find $(CURDIR)/csrc -name "*.cpp")
