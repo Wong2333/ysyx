@@ -136,6 +136,7 @@ void init_engine(int argc, char **argv) {
         {0, 0, NULL, 0},
     };
     int o;
+    printf("args\n");
     while ((o = getopt_long(argc, argv, "-bhi:d:t:e:", table, NULL)) != -1) {
         switch (o) {
             case 'b': batch_mode = true; sdb_set_batch_mode(); break;
@@ -157,7 +158,7 @@ void init_engine(int argc, char **argv) {
                 exit(1);
         }
     }
-
+    printf("args finish\n");
     if (img_file == NULL) {
         fprintf(stderr, "错误: 未指定镜像文件，请用 -i <image.bin> 指定\n");
         exit(1);
