@@ -43,6 +43,7 @@ void load_img(const char* path){
 
 extern "C" void flash_read(int32_t addr, int32_t *data) {
     uint32_t uaddr = addr;
+    printf("read\n");
     if (uaddr >= FLASH_SIZE) {
         printf("Error: flash_read out of range: addr=0x%08x\n", addr);
         assert(0);
