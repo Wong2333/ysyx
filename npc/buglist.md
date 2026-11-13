@@ -51,7 +51,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 已用（第 19 轮） |
 | B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
 | B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 已用（第 18 轮） |
-| B36 | 参数 | `$(BIN)` 的 verilator 命令 | `-cc` 改成 `-sc` | verilator 按 SystemC 模式生成，和现有 C++ 驱动对不上，构建/链接失败 | 恢复 `-cc` | 未用 |
+| B36 | 参数 | `$(BIN)` 的 verilator 命令 | `-cc` 改成 `-sc` | `%Error: Need $SYSTEMC_INCLUDE in environment...`，没法按 SystemC 模式生成 | 恢复 `-cc` | 已用（第 28 轮） |
 | B37 | 参数 | `$(BIN)` 的 verilator 命令 | `--timescale "1ns/1ns"` 改成 `--timescale "1ns/1ps"` | 时间单位与 tb/仿真预期不一致，波形和超时判断异常（仿真变慢或提前结束） | 恢复 `1ns/1ns` | 未用 |
 | B38 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(NVBOARD_ARCHIVE)` | 改了 nvboard 源码后不会重新链接，仿真里 nvboard 行为是旧的（静默） | 恢复依赖 | 未用 |
 | B39 | 源文件 | `CSRCS` 的 `find` | `-name "*.cpp"` 改成 `-name "*.cc"` | 没有任何 C++ 源码进编译，verilator 报找不到 `main`/一堆 `undefined reference` | 改回 `*.cpp` | 已用（第 24 轮） |
@@ -99,6 +99,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 25 | B20 | `make: *** 没有规则可制作目标“constr/old_top.nxdc”`（`NXDC_FILES` 改名） | 恢复 `constr/top.nxdc` |
 | 26 | B05 | `%Error-MODMISSING: ... Cannot find file containing module: 'sdram_top_axi' / 'psram_top_apb' / 'flash'` | `VSRCS` 的 find 改回 `*.v` |
 | 27 | B11 | `build/auto_bind.cpp:1:10: fatal error: nvboard.h: 没有那个文件或目录` | 恢复 `include $(NVBOARD_HOME)/scripts/nvboard.mk` |
+| 28 | B36 | `%Error: Need $SYSTEMC_INCLUDE in environment...`（`-sc`） | 恢复 `-cc` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

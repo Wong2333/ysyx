@@ -30,7 +30,7 @@ $(KCONFIG_INCLUDE): .config
 
 # Verilator 公共参数 
 VERILATOR = verilator
-VERILATOR_CFLAGS += --build -sc -O3 --noassert \
+VERILATOR_CFLAGS += --build -cc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
 VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/spi/rtl -I$(YSYX_SoC_HOME)/perip/uart16550/rtl
@@ -62,7 +62,7 @@ $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOA
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
 		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
-		--Mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
+		--Mdir $(OBJ_DIR) -o  $(CURDIR)/$(BIN) \
 		-Iresources/include
 
 sim: bin
