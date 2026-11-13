@@ -103,7 +103,7 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
     //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
 
     uint8_t low_enable = !(mask & 0x1);
-    uint8_t high_enable = (mask & 0x2);
+    uint8_t high_enable = !(mask & 0x2);
     if (low_enable) {
         new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
     }
@@ -124,8 +124,7 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
 }
 
 
-/* 总的内存访问函数，供 SDB 调用。
- * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
+/* 供 SDB 调用
  */
 uint32_t mem_read(uint32_t addr) {
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
