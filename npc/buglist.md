@@ -29,7 +29,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，编译 `auto_bind.cpp` 先报 `nvboard.h: No such file`（INC_PATH 也少了 nvboard 目录），其后才是链接错误 | 恢复 include | 已用（第 27 轮） |
 | B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
 | B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 不重新 elaborate，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
-| B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 每次叠加写入，`ysyx_26030092.sv` 里模块重复定义，verilator 报重复声明 | 改回 `>` | 未用 |
+| B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 第一次正常；触发重新生成后内容叠加（实测 313713 → 627426 字节），verilator 报 `Duplicate declaration of module: 'ysyx_26030092'` | 改回 `>` | 已用（第 32 轮） |
 | B15 | 命令 | `$(BIN)` 的 verilator 命令 | 删掉 `--exe` | 只生成库不生成可执行文件：`make` 退出码 0 但没有 `build/ysyxSoCFull`，随后 `make sim` 报 `错误 127` | 恢复 `--exe` | 已用（第 29 轮） |
 | B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 已用（第 2 轮） |
 | B17 | 源文件 | `$(BIN)` 的 verilator 命令 | 参数里 `$(CORE)` 改成 `$(NET_CORE)` | verilator 报找不到 `build/sim/ysyx_26030092_netlist_sim.sv`（只有跑过网表流程才有该文件） | 恢复 `$(CORE)` | 已用（第 5 轮） |
@@ -103,6 +103,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 29 | B15 | `make` 退出 0 但无 `build/ysyxSoCFull`，`make sim` 报 `错误 127` | 恢复 `--exe` |
 | 30 | B01 | `Makefile:61: *** 缺失分隔符`（tab 变空格） | 恢复 tab |
 | 31 | B07 | `Cannot find module: 'ysyx_26030092_PCBlackBox'` / `PerfCounterArray` | `cat` 恢复 `$(RESOURCES)` |
+| 32 | B14 | 第二次 `make` 后 CORE 从 313713 变成 627426 字节，`%Warning-MODDUP: Duplicate declaration of module: 'ysyx_26030092'` | `>>` 改回 `>` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
