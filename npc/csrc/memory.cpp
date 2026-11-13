@@ -82,8 +82,8 @@ extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* da
     //printf("addr: %x\n",addr);
     //printf("dsram:%x\n",addr);
     if(high_sdram == 0){
-        if(high) *data = sdram_h[addr >> 1];
-        else *data = sdram_l[addr >> 1];
+        if(high) *data = sdram_h[addr >> 2];
+        else *data = sdram_l[addr >> 2];
     }else{
         if(high) *data = sdram_h_high_addr[addr];
         else *data = sdram_l_high_addr[addr];
