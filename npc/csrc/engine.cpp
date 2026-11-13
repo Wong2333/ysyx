@@ -98,7 +98,7 @@ void init_cpu(){
     top.clock = 0;
     eval();
 
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 15; i++) {
         // 时钟上升沿
         top.clock = 1;
         eval();
@@ -113,7 +113,7 @@ void init_cpu(){
 
 
 void init_nvboard(){
-    nvboard_bind_all_pins(&top);
+    nvboard_bind_all_pins(nullptr);
     nvboard_init();
 }
 
