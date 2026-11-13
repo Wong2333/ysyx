@@ -243,7 +243,7 @@ bool check_commit(){
     stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
-    trace_record(commit_pc,mem_read(commit_pc),read_pc_reg());
+    trace_record(commit_pc,mem_read(commit_pc),read_fetch_pc());
     inst_counter ++;
     return true;
   }
@@ -273,7 +273,7 @@ void printNextInst(){
     printInst(last_commit_pc);
   }
   printf("next fetch: ");
-  printInst(read_pc_reg());
+  printInst(read_arch_pc());
 }
 
 void init_sdb() {

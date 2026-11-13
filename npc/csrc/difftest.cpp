@@ -41,7 +41,8 @@ uint32_t ref_mem_base();
 extern uint32_t flash[1024];
 extern uint32_t img_size;
 uint32_t read_rf_reg(int addr);
-uint32_t read_pc_reg();
+uint32_t read_fetch_pc();
+uint32_t read_arch_pc();
 
 static const char *reg_names[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -89,7 +90,7 @@ void init_difftest(const char *ref_so_file, long img_sz) {
   for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
-  dut_state.pc = read_pc_reg();
+  dut_state.pc = read_arch_pc();
   ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
 
   difftest_on = true;
@@ -110,7 +111,7 @@ static bool is_skip_ref(uint32_t pc){
   return !in_mem(commit_mem_addr);
 }
 
-// 取指流水线让架构 PC（取指 PC）超前于提交点，不能拿 read_pc_reg() 直接和 REF 对比。
+// 取指流水线让架构 PC（取指 PC）超前于提交点，不能拿取指 PC（read_fetch_pc）直接和 REF 对比。
 // 改为延迟一拍校验：上一拍 REF 执行完后的 pc 应等于本拍提交指令的 pc。
 static uint32_t ref_next_pc = 0;
 static bool have_ref_pc = false;

@@ -22,7 +22,7 @@ uint32_t read_rf_reg(int addr) {
     return (uint32_t)data;
 }
 
-uint32_t read_pc_reg() {
+uint32_t read_fetch_pc() {
     const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.IFU_u.PC_reg";
     svScope scope = svGetScopeFromName(scope_name);
 
@@ -38,6 +38,21 @@ uint32_t read_pc_reg() {
     return (uint32_t)data;
 }
 
+uint32_t read_arch_pc() {
+    const char* scope_name = "TOP.ysyxSoCFull.asic.cpu.cpu.EXU_u.branch_u.shadow_pc";
+
+    svScope scope = svGetScopeFromName(scope_name);
+    if (!scope) {
+        printf("Error: DPI Scope '%s' not found! Check your Verilog instance name.\n", scope_name);
+        return -1;
+    }
+    svSetScope(scope);
+
+    int data = 0;
+    read_pc(&data);
+    return (uint32_t)data;
+}
+
 const char *regs[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
   "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
@@ -48,7 +63,7 @@ const char *regs[] = {
 uint32_t isa_reg_str2val(const char *s, bool *success) {
   if(strcmp("pc",s)==0){
     *success=true;
-    return read_pc_reg();
+    return read_arch_pc();
   }
   for(int i = 0;i < 32;i++){
     if(strcmp(regs[i],s)==0){
@@ -63,7 +78,7 @@ void isa_reg_display(){
     for(int i = 0;i<32;i++){
         printf("%3s  %x\n",regs[i],read_rf_reg(i));
     }
-    printf("pc   %x\n",read_pc_reg());
+    printf("pc   %x\n",read_arch_pc());
 }
 extern uint64_t cycle;
 extern u_int64_t inst_counter;

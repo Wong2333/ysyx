@@ -34,7 +34,8 @@ ENGINE_STATE_TYPE STATE = STOP;
 extern uint32_t *mem;
 extern uint32_t img_size;
 
-uint32_t read_pc_reg();
+uint32_t read_fetch_pc();
+uint32_t read_arch_pc();
 // uint32_t cycle = 0;
 uint64_t dump_time = 0;
 
@@ -53,7 +54,6 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     nvboard_update();
-
     cycle++;
 }
 
@@ -98,7 +98,7 @@ void init_cpu(){
     top.clock = 0;
     eval();
 
-    for(int i = 0; i < 15; i++) {
+    for(int i = 0; i < 1; i++) {
         // 时钟上升沿
         top.clock = 1;
         eval();
