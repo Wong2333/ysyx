@@ -54,7 +54,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B36 | 参数 | `$(BIN)` 的 verilator 命令 | `-cc` 改成 `-sc` | verilator 按 SystemC 模式生成，和现有 C++ 驱动对不上，构建/链接失败 | 恢复 `-cc` | 未用 |
 | B37 | 参数 | `$(BIN)` 的 verilator 命令 | `--timescale "1ns/1ns"` 改成 `--timescale "1ns/1ps"` | 时间单位与 tb/仿真预期不一致，波形和超时判断异常（仿真变慢或提前结束） | 恢复 `1ns/1ns` | 未用 |
 | B38 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(NVBOARD_ARCHIVE)` | 改了 nvboard 源码后不会重新链接，仿真里 nvboard 行为是旧的（静默） | 恢复依赖 | 未用 |
-| B39 | 源文件 | `CSRCS` 的 `find` | `-name "*.cpp"` 改成 `-name "*.cc"` | 没有任何 C++ 源码进编译，verilator 报找不到 `main`/一堆 `undefined reference` | 改回 `*.cpp` | 未用 |
+| B39 | 源文件 | `CSRCS` 的 `find` | `-name "*.cpp"` 改成 `-name "*.cc"` | 没有任何 C++ 源码进编译，verilator 报找不到 `main`/一堆 `undefined reference` | 改回 `*.cpp` | 已用（第 24 轮） |
 | B40 | 变量展开 | `CORE` 定义 | `CORE = $(BUILD_DIR)/ysyx_26030092.sv` 改成 `CORE := $(BUILD_DIR)/ysyx_26030092.sv` | 表面等价，但如果你后续改了 `BUILD_DIR`/依赖顺序，`CORE` 会指向旧路径（当前配置下不报错，属于埋雷型） | 用 `=` | 未用 |
 
 ## 备选（需要时替换进上表）
@@ -95,6 +95,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 21 | B28 | `%Error: Invalid option: --top_module... Suggested alternative: '-top-module'` | 恢复 `--top-module` |
 | 22 | X01 | `-o build/ysyxSoCFull` 相对 `obj_dir` 解析，链接失败、没有可执行文件 | 恢复 `-o $(CURDIR)/$(BIN)` |
 | 23 | B29 | `%Error: Invalid option: --mdir... Suggested alternative: '-Mdir'` | 恢复 `--Mdir` |
+| 24 | B39 | `undefined reference to 'main'`（`CSRCS` 的 find 匹配不到 `.cpp`） | 改回 `-name "*.cpp"` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
