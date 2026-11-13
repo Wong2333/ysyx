@@ -4,6 +4,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <time.h>
+#include <csignal>
 #include <cassert>
 #include <VysyxSoCFull.h>
 #include <autoconf.h>
@@ -15,6 +16,7 @@
 #include <sdb.h>
 #include <trace.h>
 #include <difftest.h>
+#include <utils.h>
 
 static TOP_NAME top;
 
@@ -96,8 +98,15 @@ void init_cpu() {
     top.reset = 0;
 }
 
+static void close_trace_and_exit(int) {
+    close_tfp();
+    exit(0);
+}
+
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
+    signal(SIGINT, close_trace_and_exit);
+    signal(SIGTERM, close_trace_and_exit);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;

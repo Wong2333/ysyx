@@ -3,6 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <time.h>
+#include <csignal>
 #include <cassert>
 #include <nvboard.h>
 #include <VysyxSoCFull.h>
@@ -15,6 +16,7 @@
 #include <sdb.h>
 #include <trace.h>
 #include <difftest.h>
+#include <utils.h>
 
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
@@ -94,7 +96,7 @@ void init_mem(const char* img_path){
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     //eval();
-    top.reset = 1;
+    top.reset = 0;
     top.clock = 0;
     eval();
 
@@ -107,7 +109,7 @@ void init_cpu(){
         eval();
 
     }
-    top.reset = 1;
+    top.reset = 0;
     // top.eval(); // 立即更新组合逻辑状态
 }
 
@@ -117,8 +119,15 @@ void init_nvboard(){
     nvboard_init();
 }
 
+static void close_trace_and_exit(int) {
+    close_tfp();
+    exit(0);
+}
+
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
+    signal(SIGINT, close_trace_and_exit);
+    signal(SIGTERM, close_trace_and_exit);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;
