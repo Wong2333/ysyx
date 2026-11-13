@@ -84,7 +84,7 @@ class ysyx_26030092_LSU extends Module{
             Cat(Fill(16, load_shift(15)), load_shift(15,0)),
             Cat(0.U(16.W),                load_shift(15,0)))))
 
-    val store_shift = wdata << (addr(1,0) << 3)
+    val store_shift = wdata << (addr(1,0) << 2)
     val store_strb  = MuxLookup(size, "b1111".U)(Seq(
         MemSize.byte -> ("b1".U(4.W)  << addr(1,0))(3,0),
         MemSize.half -> ("b11".U(4.W) << addr(1,0))(3,0)))
