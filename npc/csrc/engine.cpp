@@ -96,7 +96,7 @@ void init_mem(const char* img_path){
 void init_cpu(){
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     //eval();
-    top.reset = 0;
+    top.reset = 1;
     top.clock = 0;
     eval();
 
