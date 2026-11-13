@@ -48,9 +48,14 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B30 | 参数 | `$(BIN)` 的 verilator 命令 | 源列表 `$(VSRCS)` 后面追加 `vsrc/npc_top.v` | `npc_top.v` 里也有一个 `module ysyxSoCFull`，verilator 报模块重定义 | 去掉追加 | 已用（第 13 轮） |
 | B31 | 参数 | `sim` 的 recipe | `-e $(ELF)` 改成 `-E $(ELF)` | 引擎打印 `invalid option -- 'E'` 后 `exit 1`，make 报 `错误 1`，没有任何仿真输出 | 恢复 `-e` | 已用（第 10 轮） |
 | B32 | 参数 | `$(BIN)` 的 verilator 命令 | `-O3` 改成 `-O` | 编译阶段 gcc 报 `unrecognized command-line option '-O'`，构建失败 | 恢复 `-O3` | 未用 |
-| B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 未用 |
+| B33 | 源文件 | `RESOURCES` 的 `find` | `-name "*.v"` 改成 `-name "*.sv"` | `RESOURCES` 变空，交付 .sv 里缺 `PCBlackBox`/`Commit` 等模块，verilator 报缺模块 | 改回 `*.v` | 已用（第 19 轮） |
 | B34 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 恢复依赖 | 未用 |
 | B35 | 生成 | `$(PERF_NAMES_H)` 的 recipe | `gen_perf_names.py $(BUILD_DIR) $@` 删掉 `$@` | 脚本 `sys.argv[2]` 越界，抛 `IndexError`，`perf_names.h` 生成失败 | 恢复 `$@` | 已用（第 18 轮） |
+| B36 | 参数 | `$(BIN)` 的 verilator 命令 | `-cc` 改成 `-sc` | verilator 按 SystemC 模式生成，和现有 C++ 驱动对不上，构建/链接失败 | 恢复 `-cc` | 未用 |
+| B37 | 参数 | `$(BIN)` 的 verilator 命令 | `--timescale "1ns/1ns"` 改成 `--timescale "1ns/1ps"` | 时间单位与 tb/仿真预期不一致，波形和超时判断异常（仿真变慢或提前结束） | 恢复 `1ns/1ns` | 未用 |
+| B38 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(NVBOARD_ARCHIVE)` | 改了 nvboard 源码后不会重新链接，仿真里 nvboard 行为是旧的（静默） | 恢复依赖 | 未用 |
+| B39 | 源文件 | `CSRCS` 的 `find` | `-name "*.cpp"` 改成 `-name "*.cc"` | 没有任何 C++ 源码进编译，verilator 报找不到 `main`/一堆 `undefined reference` | 改回 `*.cpp` | 未用 |
+| B40 | 变量展开 | `CORE` 定义 | `CORE = $(BUILD_DIR)/ysyx_26030092.sv` 改成 `CORE := $(BUILD_DIR)/ysyx_26030092.sv` | 表面等价，但如果你后续改了 `BUILD_DIR`/依赖顺序，`CORE` 会指向旧路径（当前配置下不报错，属于埋雷型） | 用 `=` | 未用 |
 
 ## 备选（需要时替换进上表）
 
@@ -85,9 +90,10 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 16 | B26 | `make` 显示成功但没生成 `build/ysyxSoCFull`，随后 `make sim` 报找不到可执行文件 | 恢复 `--build` |
 | 17 | B19 | `‘Vysyx_26030092’ does not name a type` + `nvboard_bind_all_pins 声明为 void`（`-DTOP_NAME` 用了 `$(DESIGN)`） | 恢复 `-DTOP_NAME="\"V$(TOPNAME)\""` |
 | 18 | B35 | `IndexError: list index out of range`（`gen_perf_names.py` 少了输出参数） | 恢复 `$@` |
+| 19 | B33 | `%Error-MODMISSING: ... Cannot find file containing module: 'ysyx_26030092_PerfCounterArray'` | `RESOURCES` 的 find 改回 `*.v` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
-- **易**：B01、B05、B07、B10、B11、B15、B20、B28、B29、B31、B32、X01（报错信息基本直接指向问题）
+- **易**：B01、B05、B07、B10、B11、B15、B20、B28、B29、B31、B32、B36、B39、X01（报错信息基本直接指向问题）
 - **中**：B04、B06、B08、B09、B14、B17、B19、B21、B22、B23、B24、B25、B26、B27、B30、B33、B35、X04、X05（需要看懂依赖关系或命令行）
-- **难**：B02、B12、B13、B18、X02、X03、X06（静默错误：需要自己触发重建或对比行为才能发现）
+- **难**：B02、B12、B13、B18、B37、B38、B40、X02、X03、X06（静默或不易察觉：需要自己触发重建或对比行为）
