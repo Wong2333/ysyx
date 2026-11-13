@@ -27,13 +27,13 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | B09 | 依赖 | `sim` 目标 | `sim: bin` 改成 `sim:` | 干净状态下 `make sim` 报 `build/ysyxSoCFull: No such file or directory`；只改源码也不会先重编，RT-Thread 跑的是旧程序 | 恢复 `sim: bin` | 已用（第 6 轮） |
 | B10 | 链接 | `LDFLAGS` 定义 | `LDFLAGS += -lreadline -ldl` 改成 `LDFLAGS += -ldl` | 只在 `CONFIG_ENABLE_SDB=y` 时链接失败；当前 CI 配置 SDB 关，readline 调用被编掉，**无现象，作废** | — | 作废 |
 | B11 | nvboard | `include $(NVBOARD_HOME)/scripts/nvboard.mk` | 删掉这一行 | `$(NVBOARD_ARCHIVE)` 为空、nvboard 目标也没了，编译 `auto_bind.cpp` 先报 `nvboard.h: No such file`（INC_PATH 也少了 nvboard 目录），其后才是链接错误 | 恢复 include | 已用（第 27 轮） |
-| B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 改了 `constr/top.nxdc` 后 `auto_bind.cpp` 不重新生成，引脚映射还是旧的（贪吃蛇键盘/VGA 表现异常，静默） | 恢复依赖 | 未用 |
+| B12 | 依赖 | `$(SRC_AUTO_BIND)` 的依赖 | 去掉 `$(NXDC_FILES)` | 依赖删掉后 recipe 里 `$^` 变空，`auto_pin_bind.py` 参数错误（`错误 255`），构建直接失败；**不是静默题** | 恢复依赖 | 未用（注：现象是构建失败） |
 | B13 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(CHISEL_SRC)` | 改了 scala 后 `make` 显示“无需做任何事”，`ysyx_26030092.sv` 不更新、仿真用旧 RTL（静默） | 恢复依赖 | 已用（第 33 轮） |
 | B14 | 生成 | `$(CORE)` 的 recipe | `> $@` 改成 `>> $@` | 第一次正常；触发重新生成后内容叠加（实测 313713 → 627426 字节），verilator 报 `Duplicate declaration of module: 'ysyx_26030092'` | 改回 `>` | 已用（第 32 轮） |
 | B15 | 命令 | `$(BIN)` 的 verilator 命令 | 删掉 `--exe` | 只生成库不生成可执行文件：`make` 退出码 0 但没有 `build/ysyxSoCFull`，随后 `make sim` 报 `错误 127` | 恢复 `--exe` | 已用（第 29 轮） |
 | B16 | 命令 | `sim` 的 recipe | `$(BUILD_DIR)/$(TOPNAME)` 改成 `$(BUILD_DIR)/npc_sim` | 跑的是 NPC 独立版（没有 nvboard、存储模型不同），RT-Thread / microbench 起不来 | 恢复 `$(TOPNAME)` | 已用（第 2 轮） |
 | B17 | 源文件 | `$(BIN)` 的 verilator 命令 | 参数里 `$(CORE)` 改成 `$(NET_CORE)` | verilator 报找不到 `build/sim/ysyx_26030092_netlist_sim.sv`（只有跑过网表流程才有该文件） | 恢复 `$(CORE)` | 已用（第 5 轮） |
-| B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 改了 RTL 后 `make bin` 不重新 verilate，仿真跑旧核（静默） | 恢复依赖 | 未用 |
+| B18 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(CORE)` | 实测**无现象**：`$(PERF_NAMES_H)` 依赖 `$(CORE)`，CORE 变化仍会通过它触发重建，作废 | — | 作废 |
 | B19 | 宏 | `INCFLAGS`/`CXXFLAGS` 里的 `-DTOP_NAME` | `-DTOP_NAME="\"V$(TOPNAME)\""` 改成 `V$(DESIGN)` | `engine.cpp` 里 `static TOP_NAME top;` 展开成 `Vysyx_26030092`，报 `‘Vysyx_26030092’ does not name a type`（类型名来自命令行宏） | 恢复 `$(TOPNAME)` | 已用（第 17 轮；首猜未中） |
 | B20 | 路径 | `NXDC_FILES` | `constr/top.nxdc` 改成 `constr/old_top.nxdc` | `make: *** No rule to make target 'constr/old_top.nxdc'`（中文 locale 下是 `没有规则可制作目标`），SoC 版构建失败 | 恢复路径 | 已用（第 25 轮） |
 | B21 | 源文件 | `$(BIN)` 的 verilator 命令 | 命令里的 `$(SOC_CSRCS)` 改成 `$(CSRCS)` | 链接期 `undefined reference to nvboard_bind_all_pins`（`auto_bind.cpp` 没参与编译） | 恢复 `$(SOC_CSRCS)` | 已用（第 12 轮，给了线索） |
@@ -62,7 +62,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 编号 | 类别 | 位置 | 注入方式（一处） | 现象 | 状态 |
 |---|---|---|---|---|---|
 | X01 | 输出路径 | `$(BIN)` 的 recipe | `-o $(CURDIR)/$(BIN)` 改成 `-o $(BIN)` | 可执行文件生成到 `build/obj_dir/build/...` 里，`make sim` 报找不到 `build/ysyxSoCFull` | 已用（第 22 轮） |
-| X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 未用 |
+| X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 已用（第 34 轮） |
 | X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） | 未用 |
 | X04 | 目录 | `$(BIN)` 的 verilator 命令 | `--Mdir $(OBJ_DIR)` 改成 `--Mdir $(NPC_OBJ_DIR)` | SoC 版和 NPC 版共用输出目录，互相覆盖，构建报错或跑成另一版 | 未用 |
 | X05 | 参数 | `sim` 的 recipe | 去掉 `$(if $(IMG),-i $(IMG))` | 没有指定镜像，内存是空的，复位后取指全错，很快卡到周期上限（已在 C++ 层加了“无镜像直接报错”的防护） | 已用（第 4 轮） |
@@ -105,6 +105,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 31 | B07 | `Cannot find module: 'ysyx_26030092_PCBlackBox'` / `PerfCounterArray` | `cat` 恢复 `$(RESOURCES)` |
 | 32 | B14 | 第二次 `make` 后 CORE 从 313713 变成 627426 字节，`%Warning-MODDUP: Duplicate declaration of module: 'ysyx_26030092'` | `>>` 改回 `>` |
 | 33 | B13 | `touch src/IFU.scala` 后 `make` 不重新 elaborate（CORE 时间戳不变） | 恢复 `$(CHISEL_SRC)` 依赖 |
+| 34 | X02 | `touch resources/PCBlackBox.v` 后 `make` 不重新拼 CORE（大小/时间戳不变） | 恢复 `$(RESOURCES)` 依赖 |
 
 ## 难度分组（后续优先抽「中 / 难」）
 
