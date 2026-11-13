@@ -59,14 +59,14 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 
 ## 备选（需要时替换进上表）
 
-| 编号 | 类别 | 位置 | 注入方式（一处） | 现象 |
-|---|---|---|---|---|
-| X01 | 输出路径 | `$(BIN)` 的 recipe | `-o $(CURDIR)/$(BIN)` 改成 `-o $(BIN)` | 可执行文件生成到 `build/obj_dir/build/...` 里，`make sim` 报找不到 `build/ysyxSoCFull` |
-| X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） |
-| X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） |
-| X04 | 目录 | `$(BIN)` 的 verilator 命令 | `--Mdir $(OBJ_DIR)` 改成 `--Mdir $(NPC_OBJ_DIR)` | SoC 版和 NPC 版共用输出目录，互相覆盖，构建报错或跑成另一版 |
+| 编号 | 类别 | 位置 | 注入方式（一处） | 现象 | 状态 |
+|---|---|---|---|---|---|
+| X01 | 输出路径 | `$(BIN)` 的 recipe | `-o $(CURDIR)/$(BIN)` 改成 `-o $(BIN)` | 可执行文件生成到 `build/obj_dir/build/...` 里，`make sim` 报找不到 `build/ysyxSoCFull` | 已用（第 22 轮） |
+| X02 | 依赖 | `$(CORE)` 的依赖 | 去掉 `$(RESOURCES)` | 只改 `resources/*.v` 时 `make` 不重新拼 `ysyx_26030092.sv`，仿真用旧 RTL（静默） | 未用 |
+| X03 | 依赖 | `$(BIN)` 的依赖 | 去掉 `$(VSRCS)` | 只改 perip 或 `ysyxSoCFull.v` 时不重新 verilate，仿真跑旧 SoC（静默） | 未用 |
+| X04 | 目录 | `$(BIN)` 的 verilator 命令 | `--Mdir $(OBJ_DIR)` 改成 `--Mdir $(NPC_OBJ_DIR)` | SoC 版和 NPC 版共用输出目录，互相覆盖，构建报错或跑成另一版 | 未用 |
 | X05 | 参数 | `sim` 的 recipe | 去掉 `$(if $(IMG),-i $(IMG))` | 没有指定镜像，内存是空的，复位后取指全错，很快卡到周期上限（已在 C++ 层加了“无镜像直接报错”的防护） | 已用（第 4 轮） |
-| X06 | 依赖 | `$(PERF_NAMES_H)` 的依赖 | 去掉 `$(CORE)` | RTL 重新生成后 perf 名字表不更新，PMU 统计名字错乱（不影响程序功能，静默） |
+| X06 | 依赖 | `$(PERF_NAMES_H)` 的依赖 | 去掉 `$(CORE)` | RTL 重新生成后 perf 名字表不更新，PMU 统计名字错乱（不影响程序功能，静默） | 未用 |
 
 ## 轮次记录
 
@@ -93,6 +93,7 @@ NPC 独立版（`make npc` / `npc-run`）、四值仿真（`sim-iverilog`）、�
 | 19 | B33 | `%Error-MODMISSING: ... Cannot find file containing module: 'ysyx_26030092_PerfCounterArray'` | `RESOURCES` 的 find 改回 `*.v` |
 | 20 | B24 | `Cannot find include file: 'uart_defines.v'` + `` `UART_FIFO_WIDTH `` 未定义 | 恢复 `-I.../perip/uart16550/rtl` |
 | 21 | B28 | `%Error: Invalid option: --top_module... Suggested alternative: '-top-module'` | 恢复 `--top-module` |
+| 22 | X01 | `-o build/ysyxSoCFull` 相对 `obj_dir` 解析，链接失败、没有可执行文件 | 恢复 `-o $(CURDIR)/$(BIN)` |
 
 ## 难度分组（后续优先抽「中 / 难」）
 

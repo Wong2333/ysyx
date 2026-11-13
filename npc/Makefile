@@ -63,7 +63,7 @@ $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOA
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
 		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
-		--Mdir $(OBJ_DIR) --exe -o $(BIN) \
+		--mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
 		-Iresources/include
 
 sim: bin
