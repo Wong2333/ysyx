@@ -114,6 +114,7 @@ void init_cpu(){
 
 void init_nvboard(){
     nvboard_bind_all_pins(&top);
+    nvboard_init();
 }
 
 void init_engine(int argc, char **argv) {
