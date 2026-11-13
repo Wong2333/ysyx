@@ -168,6 +168,7 @@ void init_engine(int argc, char **argv) {
         init_sdb();
     }
 #endif
+    printf("init mem\n");
     if (img_file)
         init_mem(img_file);
     else
