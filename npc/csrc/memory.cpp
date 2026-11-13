@@ -47,7 +47,7 @@ extern "C" void flash_read(int32_t addr, int32_t *data) {
         printf("Error: flash_read out of range: addr=0x%08x\n", addr);
         assert(0);
     }
-    *data = (int32_t)flash[uaddr];
+    *data = (int32_t)flash[uaddr >> 2];
 }
 
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
