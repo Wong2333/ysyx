@@ -1,5 +1,6 @@
 module ysyx_26030092_Commit(
     input [31:0] pc,
+    input [31:0] inst,
     input valid,
     input clock,
     input reset,
@@ -7,10 +8,10 @@ module ysyx_26030092_Commit(
     input [31:0] mem_addr
 );
 `ifndef SYNTHESIS
-    import "DPI-C" context function void commit(input int pc, input int mem_commit, input int mem_addr);
+    import "DPI-C" context function void commit(input int pc, input int inst, input int mem_commit, input int mem_addr);
     always @(posedge clock) begin
         if(valid) begin
-            commit(pc, {31'b0, mem_commit}, mem_addr);
+            commit(pc, inst, {31'b0, mem_commit}, mem_addr);
         end
     end
 `endif

@@ -225,9 +225,11 @@ static uint32_t last_commit_pc = 0;
 // commit 附带的访存信息（供 difftest 判断是否跳过 NEMU）
 int commit_mem_valid = 0;
 uint32_t commit_mem_addr = 0;
+uint32_t commit_inst = 0;
 
-extern "C" void commit(int pc, int mem_commit, int mem_addr){
+extern "C" void commit(int pc, int inst, int mem_commit, int mem_addr){
   commit_pc = pc;
+  commit_inst = (uint32_t)inst;
   last_commit_pc = pc;
   ever_committed = true;
   has_commit = true;
@@ -243,7 +245,7 @@ bool check_commit(){
     stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
-    trace_record(commit_pc,mem_read(commit_pc),read_fetch_pc());
+    trace_record(commit_pc,commit_inst,read_fetch_pc());
     inst_counter ++;
     return true;
   }

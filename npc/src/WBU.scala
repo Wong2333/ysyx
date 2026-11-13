@@ -7,6 +7,7 @@ import npc.PMU._
 // 提交指令信息：PC / 是否访存 / 访存地址（沿流水线 EXU → WBU）
 class CommitInfoBundle extends Bundle {
   val pc = Output(UInt(32.W))
+  val inst = Output(UInt(32.W))
   val mem = Output(Bool())
   val mem_addr = Output(UInt(32.W))
 }
@@ -85,6 +86,7 @@ class ysyx_26030092_WBU extends Module{
     commit_u.reset := reset
     commit_u.valid := false.B
     commit_u.pc := commit_info.pc
+    commit_u.inst := commit_info.inst
     commit_u.mem_commit := commit_info.mem
     commit_u.mem_addr := commit_info.mem_addr
 

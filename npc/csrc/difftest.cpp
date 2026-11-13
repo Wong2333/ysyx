@@ -17,10 +17,11 @@ typedef void (*ref_difftest_exec_t)(uint64_t n);
 typedef void (*ref_difftest_raise_intr_t)(uint64_t NO);
 typedef void (*ref_difftest_init_t)(int port);
 
-/* CPU state matching NEMU's riscv32_CPU_state: 32 GPRs + PC */
+/* CPU state matching NEMU's riscv32_CPU_state: 32 GPRs + PC + inst */
 typedef struct {
   uint32_t gpr[32];
   uint32_t pc;
+  uint32_t inst;
 } riscv32_CPU_state;
 
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
@@ -105,6 +106,7 @@ bool in_mem(uint32_t addr);
 // commit 附带访存信息（sdb.cpp 的 commit() 设置）
 extern int commit_mem_valid;
 extern uint32_t commit_mem_addr;
+extern uint32_t commit_inst;
 
 static bool is_skip_ref(uint32_t pc){
   if (!commit_mem_valid) return false;
@@ -133,9 +135,9 @@ void check_difftest(uint32_t pc) {
   for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
+  dut_state.inst = commit_inst;
 
   if (is_skip_ref(pc)) {
-    // MMIO 提交：REF 无法复现外设访问，重同步寄存器堆；访存指令必顺序执行，下一 pc = pc+4
     dut_state.pc = pc + 4;
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
     ref_next_pc = dut_state.pc;
@@ -153,6 +155,11 @@ void check_difftest(uint32_t pc) {
              pc, reg_names[i], ref_state.gpr[i], dut_state.gpr[i]);
       ok = false;
     }
+  }
+  if (dut_state.inst != ref_state.inst) {
+    printf("Difftest: Mismatch at pc = 0x%08x, inst: right = 0x%08x, wrong = 0x%08x\n",
+           pc, ref_state.inst, dut_state.inst);
+    ok = false;
   }
   ref_next_pc = ref_state.pc;
   have_ref_pc = true;
