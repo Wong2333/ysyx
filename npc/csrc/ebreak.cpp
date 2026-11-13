@@ -85,7 +85,7 @@ extern u_int64_t inst_counter;
 void printPMU();
 // DPI-C 函数实现
 void ebreak() {
-    uint32_t status = read_rf_reg(10);
+    uint32_t status = read_rf_reg(11);
     printf("cycle: %llu, InstCounter: %llu, IPC: %f\n",cycle, inst_counter , 1.0 * inst_counter / cycle);
     printPMU();
     if(status == 0){
