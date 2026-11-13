@@ -113,7 +113,7 @@ void init_cpu(){
 
 
 void init_nvboard(){
-    nvboard_bind_all_pins(&top);
+    nvboard_bind_all_pins(NULL);
     nvboard_init();
 }
 
@@ -172,7 +172,7 @@ void init_engine(int argc, char **argv) {
         init_mem(img_file);
     else
         init_mem(NULL);
-    printf("init cpu");
+    printf("init cpu\n");
     init_cpu();
 #ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
