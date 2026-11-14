@@ -8,6 +8,7 @@ import npc.PMU._
 class CommitInfoBundle extends Bundle {
   val pc = Output(UInt(32.W))
   val inst = Output(UInt(32.W))
+  val next_pc = Output(UInt(32.W))
   val mem = Output(Bool())
   val mem_addr = Output(UInt(32.W))
 }
@@ -38,6 +39,7 @@ class ysyx_26030092_Commit extends ExtModule{
     val reset = FlatIO(Input(Bool()))
     val pc = FlatIO(Input(UInt(32.W)))
     val inst = FlatIO(Input(UInt(32.W)))
+    val dnpc = FlatIO(Input(UInt(32.W)))
     val valid = FlatIO(Input(Bool()))
     val mem_commit = FlatIO(Input(Bool()))
     val mem_addr = FlatIO(Input(UInt(32.W)))
@@ -88,6 +90,7 @@ class ysyx_26030092_WBU extends Module{
     commit_u.valid := false.B
     commit_u.pc := commit_info.pc
     commit_u.inst := commit_info.inst
+    commit_u.dnpc := commit_info.next_pc
     commit_u.mem_commit := commit_info.mem
     commit_u.mem_addr := commit_info.mem_addr
 

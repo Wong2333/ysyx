@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// 性能计数器列表由 RTL 的 PerfCounter 声明自动生成（build/perf_names.h，见 scripts/gen_perf_names.py），
-// 这里只需要按 scope 逐个读出打印。
+
 void printPMU(){
     for (int i = 0; i < PERF_COUNT; i++) {
         char scope[256];

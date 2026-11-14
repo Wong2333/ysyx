@@ -37,7 +37,6 @@ extern uint32_t *mem;
 extern uint32_t img_size;
 
 uint32_t read_fetch_pc();
-uint32_t read_arch_pc();
 // uint32_t cycle = 0;
 uint64_t dump_time = 0;
 
@@ -101,16 +100,13 @@ void init_cpu(){
     eval();
 
     for(int i = 0; i < 15; i++) {
-        // 时钟上升沿
         top.clock = 1;
         eval();
-        // 时钟下降沿
         top.clock = 0;
         eval();
 
     }
     top.reset = 0;
-    // top.eval(); // 立即更新组合逻辑状态
 }
 
 

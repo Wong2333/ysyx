@@ -124,8 +124,7 @@ extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wd
 }
 
 
-/* 供 SDB 调用
- */
+// 供 SDB 调用
 uint32_t mem_read(uint32_t addr) {
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return mrom[(addr - 0x20000000) >> 2];
@@ -252,7 +251,6 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
                 break;
         }
     }
-    /* 其它 opcode: info.type 保持为 0, 表示非内存访问指令 */
 
     return info;
 }

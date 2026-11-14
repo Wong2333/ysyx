@@ -28,7 +28,6 @@ struct timespec start, end;
 bool check_wp();
 void load_img(const char *path);
 uint32_t read_fetch_pc();
-uint32_t read_arch_pc();
 extern uint32_t img_size;
 
 uint64_t cycle = 0;

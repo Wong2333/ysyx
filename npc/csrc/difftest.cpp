@@ -43,7 +43,6 @@ extern uint32_t flash[1024];
 extern uint32_t img_size;
 uint32_t read_rf_reg(int addr);
 uint32_t read_fetch_pc();
-uint32_t read_arch_pc();
 
 static const char *reg_names[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -84,14 +83,13 @@ void init_difftest(const char *ref_so_file, long img_sz) {
 
   void *img_ptr = ref_mem_ptr();
   ref_difftest_memcpy(ref_mem_base(), img_ptr, img_size, DIFFTEST_TO_REF);
-
   riscv32_CPU_state dut_state;
-  // RV32E: RTL 只有 16 个寄存器，高 16 个清零且不再更新（软件不写 x16-x31）
+
   memset(&dut_state, 0, sizeof(dut_state));
   for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
-  dut_state.pc = read_arch_pc();
+  dut_state.pc = read_fetch_pc();
   ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
 
   difftest_on = true;
@@ -103,51 +101,44 @@ uint32_t mem_read(uint32_t addr);
 bool in_mem(uint32_t addr);
 #include<npc-memory.h>
 
-// commit 附带访存信息（sdb.cpp 的 commit() 设置）
 extern int commit_mem_valid;
 extern uint32_t commit_mem_addr;
 extern uint32_t commit_inst;
+extern uint32_t commit_dnpc;
 
 static bool is_skip_ref(uint32_t pc){
   if (!commit_mem_valid) return false;
   return !in_mem(commit_mem_addr);
 }
 
-// 取指流水线让架构 PC（取指 PC）超前于提交点，不能拿取指 PC（read_fetch_pc）直接和 REF 对比。
-// 改为延迟一拍校验：上一拍 REF 执行完后的 pc 应等于本拍提交指令的 pc。
-static uint32_t ref_next_pc = 0;
-static bool have_ref_pc = false;
-
 void check_difftest(uint32_t pc) {
   if (!difftest_on) return;
 
   bool ok = true;
-  if (have_ref_pc && pc != ref_next_pc) {
-    printf("Difftest: Mismatch at pc = 0x%08x, pc: right = 0x%08x, wrong = 0x%08x\n",
-           pc, ref_next_pc, pc);
-    ok = false;
-  }
-  have_ref_pc = false;
 
   riscv32_CPU_state dut_state;
-  // RV32E: 只读低 16 个寄存器，高 16 个保持 0
+
   memset(&dut_state, 0, sizeof(dut_state));
   for (int i = 0; i < 16; i++) {
     dut_state.gpr[i] = read_rf_reg(i);
   }
   dut_state.inst = commit_inst;
+  dut_state.pc = commit_dnpc;
 
   if (is_skip_ref(pc)) {
-    dut_state.pc = pc + 4;
     ref_difftest_regcpy(&dut_state, DIFFTEST_TO_REF);
-    ref_next_pc = dut_state.pc;
-    have_ref_pc = true;
     return;
   }
   ref_difftest_exec(1);
 
   riscv32_CPU_state ref_state;
   ref_difftest_regcpy(&ref_state, DIFFTEST_TO_DUT);
+
+  if (dut_state.pc != ref_state.pc) {
+    printf("Difftest: Mismatch at pc = 0x%08x, pc: right = 0x%08x, wrong = 0x%08x\n",
+           pc, ref_state.pc, dut_state.pc);
+    ok = false;
+  }
 
   for (int i = 1; i < 32; i++) {
     if (dut_state.gpr[i] != ref_state.gpr[i]) {
@@ -161,9 +152,6 @@ void check_difftest(uint32_t pc) {
            pc, ref_state.inst, dut_state.inst);
     ok = false;
   }
-  ref_next_pc = ref_state.pc;
-  have_ref_pc = true;
-
   if (!ok) {
     printf("Difftest: FAIL at pc = 0x%08x\n", pc);
     fflush(stdout);
