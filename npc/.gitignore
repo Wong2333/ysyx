@@ -43,3 +43,4 @@ tools/kconfig/build/
 !tools/kconfig/*.l
 !tools/kconfig/*.y
 !buglist.md
+!tools/*.patch
