@@ -11,7 +11,7 @@ module ysyx_26030092_PCBlackBox(
 `elsif NETLIST_SIM
     localparam CONFIG_START_ADDR = 32'h80000000;
 `else
-    localparam CONFIG_START_ADDR = 32'h80000000;
+    localparam CONFIG_START_ADDR = 32'h30000000;
 `endif
     reg [31:0] PC;
     assign pc = PC;
