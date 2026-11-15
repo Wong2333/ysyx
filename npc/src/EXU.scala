@@ -103,7 +103,7 @@ class ysyx_26030092_EXU extends Module{
     val AluResult = WireDefault(0.U(32.W))
     dontTouch(AluResult)
     AluResult := ALU_u.out
-    val PCAddFour = idu_out.bits.decode.pc + 4.U
+    val PCAddFour = idu_out.bits.decode.pc + 2.U
 
     val branch_u = Module(new ysyx_26030092_BranchUnit)
     branch_u.pc        := idu_out.bits.decode.pc
