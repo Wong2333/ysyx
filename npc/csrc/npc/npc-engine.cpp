@@ -18,6 +18,8 @@
 #include <difftest.h>
 #include <utils.h>
 
+static void check_stop();
+
 static TOP_NAME top;
 
 #ifdef CONFIG_ENABLE_FST_TRACE
@@ -49,6 +51,7 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     cycle++;
+    check_stop();
 }
 
 void cpu_exec(int n) {
@@ -97,15 +100,19 @@ void init_cpu() {
     top.reset = 0;
 }
 
-static void close_trace_and_exit(int) {
-    close_tfp();
-    exit(0);
+static volatile sig_atomic_t g_stop = 0;
+static void on_signal(int) { g_stop = 1; }
+static void check_stop() {
+    if (g_stop) {
+        close_tfp();
+        fprintf(stderr, "\n[Ctrl-C] 退出\n");
+        exit(0);
+    }
 }
-
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
-    signal(SIGINT, close_trace_and_exit);
-    signal(SIGTERM, close_trace_and_exit);
+    signal(SIGINT, on_signal);
+    signal(SIGTERM, on_signal);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;

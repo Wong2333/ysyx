@@ -4,8 +4,13 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
+// 地址映射与 ysyxSoC 对齐：
+//   0x1000_0000 UART16550 (8 字节寄存器)
+//   0x1000_0030 RTC（mtime 的低/高 32 位）
+//   0x8000_0000 + 128MB 主存（npc 平台程序链接地址）
 #define NPC_PMEM_BASE 0x80000000u
 #define NPC_PMEM_SIZE (128u * 1024u * 1024u)
 #define NPC_UART_BASE 0x10000000u
@@ -36,23 +41,67 @@ void load_img(const char *path) {
     fclose(fp);
 }
 
-uint32_t npc_mem_read_word(uint32_t addr) {
-    addr = addr & ~3u;
-    if (addr >= NPC_PMEM_BASE && addr < NPC_PMEM_BASE + NPC_PMEM_SIZE) {
-        uint32_t off = addr - NPC_PMEM_BASE;
+static bool npc_pmem_hit(uint32_t addr) {
+    return addr >= NPC_PMEM_BASE && addr < NPC_PMEM_BASE + NPC_PMEM_SIZE;
+}
+
+// 读 4 字节；返回 false 表示地址未映射（由 AXI 从设备转成 DECERR）
+static bool npc_bus_read(uint32_t addr, uint32_t *data) {
+    uint32_t a = addr & ~3u;
+    if (npc_pmem_hit(a)) {
+        uint32_t off = a - NPC_PMEM_BASE;
         uint32_t v = 0;
         for (int i = 0; i < 4; i++) {
             if (off + i < NPC_PMEM_SIZE) {
                 v |= (uint32_t)npc_pmem[off + i] << (8 * i);
             }
         }
-        return v;
+        *data = v;
+        return true;
     }
-    if (addr >= NPC_RTC_BASE && addr < NPC_RTC_BASE + 8) {
+    if (a >= NPC_UART_BASE && a < NPC_UART_BASE + 8) {
+        *data = 0;                                      // npc 平台 AM 只写不读
+        return true;
+    }
+    if (a >= NPC_RTC_BASE && a < NPC_RTC_BASE + 8) {
         uint64_t t = npc_now_us();
-        return (addr == NPC_RTC_BASE + 4) ? (uint32_t)(t >> 32) : (uint32_t)t;
+        *data = (a == NPC_RTC_BASE + 4) ? (uint32_t)(t >> 32) : (uint32_t)t;
+        return true;
     }
-    return 0;
+    *data = 0;
+    return false;
+}
+
+// 写 4 字节（按 strb 选字节）；返回 false 表示地址未映射
+static bool npc_bus_write(uint32_t addr, uint32_t data, uint8_t strb) {
+    uint32_t a = addr & ~3u;
+    if (npc_pmem_hit(a)) {
+        uint32_t off = a - NPC_PMEM_BASE;
+        for (int i = 0; i < 4; i++) {
+            if ((strb & (1 << i)) && off + i < NPC_PMEM_SIZE) {
+                npc_pmem[off + i] = (uint8_t)((data >> (8 * i)) & 0xff);
+            }
+        }
+        return true;
+    }
+    if (a >= NPC_UART_BASE && a < NPC_UART_BASE + 8) {
+        if (a == NPC_UART_BASE) {
+            for (int i = 0; i < 4; i++) {
+                if (strb & (1 << i)) {
+                    putchar((uint8_t)((data >> (8 * i)) & 0xff));
+                }
+            }
+            fflush(stdout);
+        }
+        return true;
+    }
+    return false;
+}
+
+uint32_t npc_mem_read_word(uint32_t addr) {
+    uint32_t v = 0;
+    npc_bus_read(addr, &v);
+    return v;
 }
 
 uint32_t mem_read(uint32_t addr) {
@@ -60,7 +109,7 @@ uint32_t mem_read(uint32_t addr) {
 }
 
 bool in_mem(uint32_t addr) {
-    return addr >= NPC_PMEM_BASE && addr < NPC_PMEM_BASE + NPC_PMEM_SIZE;
+    return npc_pmem_hit(addr);
 }
 
 void *ref_mem_ptr() {
@@ -71,30 +120,17 @@ uint32_t ref_mem_base() {
     return NPC_PMEM_BASE;
 }
 
-extern "C" void npc_mem_read(int addr, int *data) {
-    *data = (int)npc_mem_read_word((uint32_t)addr);
+// DPI：ok 返回 1 表示访问成功，0 表示地址未映射
+extern "C" void npc_mem_read(int addr, int *data, int *ok) {
+    uint32_t v = 0;
+    bool hit = npc_bus_read((uint32_t)addr, &v);
+    *data = (int)v;
+    *ok = hit ? 1 : 0;
 }
 
-extern "C" void npc_mem_write(int addr, int data, char strb) {
-    uint32_t a = (uint32_t)addr & ~3u;
-    if (a >= NPC_PMEM_BASE && a < NPC_PMEM_BASE + NPC_PMEM_SIZE) {
-        uint32_t off = a - NPC_PMEM_BASE;
-        for (int i = 0; i < 4; i++) {
-            if ((strb & (1 << i)) && off + i < NPC_PMEM_SIZE) {
-                npc_pmem[off + i] = (uint8_t)(((uint32_t)data >> (8 * i)) & 0xff);
-            }
-        }
-        return;
-    }
-    if (a == NPC_UART_BASE) {
-        for (int i = 0; i < 4; i++) {
-            if (strb & (1 << i)) {
-                putchar((uint8_t)(((uint32_t)data >> (8 * i)) & 0xff));
-            }
-        }
-        fflush(stdout);
-        return;
-    }
+extern "C" void npc_mem_write(int addr, int data, char strb, int *ok) {
+    bool hit = npc_bus_write((uint32_t)addr, (uint32_t)data, (uint8_t)strb);
+    *ok = hit ? 1 : 0;
 }
 
 #endif
