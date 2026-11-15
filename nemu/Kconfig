@@ -68,6 +68,14 @@ config TARGET_AM
   bool "Application on Abstract-Machine (DON'T CHOOSE)"
 endchoice
 
+config YSYXSOC_MODE
+  bool "Emulate ysyxSoC address space (difftest REF only)"
+  default n
+  help
+    Emulate ysyxSoC memory map (mrom/sram/flash/sdram) and peripherals
+    (UART/RTC/GPIO), and boot from flash. Enable it only for the REF build;
+    in other builds these regions overlap NEMU serial/VGA MMIO.
+
 menu "Build Options"
 choice
   prompt "Compiler"

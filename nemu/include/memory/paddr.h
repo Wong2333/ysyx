@@ -20,10 +20,14 @@
 
 #define PMEM_LEFT  ((paddr_t)CONFIG_MBASE)
 #define PMEM_RIGHT ((paddr_t)CONFIG_MBASE + CONFIG_MSIZE - 1)
-// ysyxSoC 模式（-i/--icachesim 自动开启）时从 flash(0x30000000) 启动
-// （bootloader 复制 SSBL 到 sdram）；否则维持原复位向量
+/* ysyxSoC address space emulation is only needed by the difftest REF build. */
+#ifdef CONFIG_YSYXSOC_MODE
 extern bool ysyxsoc_mode;
 #define RESET_VECTOR (ysyxsoc_mode ? (paddr_t)CONFIG_FLASH_BASE : (PMEM_LEFT + CONFIG_PC_RESET_OFFSET))
+#else
+#define ysyxsoc_mode false
+#define RESET_VECTOR (PMEM_LEFT + CONFIG_PC_RESET_OFFSET)
+#endif
 
 /* convert the guest physical address in the guest program to host virtual address in NEMU */
 uint8_t* guest_to_host(paddr_t paddr);
@@ -34,6 +38,7 @@ static inline bool in_pmem(paddr_t addr) {
   return addr - CONFIG_MBASE < CONFIG_MSIZE;
 }
 
+#ifdef CONFIG_YSYXSOC_MODE
 static inline bool in_mrom(paddr_t addr){
   return addr - CONFIG_MROM_BASE < CONFIG_MROM_SIZE;
 }
@@ -49,6 +54,7 @@ static inline bool in_flash(paddr_t addr){
 static inline bool in_sdram(paddr_t addr){
   return addr - CONFIG_SDRAM_BASE < CONFIG_SDRAM_SIZE;
 }
+#endif
 
 word_t paddr_read(paddr_t addr, int len);
 void paddr_write(paddr_t addr, int len, word_t data);

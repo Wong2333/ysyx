@@ -50,8 +50,6 @@ static char *elf_file = NULL;
 static char *icachesim_file = NULL;
 static int difftest_port = 1234;
 
-// ysyxSoC 模式：-i/--icachesim 时自动开启（复位到 flash、串口/外设模拟）
-bool ysyxsoc_mode = false;
 
 static long load_img() {
   if (img_file == NULL) {
@@ -99,7 +97,6 @@ static int parse_args(int argc, char *argv[]) {
       case 'e': elf_file = optarg; break;
       case 'i':
         icachesim_file = optarg;
-        ysyxsoc_mode = true; // 自动开启 ysyxSoC 行为（复位到 flash、串口/外设）
         break;
       case 1: img_file = optarg; return 0;
       default:
