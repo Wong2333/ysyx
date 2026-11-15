@@ -86,7 +86,7 @@ class ysyx_26030092_EXU extends Module{
     val src1 = WireDefault(0.U(32.W))
     switch(idu_out.bits.exu_ctl.ALU_Src1){
         is(ALUSrc1.rs1){ src1 := idu_out.bits.rs1_data }
-        is(ALUSrc1.pc) { src1 := idu_out.bits.decode.pc }
+        is(ALUSrc1.pc) { src1 := idu_out.bits.rs1_data }
     }
     val src2 = WireDefault(0.U(32.W))
     switch(idu_out.bits.exu_ctl.ALU_Src2){
