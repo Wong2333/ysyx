@@ -62,7 +62,6 @@ class ysyx_26030092_BranchUnit extends Module{
     flush      := (valid && !pc_hit) || lsu_trap
     redirectPC := Mux(lsu_trap, mtvec, shadow_pc.io.pc)
 
-    // 本条指令的架构下一条 PC：跳转/trap 取目标，否则顺序 +4（供 commit 信息 / ftrace 用）
     val is_redirect = taken || is_mret || is_excp || lsu_trap
     dnpc := Mux(is_redirect, next_pc, pc + 4.U)
 }

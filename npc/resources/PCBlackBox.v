@@ -24,7 +24,7 @@ module ysyx_26030092_PCBlackBox(
                 PC <= pc_next;
             end
             else if(pc_4)begin
-                PC <= PC + 2;
+                PC <= PC + 4;
             end
         end
     end
