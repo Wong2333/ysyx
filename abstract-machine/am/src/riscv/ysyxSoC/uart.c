@@ -4,7 +4,7 @@
 
 void uart_init() {
   // 1. 设置 LCR 的第 7 位 (DLAB) 为 1，开启除数寄存器访问
-  outb(UART_BASE + UART_REG_LC, 0xc0);
+  outb(UART_BASE + UART_REG_LC, 0x40);
 
   // 2. 设置除数 (波特率)
   // 在仿真环境中，简单设置为 1 即可 (DLL=1, DLM=0)
