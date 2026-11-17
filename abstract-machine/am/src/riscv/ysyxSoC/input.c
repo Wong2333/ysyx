@@ -2,7 +2,6 @@
 #include <npc.h>
 #include <riscv/riscv.h>
 
-// 普通按键映射表 (单字节扫描码)
 static const int set2_normal_map[256] = {
     // 第一行：功能键和数字键
     [0x76] AM_KEY_ESCAPE, [0x05] AM_KEY_F1, [0x06] AM_KEY_F2, [0x04] AM_KEY_F3, 
