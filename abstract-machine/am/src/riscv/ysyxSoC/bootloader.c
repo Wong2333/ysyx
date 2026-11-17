@@ -39,7 +39,7 @@ void second_stage_bootloader(){
     *dst = *src;
     dst++;
     src++;
-  } 
+  }
 
   dst = &_data_vma_start;
   src = &_data_lma_start;

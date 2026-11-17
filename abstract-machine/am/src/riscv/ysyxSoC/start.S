@@ -4,7 +4,7 @@
 
 _start:
   mv s0, zero
-  la sp, _heap_start
+  la sp, _stack_pointer
   call first_stage_bootloader
   call second_stage_bootloader
   call _trm_init
