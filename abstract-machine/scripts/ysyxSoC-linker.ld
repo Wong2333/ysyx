@@ -6,7 +6,6 @@ MEMORY {
 }
 
 SECTIONS {
-  /* _pmem_start and _entry_offset are defined in LDFLAGS */
   . = ORIGIN(flash);
   .text_start : {
     *(entry)
