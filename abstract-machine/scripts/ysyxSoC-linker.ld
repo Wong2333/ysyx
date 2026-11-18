@@ -27,7 +27,7 @@ SECTIONS {
     *(.text*)
     *(.rodata*)
     _text_vma_end = .;
-  } > sdram AT> sdram
+  } > sdram AT> flash
   _text_lma_start = LOADADDR(.text);
 
   .data : {
