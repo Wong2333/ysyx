@@ -62,7 +62,7 @@ static int print_int(char *out, int val) {
   }
   return len;
 }
-// 1. 核心逻辑放在 vsprintf 中，注意参数是 va_list ap
+
 int vsprintf(char *out, const char *fmt, va_list ap) {
   char *p = out; 
   
@@ -76,17 +76,17 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
 
     switch (*fmt) {
       case 's': {
-        const char *s = va_arg(ap, const char *); // 使用 ap
+        const char *s = va_arg(ap, const char *); 
         while (*s) *p++ = *s++;
         break;
       }
       case 'd': {
-        int d = va_arg(ap, int); // 使用 ap
+        int d = va_arg(ap, int); 
         p += print_int(p, d);
         break;
       }
       case 'u': {
-        int d = va_arg(ap, int); // 使用 ap
+        int d = va_arg(ap, int);
         p += print_unsigned(p, d);
         break;
       }
@@ -116,20 +116,18 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     }
     if (*fmt) fmt++; 
   }
-
+  *p = '\0';
   return p - out; 
 }
 
-// 2. sprintf 变成了一个简单的“包装器”
 int sprintf(char *out, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int len = vsprintf(out, fmt, ap); // 调用 v 版本
+  int len = vsprintf(out, fmt, ap);
   va_end(ap);
   return len;
 }
 
-// 3. printf 也是包装器
 int printf(const char *fmt, ...) {
   char out[1024];
   va_list ap;
