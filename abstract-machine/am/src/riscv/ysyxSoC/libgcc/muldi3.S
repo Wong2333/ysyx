@@ -42,7 +42,7 @@ FUNC_BEGIN (__muldi3)
   add    a0, a0, a2
 .L2:
   srli   a1, a1, 1
-  slli   a2, a2, 1
+  srli   a2, a2, 1
   bnez   a1, .L1
   ret
 FUNC_END (__muldi3)
