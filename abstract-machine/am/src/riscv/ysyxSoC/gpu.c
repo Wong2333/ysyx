@@ -10,7 +10,7 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
 
   *cfg = (AM_GPU_CONFIG_T) {
     .present = true, .has_accel = false,
-    .width = 480, .height = 640,
+    .width = 640, .height = 480,
     .vmemsz = 640*480*4
   };
 }
