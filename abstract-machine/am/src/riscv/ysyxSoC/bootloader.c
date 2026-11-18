@@ -13,7 +13,7 @@ void first_stage_bootloader(){
   uint32_t *end = &_SSBL_end;
 
   while(dst < end){
-    *dst = *src;
+    *src = *dst;
     dst++;
     src++; 
   }
