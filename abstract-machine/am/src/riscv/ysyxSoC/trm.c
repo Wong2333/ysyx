@@ -49,7 +49,7 @@ void _trm_init() {
   asm volatile("csrr %0, marchid":"=r"(marchid)::);
   putch(mvendorid[3]); putch(mvendorid[2]); putch(mvendorid[1]); putch(mvendorid[0]);
   putch('_');
-  printf("%u\n",marchid);
+  printf("%x\n",marchid);
   show_id_in_seg(marchid);
   int ret = main(mainargs);
   halt(ret);
