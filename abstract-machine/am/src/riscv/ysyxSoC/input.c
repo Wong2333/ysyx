@@ -24,7 +24,7 @@ static const int set2_normal_map[256] = {
 
     // 字母键第二排
     [0x58] AM_KEY_CAPSLOCK,
-    [0x1C] AM_KEY_S, [0x1B] AM_KEY_S, [0x23] AM_KEY_D, [0x2B] AM_KEY_F, [0x34] AM_KEY_G,
+    [0x1C] AM_KEY_A, [0x1B] AM_KEY_S, [0x23] AM_KEY_D, [0x2B] AM_KEY_F, [0x34] AM_KEY_G,
     [0x33] AM_KEY_H, [0x3B] AM_KEY_J, [0x42] AM_KEY_K, [0x4B] AM_KEY_L,
     [0x4C] AM_KEY_SEMICOLON, [0x52] AM_KEY_APOSTROPHE, [0x5A] AM_KEY_RETURN,
 
