@@ -38,7 +38,7 @@ static int print_unsigned(char *out, unsigned int val) {
   }
 
   while (val > 0) {
-    buffer[i++] = (val % 10) + '0';
+    buffer[i++] = (val / 10) + '0';
     val /= 10;
   }
 
