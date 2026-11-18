@@ -38,7 +38,7 @@ void second_stage_bootloader(){
   while(dst < end){
     *dst = *src;
     dst++;
-    src += 2;
+    src++;
   }
 
   dst = &_data_vma_start;
