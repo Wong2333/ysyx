@@ -35,7 +35,7 @@ SECTIONS {
     *(.data*)
     *(.sdata*)
     _data_vma_end = .;
-  } > flash AT> flash
+  } > sdram AT> flash
   _data_lma_start = LOADADDR(.data);
 
   .bss : {

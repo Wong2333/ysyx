@@ -9,7 +9,7 @@ void first_stage_bootloader() __attribute__((section(".FSBL")));
 
 void first_stage_bootloader(){
   uint32_t *dst = &_SSBL_start;
-  uint32_t *src = &_SSBL_lma_start;
+  uint32_t *src = &_SSBL_lma_start + 1;
   uint32_t *end = &_SSBL_end;
 
   while(dst < end){
