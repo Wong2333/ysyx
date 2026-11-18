@@ -11,7 +11,7 @@ AM_SRCS := riscv/ysyxSoC/start.S \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 
-CFLAGS    += -fdata-sections -ffunction-section
+CFLAGS    += -fdata-sections -ffunction-sections
 CFLAGS    += -I$(AM_HOME)/am/src/riscv/ysyxSoC/include
 LDSCRIPTS += $(AM_HOME)/scripts/ysyxSoC-linker.ld
 
