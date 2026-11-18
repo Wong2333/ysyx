@@ -19,9 +19,8 @@ SECTIONS {
     _SSBL_start = .;
     *(.SSBL)
     _SSBL_end = .;
-    _SSBL_lma_start = LOADADDR(.SSBL);
   } > sdram AT> flash
-
+  _SSBL_lma_start = LOADADDR(.SSBL);
 
   .text : {
     _text_vma_start = .;
@@ -49,6 +48,6 @@ SECTIONS {
   . = ALIGN(8);
   _heap_start = .;
 
-  _stack_pointer = ORIGIN(sdram);
+  _stack_pointer = ORIGIN(sdram) + LENGTH(sdram);
 
 }
