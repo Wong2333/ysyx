@@ -18,8 +18,8 @@ INC_PATH += $(CURDIR)/$(BUILD_DIR)/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
 INCFLAGS = $(addprefix -I,$(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\"" #-g -fsanitize=address
-LDFLAGS += -lreadline -ldl #-g -fsanitize=address
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\"" -g -fsanitize=address
+LDFLAGS += -lreadline -ldl -g -fsanitize=address
 
 # kconfig
 -include include/config/auto.conf
