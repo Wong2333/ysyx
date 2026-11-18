@@ -77,7 +77,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     switch (*fmt) {
       case 's': {
         const char *s = va_arg(ap, const char *); // 使用 ap
-        while (*s) *p++ = *s;
+        while (*s) *p++ = *s++;
         break;
       }
       case 'd': {
