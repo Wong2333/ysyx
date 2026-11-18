@@ -2,7 +2,7 @@
 #define NPC_H__
 
 
-#define UART_BASE 0x10000000 
+#define UART_BASE 0x10001000 
 
 #define UART_REG_TR  0x0 
 #define UART_REG_XR  0x0
