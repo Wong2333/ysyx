@@ -19,7 +19,7 @@ SECTIONS {
     _SSBL_start = .;
     *(.SSBL)
     _SSBL_end = .;
-  } > sdram AT> flash
+  } > sdram AT> sdram
   _SSBL_lma_start = LOADADDR(.SSBL);
 
   .text : {
