@@ -11,7 +11,7 @@ void uart_init() {
   outb(UART_BASE + UART_REG_DL2, 0x00);
 
   // 8位数据并关闭 DLAB
-  outb(UART_BASE + UART_REG_LC, 0x03);
+  outb(UART_BASE + UART_REG_LC, 0x00);
 }
 
 void __am_uart_rx(AM_UART_RX_T *uart_rx){
