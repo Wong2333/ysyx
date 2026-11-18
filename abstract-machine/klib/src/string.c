@@ -46,7 +46,7 @@ int strcmp(const char *p1, const char *p2) {
             return c1 - c2;
     } while (c1 == c2); 
 
-    return c1 - c2;
+    return c2 - c1;
 }
 
 
