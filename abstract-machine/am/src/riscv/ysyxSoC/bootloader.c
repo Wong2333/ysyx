@@ -13,7 +13,7 @@ void first_stage_bootloader(){
   uint32_t *end = &_SSBL_end;
 
   while(dst < end){
-    *src = *dst;
+    *dst = *src;
     dst++;
     src++; 
   }
@@ -34,7 +34,7 @@ void second_stage_bootloader(){
   uint32_t *dst = &_text_vma_start;
   uint32_t *src = &_text_lma_start;
   uint32_t *end = &_text_vma_end;
-  // for(int start = _bootloader_start )
+
   while(dst < end){
     *dst = *src;
     dst++;
@@ -44,7 +44,7 @@ void second_stage_bootloader(){
   dst = &_data_vma_start;
   src = &_data_lma_start;
   end = &_data_vma_end;
-  // for(int start = _bootloader_start )
+
   while(dst < end){
     *dst = *src;
     dst++;
