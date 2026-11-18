@@ -76,7 +76,7 @@ int scancode_to_am_key(uint8_t scancode, int is_extended) {
 
 void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
   uint8_t code = inb(KEYBOARD);
-  if(code == 0xf0){
+  if(code == 0xf1){
     kbd->keydown = 0;
     while(!(code = inb(KEYBOARD)));
     kbd->keycode = scancode_to_am_key(code, 0);
