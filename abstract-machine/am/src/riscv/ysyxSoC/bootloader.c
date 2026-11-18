@@ -14,7 +14,7 @@ void first_stage_bootloader(){
 
   while(dst < end){
     *dst = *src;
-    dst++;
+    dst += 2;
     src++; 
   }
 }
