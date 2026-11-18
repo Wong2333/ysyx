@@ -16,6 +16,6 @@ void uart_init() {
 
 void __am_uart_rx(AM_UART_RX_T *uart_rx){
     if((inb(UART_BASE + UART_REG_LS) & UART_LS_DR) == 0){
-        uart_rx->data = 0xff;
+        uart_rx->data = 0x0;
     }else uart_rx->data = inb(UART_BASE + UART_REG_XR);
 }
