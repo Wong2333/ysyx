@@ -49,6 +49,6 @@ SECTIONS {
   . = ALIGN(8);
   _heap_start = .;
 
-  _stack_pointer = ORIGIN(sdram) + LENGTH(sdram);
+  _stack_pointer = ORIGIN(sdram);
 
 }
