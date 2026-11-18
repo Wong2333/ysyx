@@ -16,7 +16,7 @@ static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); /
 void putch(char ch) {
   while ((inb(UART_BASE + UART_REG_LS) & UART_LS_THRE) == 0);
 
-  outb(UART_BASE + 5,ch);
+  outb(UART_BASE,ch);
 }
 
 void halt(int code) {
