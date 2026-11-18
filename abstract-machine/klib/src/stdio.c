@@ -117,7 +117,6 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     if (*fmt) fmt++; 
   }
 
-  *p = '\0'; 
   return p - out; 
 }
 
