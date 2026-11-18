@@ -27,7 +27,7 @@ char *strncpy(char *dst, const char *src, size_t n) {
 
 char *strcat(char *dst, const char *src) {
   char *ret = dst;
-  while (*dst++) ;
+  while (*dst) dst++;
   while ((*dst++ = *src++) != '\0');
   return ret;
 }
