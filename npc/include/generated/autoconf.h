@@ -4,8 +4,6 @@
  * Kconfig Demo
  *
  */
-#define CONFIG_ENABLE_SDB 1
-#define CONFIG_ENABLE_ITRACE 1
 #define CONFIG_TRACE_PATH "./"
 #define CONFIG_ENABLE_DIFFTEST 1
 #define CONFIG__ENABLE_VERILOG 1
