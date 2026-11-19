@@ -120,7 +120,7 @@ class ysyx_26030092_RFS extends Module {
         is("h300".U){
           mstatus := CSRWritePort.CSRWData
         }
-        is("h340".U){
+        is("h341".U){
           mepc := CSRWritePort.CSRWData
         }
         is("h342".U){
