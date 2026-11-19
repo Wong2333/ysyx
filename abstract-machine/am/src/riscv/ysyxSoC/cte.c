@@ -9,7 +9,7 @@ Context* __am_irq_handle(Context *c) {
     Event ev = {0};
     switch (c->mcause) {
       case 11:
-        if(c->GPR1 == -2){
+        if(c->GPR1 == -1){
           ev.event = EVENT_YIELD;
           c->mepc += 4;
         }
