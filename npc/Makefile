@@ -51,7 +51,7 @@ RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
 SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
-$(SRC_AUTO_BIND):
+$(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # SoC
@@ -62,7 +62,7 @@ $(BIN): $(KCONFIG_INCLUDE) $(CORE) $(VSRCS) $(PERF_NAMES_H) $(SOC_CSRCS) $(NVBOA
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
 		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE)\
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
-		--Mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
+		--Mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN).tmp \
 		-Iresources/include
 
 sim: bin
