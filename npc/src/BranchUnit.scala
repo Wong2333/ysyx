@@ -31,7 +31,7 @@ class ysyx_26030092_BranchUnit extends Module{
         BranchOp.bne  -> (rs1 =/= rs2),
         BranchOp.blt  -> (rs1.asSInt <  rs2.asSInt),
         BranchOp.bge  -> (rs1.asSInt >= rs2.asSInt),
-        BranchOp.bltu -> (rs1.asSInt <  rs2.asSInt),
+        BranchOp.bltu -> (rs1 <  rs2),
         BranchOp.bgeu -> (rs1 >= rs2)))
 
     val is_branch = branch_op =/= BranchOp.none
