@@ -98,7 +98,7 @@ class ysyx_26030092_RFS extends Module {
       is("h300".U){
         RFS_ReadPort.CSRReadPort.CSRRData := mstatus
       }
-      is("h341".U){
+      is("h340".U){
         RFS_ReadPort.CSRReadPort.CSRRData := mepc
       }
       is("h342".U){

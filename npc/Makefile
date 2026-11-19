@@ -51,7 +51,7 @@ RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
 SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
+$(SRC_AUTO_BIND):
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # SoC
