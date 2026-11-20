@@ -1,6 +1,6 @@
 # ysyxSoC 补丁（按文件拆分）
 
-基准：**固定在 `BASE`**（`df38a4d9`，origin/ysyx6 的前一版；上游后来前进了，补丁仍按这个基准验证），
+基准：**固定在 `BASE`**（当前的 `origin/ysyx6`，即 `bcdcbc3e`，已 rebase 到上游最新），
 只包含本人（wangjingmin）的修改，**每个被修改的文件一个 patch**。
 
 > 一键拉取 + 打补丁：`./patch/setup.sh`（会先把仓库 checkout 到 `BASE` 再逐个 apply）。
@@ -15,8 +15,9 @@
 | 文件 | 说明 |
 |---|---|
 | 01-gitignore.patch | 忽略构建产物 |
-| 02-bitrev.patch ~ 09-sdram_top_axi.patch | perip 下的 bitrev / psram / sdram Verilog 修改 |
-| 10-APBDelayer.patch、11-AXI4Delayer.patch | 两个 APB/AXI 延时模块 |
-| 12-CPU.patch | CPU 黑盒声明 |
-| 13-GPIO.patch ~ 17-VGA.patch | GPIO / Keyboard / SDRAM 模型 / SPI(XIP) / VGA |
-| 18-SoC.patch、19-Top.patch | SoC 顶层连线与平台配置 |
+| 02-Makefile.patch | `dev-init` 去掉 rocket-chip 补丁那一行（保留上游的 `--depth 1`） |
+| 03-bitrev.patch ~ 10-sdram_top_axi.patch | perip 下的 bitrev / psram / sdram Verilog 修改 |
+| 11-APBDelayer.patch、12-AXI4Delayer.patch | 两个 APB/AXI 延时模块 |
+| 13-CPU.patch | CPU 黑盒声明 |
+| 14-GPIO.patch ~ 18-VGA.patch | GPIO / Keyboard / SDRAM 模型 / SPI(XIP) / VGA |
+| 19-SoC.patch、20-Top.patch | SoC 顶层连线与平台配置 |

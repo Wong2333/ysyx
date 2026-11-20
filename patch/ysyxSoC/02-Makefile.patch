@@ -1,11 +1,11 @@
 diff --git a/Makefile b/Makefile
-index c30262ea..6f268be9 100644
+index 70af8d70..8e505de2 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -23,6 +23,5 @@ clean:
  
  dev-init:
- 	git submodule update --init --recursive
+ 	git submodule update --init --recursive --depth 1
 -	cd rocket-chip && git apply ../patch/rocket-chip.patch
  
  .PHONY: verilog clean dev-init
