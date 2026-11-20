@@ -1,6 +1,9 @@
 # ysyxSoC 补丁（按文件拆分）
 
-基准：`origin/ysyx6`，只包含本人（wangjingmin）的修改，**每个被修改的文件一个 patch**。
+基准：**固定在 `BASE`**（`df38a4d9`，origin/ysyx6 的前一版；上游后来前进了，补丁仍按这个基准验证），
+只包含本人（wangjingmin）的修改，**每个被修改的文件一个 patch**。
+
+> 一键拉取 + 打补丁：`./patch/setup.sh`（会先把仓库 checkout 到 `BASE` 再逐个 apply）。
 
 - 应用：在 ysyxSoC 仓库根目录执行
   ```bash

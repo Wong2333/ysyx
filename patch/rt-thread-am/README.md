@@ -1,6 +1,8 @@
 # rt-thread-am 补丁（按文件拆分）
 
-基准：`origin/master`，只包含本人的修改，**每个被修改的文件一个 patch**。
+基准：**固定在 `BASE`**（`72ba231b`，origin/master），只包含本人的修改，**每个被修改的文件一个 patch**。
+
+> 一键拉取 + 打补丁：`./patch/setup.sh`（会先把仓库 checkout 到 `BASE` 再逐个 apply）。
 
 - 应用：在 rt-thread-am 仓库根目录执行
   ```bash
