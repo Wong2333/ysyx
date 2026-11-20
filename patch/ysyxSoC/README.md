@@ -6,8 +6,6 @@
   ```bash
   for p in /path/to/ysyx-workbench/patch/ysyxSoC/*.patch; do git apply "$p"; done
   ```
-- `rocket-chip.patch` 在 `ysyxSoC/` 下（对应 `dev-init` 里的子模块补丁），生成方式：
-  `git -C rocket-chip diff > patch/rocket-chip.patch`
 - 未包含：`patch/firtool/` 下的 firtool 二进制（由 `make verilog` 里的
   `patch/update-firtool.sh` 自动下载/打补丁）。
 
