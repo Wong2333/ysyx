@@ -46,7 +46,7 @@ apply() {
 
 # ---------------- ysyxSoC ----------------
 if clone "$SOC_REPO" "$SOC_BRANCH" "$SOC_DIR" ysyxSoC; then
-    git -C "$SOC_DIR" checkout --detach "$(cat "$PATCH_DIR/ysyxSoC/BASE")"
+    git -C "$SOC_DIR" checkout -B "$SOC_BRANCH" "$(cat "$PATCH_DIR/ysyxSoC/BASE")"
     log "make dev-init（拉 rocket-chip 子模块，比较慢）"
     ( cd "$SOC_DIR" && make dev-init )
     apply ysyxSoC "$SOC_DIR"
@@ -54,7 +54,7 @@ fi
 
 # ---------------- rt-thread-am ----------------
 if clone "$RTT_REPO" "$RTT_BRANCH" "$RTT_DIR" rt-thread-am; then
-    git -C "$RTT_DIR" checkout --detach "$(cat "$PATCH_DIR/rt-thread-am/BASE")"
+    git -C "$RTT_DIR" checkout -B "$RTT_BRANCH" "$(cat "$PATCH_DIR/rt-thread-am/BASE")"
     apply rt-thread-am "$RTT_DIR"
 fi
 
