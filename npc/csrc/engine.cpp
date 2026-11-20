@@ -3,6 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <time.h>
+#include <csignal>
 #include <cassert>
 #include <nvboard.h>
 #include <VysyxSoCFull.h>
@@ -15,6 +16,9 @@
 #include <sdb.h>
 #include <trace.h>
 #include <difftest.h>
+#include <utils.h>
+
+static void check_stop();
 
 static TOP_NAME top;
 #ifdef CONFIG_ENABLE_FST_TRACE
@@ -34,7 +38,7 @@ ENGINE_STATE_TYPE STATE = STOP;
 extern uint32_t *mem;
 extern uint32_t img_size;
 
-uint32_t read_pc_reg();
+uint32_t read_fetch_pc();
 // uint32_t cycle = 0;
 uint64_t dump_time = 0;
 
@@ -53,8 +57,8 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     nvboard_update();
-
     cycle++;
+    check_stop();
 }
 
 
@@ -99,16 +103,13 @@ void init_cpu(){
     eval();
 
     for(int i = 0; i < 15; i++) {
-        // 时钟上升沿
         top.clock = 1;
         eval();
-        // 时钟下降沿
         top.clock = 0;
         eval();
 
     }
     top.reset = 0;
-    // top.eval(); // 立即更新组合逻辑状态
 }
 
 
@@ -117,8 +118,19 @@ void init_nvboard(){
     nvboard_init();
 }
 
+static volatile sig_atomic_t g_stop = 0;
+static void on_signal(int) { g_stop = 1; }
+static void check_stop() {
+    if (g_stop) {
+        close_tfp();
+        fprintf(stderr, "\n[Ctrl-C] 退出\n");
+        exit(0);
+    }
+}
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
+    signal(SIGINT, on_signal);
+    signal(SIGTERM, on_signal);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;
@@ -156,6 +168,10 @@ void init_engine(int argc, char **argv) {
                 exit(1);
         }
     }
+    if (img_file == NULL) {
+        fprintf(stderr, "错误: 未指定镜像文件，请用 -i <image.bin> 指定\n");
+        exit(1);
+    }
 
     init_nvboard();
 #ifdef CONFIG_ENABLE_SDB
@@ -163,11 +179,12 @@ void init_engine(int argc, char **argv) {
         init_sdb();
     }
 #endif
+    printf("init memory\n");
     if (img_file)
         init_mem(img_file);
     else
         init_mem(NULL);
-    init_cpu();
+
 #ifdef CONFIG_ENABLE_FST_TRACE
     // initialize FST waveform dump
     Verilated::traceEverOn(true);
@@ -175,6 +192,8 @@ void init_engine(int argc, char **argv) {
     top.trace(tfp, 99);  // trace 99 levels of hierarchy
     tfp->open("waveform.fst");
 #endif
+    printf("init cpu\n");
+    init_cpu();
     init_trace(trace_dir, elf_file ? elf_file : img_file);
 #ifdef CONFIG_ENABLE_DIFFTEST
     {

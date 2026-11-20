@@ -4,6 +4,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <time.h>
+#include <csignal>
 #include <cassert>
 #include <VysyxSoCFull.h>
 #include <autoconf.h>
@@ -15,6 +16,9 @@
 #include <sdb.h>
 #include <trace.h>
 #include <difftest.h>
+#include <utils.h>
+
+static void check_stop();
 
 static TOP_NAME top;
 
@@ -25,7 +29,7 @@ VerilatedFstC *tfp = NULL;
 struct timespec start, end;
 bool check_wp();
 void load_img(const char *path);
-uint32_t read_pc_reg();
+uint32_t read_fetch_pc();
 extern uint32_t img_size;
 
 uint64_t cycle = 0;
@@ -47,6 +51,7 @@ static void single_cycle() {
     top.clock = ~top.clock;
     eval();
     cycle++;
+    check_stop();
 }
 
 void cpu_exec(int n) {
@@ -95,8 +100,19 @@ void init_cpu() {
     top.reset = 0;
 }
 
+static volatile sig_atomic_t g_stop = 0;
+static void on_signal(int) { g_stop = 1; }
+static void check_stop() {
+    if (g_stop) {
+        close_tfp();
+        fprintf(stderr, "\n[Ctrl-C] 退出\n");
+        exit(0);
+    }
+}
 void init_engine(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
+    signal(SIGINT, on_signal);
+    signal(SIGTERM, on_signal);
     const char *img_file = NULL;
     const char *diff_so_file = NULL;
     const char *elf_file = NULL;
@@ -140,6 +156,11 @@ void init_engine(int argc, char **argv) {
         init_sdb();
     }
 #endif
+    if (img_file == NULL) {
+        fprintf(stderr, "错误: 未指定镜像文件，请用 -i <image.bin> 指定\n");
+        exit(1);
+    }
+
     if (img_file) {
         init_mem(img_file);
     } else {

@@ -7,6 +7,7 @@ import npc.BPU.BPUTrainBundle
 class ysyx_26030092_BranchUnit extends Module{
     val flush      = IO(Output(Bool()))
     val redirectPC = IO(Output(UInt(32.W)))
+    val dnpc       = IO(Output(UInt(32.W)))
     val bpu_train  = IO(Output(new BPUTrainBundle))
 
     val pc        = IO(Input(UInt(32.W)))
@@ -60,4 +61,7 @@ class ysyx_26030092_BranchUnit extends Module{
 
     flush      := (valid && !pc_hit) || lsu_trap
     redirectPC := Mux(lsu_trap, mtvec, shadow_pc.io.pc)
+
+    val is_redirect = taken || is_mret || is_excp || lsu_trap
+    dnpc := Mux(is_redirect, next_pc, pc + 4.U)
 }

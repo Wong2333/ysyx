@@ -42,3 +42,4 @@ include/config/
 tools/kconfig/build/
 !tools/kconfig/*.l
 !tools/kconfig/*.y
+!tools/*.patch

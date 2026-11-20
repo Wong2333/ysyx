@@ -13,14 +13,13 @@ PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/include
-INC_PATH += $(NPC_HOME)/include/generated
-INC_PATH += $(CURDIR)/$(BUILD_DIR)
+INC_PATH += $(NPC_HOME)/include/generated/
+INC_PATH += $(CURDIR)/$(BUILD_DIR)/
 KCONFIG_INCLUDE = include/generated/autoconf.h
 
-# nvboard.mk 会往 INC_PATH 追加头文件目录，所以这里统一加 -I
 INCFLAGS = $(addprefix -I,$(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-LDFLAGS += -lreadline -ldl
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\"" #-g -fsanitize=address
+LDFLAGS += -lreadline -ldl #-g -fsanitize=address
 
 # kconfig
 -include include/config/auto.conf
@@ -34,7 +33,7 @@ VERILATOR = verilator
 VERILATOR_CFLAGS += --build -cc -O3 --noassert \
 				--timescale "1ns/1ns" --no-timing --autoflush
 
-VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/uart16550/rtl -I$(YSYX_SoC_HOME)/perip/spi/rtl
+VERILATOR_CFLAGS += -I$(YSYX_SoC_HOME)/perip/spi/rtl -I$(YSYX_SoC_HOME)/perip/uart16550/rtl
 
 ifeq ($(CONFIG_ENABLE_FST_TRACE),y)
 VERILATOR_CFLAGS += --trace-fst
@@ -50,7 +49,6 @@ CHISEL_SRC = $(shell find $(CURDIR)/src -name "*.scala")
 RESOURCES = $(shell find $(CURDIR)/resources -name "*.v")
 
 include $(NVBOARD_HOME)/scripts/nvboard.mk
-
 SRC_AUTO_BIND = $(CURDIR)/$(BUILD_DIR)/auto_bind.cpp
 SOC_CSRCS = $(CSRCS) $(SRC_AUTO_BIND)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
@@ -59,17 +57,17 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 # SoC
 bin: $(BIN)
 
-$(BIN): $(KCONFIG_INCLUDE) $(CORE) $(PERF_NAMES_H) $(SOC_CSRCS) $(VSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(KCONFIG_INCLUDE) $(CORE) $(VSRCS) $(PERF_NAMES_H) $(SOC_CSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) $(VSRCS) \
-		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE) \
+		--top-module $(TOPNAME) $(CORE) $(SOC_CSRCS) $(NVBOARD_ARCHIVE)\
 		-CFLAGS "$(CXXFLAGS)" -LDFLAGS "$(LDFLAGS)" \
-		--Mdir $(OBJ_DIR) --exe -o $(CURDIR)/$(BIN) \
+		--Mdir $(OBJ_DIR) --exe -o  $(CURDIR)/$(BIN) \
 		-Iresources/include
 
 sim: bin
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	$(BUILD_DIR)/$(TOPNAME) $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
+	$(BUILD_DIR)/ysyxSoCFull $(if $(IMG),-i $(IMG)) $(if $(DIFF_REF),-d $(DIFF_REF)) $(if $(ELF),-e $(ELF))
 
 # NPC
 NPC_OBJ_DIR = $(BUILD_DIR)/obj_dir_npc

@@ -73,60 +73,33 @@ extern "C" void psram_write(int32_t addr,char data){
     psram_8bits[uaddr] = data;
 }
 
-uint16_t sdram_l [32*1024*1024/2];
-uint16_t sdram_h [32*1024*1024/2];
+// 位扩展后的 SDRAM 颗粒模型：总共 128MB（两片 × 64MB），用一块扁平数组表示
+// 下标 = (片选 << 24) | 24 位字地址；mask 是 DQM（低有效）：bit=1 表示该字节不写
+#define SDRAM_WORDS (32u * 1024u * 1024u)   // 32M words = 128MB
+static uint32_t sdram_mem[SDRAM_WORDS];
 
-uint16_t sdram_l_high_addr [32*1024*1024/2];
-uint16_t sdram_h_high_addr [32*1024*1024/2];
-extern "C" void sdram_read(char high_sdram, char high, int32_t addr, int16_t* data){
-    //printf("addr: %x\n",addr);
-    //printf("dsram:%x\n",addr);
-    if(high_sdram == 0){
-        if(high) *data = sdram_h[addr];
-        else *data = sdram_l[addr];
-    }else{
-        if(high) *data = sdram_h_high_addr[addr];
-        else *data = sdram_l_high_addr[addr];
-        //printf("read %x from %x\n",*data, addr);
-    }
-
+static inline uint32_t sdram_index(char high_sdram, int32_t addr) {
+    return (((uint32_t)high_sdram & 1u) << 24) | ((uint32_t)addr & 0xFFFFFFu);
 }
 
-extern "C" void sdram_write(char high_sdram, char high, int32_t addr, int16_t wdata, char mask) {
-    uint16_t current_data;
-    if(high_sdram){
-        current_data = high? sdram_h_high_addr[addr] : sdram_l_high_addr[addr];
-    }else{
-        current_data = high? sdram_h[addr] : sdram_l[addr];
-    }
-    uint16_t new_data = current_data;
-    //printf("write: addr: %x, data: %x, mask: %x\n",addr,wdata,mask);
+extern "C" void sdram_read(char high_sdram, int32_t addr, int32_t *data) {
+    *data = (int32_t)sdram_mem[sdram_index(high_sdram, addr)];
+}
 
-    uint8_t low_enable = !(mask & 0x1);
-    uint8_t high_enable = !(mask & 0x2);
-    if (low_enable) {
-        new_data = (new_data & 0xFF00) | (wdata & 0x00FF);
+extern "C" void sdram_write(char high_sdram, int32_t addr, int32_t wdata, char mask) {
+    uint32_t *word = &sdram_mem[sdram_index(high_sdram, addr)];
+    uint32_t cur = *word;
+    for (int i = 0; i < 4; i++) {
+        if (!(mask & (1 << i))) {                 // DQM 低有效：0 才写
+            uint32_t m = 0xFFu << (8 * i);
+            cur = (cur & ~m) | ((((uint32_t)wdata >> (8 * i)) & 0xFFu) << (8 * i));
+        }
     }
-
-    if (high_enable) {
-        new_data = (new_data & 0x00FF) | (wdata & 0xFF00);
-    }
-    // printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
-
-    if(high_sdram){
-        //printf("write %x to %x ,high: %x, mask: %x\n",new_data,addr,high,mask);
-        if(high) sdram_h_high_addr[addr] = new_data;
-        else sdram_l_high_addr[addr] = new_data;
-    }else{
-        if(high) sdram_h[addr] = new_data;
-        else sdram_l[addr] = new_data;
-    }
+    *word = cur;
 }
 
 
-/* 总的内存访问函数，供 SDB 调用。
- * 根据地址范围路由到对应的存储数组，和 CPU 通过 APB 外设看到的数据一致。
- */
+// 供 SDB 调用
 uint32_t mem_read(uint32_t addr) {
     if (addr >= 0x20000000 && addr < 0x20001000)         // MROM
         return mrom[(addr - 0x20000000) >> 2];
@@ -140,12 +113,9 @@ uint32_t mem_read(uint32_t addr) {
     }
     else if (addr >= 0x80000000 && addr < 0x80400000)    // PSRAM
         return psram[(addr - 0x80000000) >> 2];
-    else if(addr >= 0xa0000000 && addr < 0xa2000000){    // SDRAM
-        // printf("mem_read addr: %x\n",addr);
-        // printf("read data: %x\n",((uint32_t)sdram_h[addr - 0xa0000000] << 16 | sdram_l[addr - 0xa0000000]));
-        return ((uint32_t)sdram_h[(addr - 0xa0000000)>>2] << 16 | sdram_l[(addr - 0xa0000000)>>2]);
-    }else if(addr >= 0xa2000000 && addr < 0xa4000000){
-        return ((uint32_t)sdram_h_high_addr[((addr >> 2) & 0xffffff)] << 16 | sdram_l_high_addr[((addr >> 2) & 0xffffff)]);
+    else if(addr >= 0xa0000000 && addr < 0xa4000000) {  // SDRAM：bit25 选片，低 24 位是字地址
+        uint32_t off = addr - 0xa0000000;
+        return sdram_mem[(((off >> 25) & 1u) << 24) | ((off >> 2) & 0xFFFFFFu)];
     }
     return 0;
 }
@@ -253,7 +223,6 @@ MemAccessInfo get_mem_access_info(uint32_t instr) {
                 break;
         }
     }
-    /* 其它 opcode: info.type 保持为 0, 表示非内存访问指令 */
 
     return info;
 }

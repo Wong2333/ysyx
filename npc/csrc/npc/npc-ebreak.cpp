@@ -6,6 +6,8 @@
 #include "VysyxSoCFull.h"
 #include <utils.h>
 
+uint32_t cur_pc();
+
 uint32_t read_rf_reg(int addr) {
     const char* scope_name = "TOP.ysyxSoCFull.cpu.RFS_u.Reg_u"; 
     
@@ -21,7 +23,7 @@ uint32_t read_rf_reg(int addr) {
     return (uint32_t)data;
 }
 
-uint32_t read_pc_reg() {
+uint32_t read_fetch_pc() {
     const char* scope_name = "TOP.ysyxSoCFull.cpu.IFU_u.PC_reg";
     svScope scope = svGetScopeFromName(scope_name);
 
@@ -46,7 +48,7 @@ const char *regs[] = {
 uint32_t isa_reg_str2val(const char *s, bool *success) {
   if(strcmp("pc",s)==0){
     *success=true;
-    return read_pc_reg();
+    return cur_pc();
   }
   for(int i = 0;i < 32;i++){
     if(strcmp(regs[i],s)==0){
@@ -61,7 +63,7 @@ void isa_reg_display(){
     for(int i = 0;i<32;i++){
         printf("%3s  %x\n",regs[i],read_rf_reg(i));
     }
-    printf("pc   %x\n",read_pc_reg());
+    printf("pc   %x\n",cur_pc());
 }
 extern uint64_t cycle;
 extern u_int64_t inst_counter;

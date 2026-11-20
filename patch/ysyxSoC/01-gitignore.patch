@@ -1,0 +1,10 @@
+diff --git a/.gitignore b/.gitignore
+index 3c0160d0..0321b0c0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,4 @@
+ build/
+ out/
++.vscode
++.metals
+\ No newline at end of file

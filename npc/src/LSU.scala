@@ -43,8 +43,10 @@ class ysyx_26030092_LSU extends Module{
     val excp_store_misalign = 6.U(3.W)
     val excp_store_fault    = 7.U(3.W)
 
-    val s_idle :: s_ar :: s_data :: s_aw :: s_w :: s_b :: s_rep :: Nil = Enum(7)
+    val s_idle :: s_ar :: s_data :: s_aw :: s_b :: s_rep :: Nil = Enum(6)
     val state = RegInit(s_idle)
+    val aw_done = RegInit(false.B)
+    val w_done  = RegInit(false.B)
 
     val addr     = Reg(UInt(32.W))
     val wdata    = Reg(UInt(32.W))
@@ -102,10 +104,10 @@ class ysyx_26030092_LSU extends Module{
     AXI4_port.araddr  := addr
     AXI4_port.arsize  := axi_size(size)
     AXI4_port.rready  := state === s_data
-    AXI4_port.awvalid := state === s_aw
+    AXI4_port.awvalid := state === s_aw && !aw_done
     AXI4_port.awaddr  := addr
     AXI4_port.awsize  := axi_size(size)
-    AXI4_port.wvalid  := state === s_w
+    AXI4_port.wvalid  := state === s_aw && !w_done
     AXI4_port.wdata   := store_shift
     AXI4_port.wstrb   := store_strb
     AXI4_port.wlast   := true.B
@@ -113,6 +115,8 @@ class ysyx_26030092_LSU extends Module{
 
     switch(state){
         is(s_idle){
+            aw_done := false.B
+            w_done  := false.B
             when(in.fire){
                 when(req_misalign)   { state := s_rep }
                 .elsewhen(req_store) { state := s_aw  }
@@ -121,8 +125,11 @@ class ysyx_26030092_LSU extends Module{
         }
         is(s_ar)   { when(AXI4_port.arready){ state := s_data } }
         is(s_data) { when(AXI4_port.rvalid) { state := s_idle } }
-        is(s_aw)   { when(AXI4_port.awready){ state := s_w    } }
-        is(s_w)    { when(AXI4_port.wready) { state := s_b    } }
+        is(s_aw)   {
+            when(AXI4_port.awvalid && AXI4_port.awready){ aw_done := true.B }
+            when(AXI4_port.wvalid  && AXI4_port.wready ){ w_done  := true.B }
+            when((aw_done || AXI4_port.awready) && (w_done || AXI4_port.wready)){ state := s_b }
+        }
         is(s_b)    { when(AXI4_port.bvalid) { state := s_idle } }
         is(s_rep)  { state := s_idle }
     }

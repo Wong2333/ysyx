@@ -1,0 +1,72 @@
+diff --git a/perip/psram/efabless/EF_PSRAM_CTRL_wb.v b/perip/psram/efabless/EF_PSRAM_CTRL_wb.v
+index 7b5296db..7d2d6a6c 100644
+--- a/perip/psram/efabless/EF_PSRAM_CTRL_wb.v
++++ b/perip/psram/efabless/EF_PSRAM_CTRL_wb.v
+@@ -39,8 +39,9 @@ module EF_PSRAM_CTRL_wb (
+     output  wire [3:0]      douten
+ );
+ 
+-    localparam  ST_IDLE = 1'b0,
+-                ST_WAIT = 1'b1;
++    localparam  ST_IDLE = 2'b0,
++                ST_WAIT = 2'b1,
++                ST_INIT = 2'b10;
+ 
+     wire        mr_sck;
+     wire        mr_ce_n;
+@@ -69,10 +70,27 @@ module EF_PSRAM_CTRL_wb (
+     //wire[3:0]   wb_byte_sel     =   sel_i & {4{wb_we}};
+ 
+     // The FSM
+-    reg         state, nstate;
++    reg         [1:0]state, nstate;
++
++
++    wire init_done, init_ce_n, init_sck;
++    wire [3:0]init_din, init_dout;
++    wire init_doe;
++
++    PSRAM_QPI_INIT QPI_INIT (
++        .clk(clk_i),
++        .rst_n(~rst_i),
++        .done(init_done),
++        .sck(init_sck),
++        .ce_n(init_ce_n),
++        .din(init_din),
++        .dout(init_dout),
++        .douten(init_doe)
++    );
++
+     always @ (posedge clk_i or posedge rst_i)
+         if(rst_i)
+-            state <= ST_IDLE;
++            state <= ST_INIT;
+         else
+             state <= nstate;
+ 
+@@ -89,6 +107,10 @@ module EF_PSRAM_CTRL_wb (
+                     nstate = ST_IDLE;
+                 else
+                     nstate = ST_WAIT;
++            ST_INIT : 
++                if(init_done) nstate = ST_IDLE;
++                else nstate = ST_INIT;
++            default :;
+         endcase
+     end
+ 
+@@ -161,10 +183,10 @@ module EF_PSRAM_CTRL_wb (
+         .douten(mw_doe)
+     );
+ 
+-    assign sck  = wb_we ? mw_sck  : mr_sck;
+-    assign ce_n = wb_we ? mw_ce_n : mr_ce_n;
+-    assign dout = wb_we ? mw_dout : mr_dout;
+-    assign douten  = wb_we ? {4{mw_doe}}  : {4{mr_doe}};
++    assign sck  = !init_done? init_sck : wb_we ? mw_sck  : mr_sck;
++    assign ce_n = !init_done? init_ce_n : wb_we ? mw_ce_n : mr_ce_n;
++    assign dout = !init_done? init_dout : wb_we ? mw_dout : mr_dout;
++    assign douten  = !init_done? {4{init_doe}} : wb_we ? {4{mw_doe}}  : {4{mr_doe}};
+ 
+     assign mw_din = din;
+     assign mr_din = din;

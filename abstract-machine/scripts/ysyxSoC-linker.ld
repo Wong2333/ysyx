@@ -2,12 +2,10 @@ ENTRY(_start)
 
 MEMORY {
   flash : ORIGIN = 0x30000000, LENGTH = 16M
-  psram : ORIGIN = 0x80000000, LENGTH = 4M
   sdram : ORIGIN = 0xa0000000, LENGTH = 64M
 }
 
 SECTIONS {
-  /* _pmem_start and _entry_offset are defined in LDFLAGS */
   . = ORIGIN(flash);
   .text_start : {
     *(entry)
@@ -21,9 +19,8 @@ SECTIONS {
     _SSBL_start = .;
     *(.SSBL)
     _SSBL_end = .;
-    _SSBL_lma_start = LOADADDR(.SSBL);
   } > sdram AT> flash
-
+  _SSBL_lma_start = LOADADDR(.SSBL);
 
   .text : {
     _text_vma_start = .;

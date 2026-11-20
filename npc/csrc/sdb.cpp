@@ -182,6 +182,7 @@ void sdb_mainloop() {
   sdb_set_batch_mode();
 #endif
   if (is_batch_mode) {
+    printf("start batch mode\n");
     cmd_c(NULL);
     return;
   }
@@ -224,9 +225,13 @@ static uint32_t last_commit_pc = 0;
 // commit 附带的访存信息（供 difftest 判断是否跳过 NEMU）
 int commit_mem_valid = 0;
 uint32_t commit_mem_addr = 0;
+uint32_t commit_inst = 0;
+uint32_t commit_dnpc = 0;
 
-extern "C" void commit(int pc, int mem_commit, int mem_addr){
+extern "C" void commit(int pc, int inst, int dnpc, int mem_commit, int mem_addr){
   commit_pc = pc;
+  commit_inst = (uint32_t)inst;
+  commit_dnpc = (uint32_t)dnpc;
   last_commit_pc = pc;
   ever_committed = true;
   has_commit = true;
@@ -242,7 +247,7 @@ bool check_commit(){
     stuck_cycle = 0;
     has_commit = false;
     check_difftest(commit_pc);
-    trace_record(commit_pc,mem_read(commit_pc),read_pc_reg());
+    trace_record(commit_pc,commit_inst,commit_dnpc);
     inst_counter ++;
     return true;
   }
@@ -253,8 +258,7 @@ bool check_commit(){
   return false;
 }
 
-void printInst(uint32_t pc){
-    uint32_t inst = mem_read(pc);
+void printInstRaw(uint32_t pc, uint32_t inst){
     uint8_t code[4] = {
         (uint8_t)(inst >> 0),
         (uint8_t)(inst >> 8),
@@ -266,13 +270,21 @@ void printInst(uint32_t pc){
     printf("0x%08x: 0x%08x\t%s\n", pc, inst, buf);
 }
 
+void printInst(uint32_t pc){
+    printInstRaw(pc, mem_read(pc));
+}
+
+uint32_t cur_pc(){
+  return ever_committed ? commit_dnpc : read_fetch_pc();
+}
+
 void printNextInst(){
   if (ever_committed) {
     printf("commit:     ");
-    printInst(last_commit_pc);
+    printInstRaw(last_commit_pc, commit_inst);
   }
-  printf("next fetch: ");
-  printInst(read_pc_reg());
+  printf("next:       ");
+  printInst(ever_committed ? commit_dnpc : read_fetch_pc());
 }
 
 void init_sdb() {
