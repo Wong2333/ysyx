@@ -15,9 +15,8 @@
 | 文件 | 说明 |
 |---|---|
 | 01-gitignore.patch | 忽略构建产物 |
-| 02-Makefile.patch | `dev-init` 去掉 rocket-chip 补丁那一行（保留上游的 `--depth 1`） |
-| 03-bitrev.patch ~ 10-sdram_top_axi.patch | perip 下的 bitrev / psram / sdram Verilog 修改 |
-| 11-APBDelayer.patch、12-AXI4Delayer.patch | 两个 APB/AXI 延时模块 |
-| 13-CPU.patch | CPU 黑盒声明 |
-| 14-GPIO.patch ~ 18-VGA.patch | GPIO / Keyboard / SDRAM 模型 / SPI(XIP) / VGA |
-| 19-SoC.patch、20-Top.patch | SoC 顶层连线与平台配置 |
+| 02-bitrev.patch ~ 09-sdram_top_axi.patch | perip 下的 bitrev / psram / sdram Verilog 修改 |
+| 10-APBDelayer.patch、11-AXI4Delayer.patch | 两个 APB/AXI 延时模块 |
+| 12-CPU.patch | CPU 黑盒声明 |
+| 13-GPIO.patch ~ 17-VGA.patch | GPIO / Keyboard / SDRAM 模型 / SPI(XIP) / VGA |
+| 18-SoC.patch、19-Top.patch | SoC 顶层连线与平台配置 |
