@@ -98,7 +98,7 @@ $(CORE): $(CHISEL_SRC) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	rm -rf $(SPLIT_DIR)
 	mkdir -p $(SPLIT_DIR)
-	mill -i runMain Elaborate --target-dir $(SPLIT_DIR)
+	mill -i playground.runMain Elaborate --target-dir $(SPLIT_DIR)
 	cat $(SPLIT_DIR)/*.sv $(RESOURCES) > $@
 
 $(PERF_NAMES_H): $(CORE) scripts/gen_perf_names.py
@@ -167,10 +167,10 @@ lint: $(CORE)
 
 # 常用工具目标
 test:
-	mill -i test
+	mill -i playground.test
 
 help:
-	mill -i runMain Elaborate --help
+	mill -i playground.runMain Elaborate --help
 
 reformat:
 	mill -i __.reformat
