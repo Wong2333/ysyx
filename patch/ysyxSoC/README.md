@@ -1,22 +1,26 @@
-# ysyxSoC 补丁（按文件拆分）
+# ysyxSoC 补丁（`git format-patch`）
 
-基准：**固定在 `BASE`**（当前的 `origin/ysyx6`，即 `bcdcbc3e`，已 rebase 到上游最新），
-只包含本人（wangjingmin）的修改，**每个被修改的文件一个 patch**。
+基准：`origin/ysyx6`（当前 `bcdcbc3e`）。从上游到本地 `HEAD` 的**每个 commit 一个 patch**，
+按 `0001-…` 顺序应用即可复现本地状态。
 
-> 一键拉取 + 打补丁：`./patch/setup.sh`（会先把仓库 checkout 到 `BASE` 再逐个 apply）。
+## 生成
 
-- 应用：在 ysyxSoC 仓库根目录执行
-  ```bash
-  for p in /path/to/ysyx-workbench/patch/ysyxSoC/*.patch; do git apply "$p"; done
-  ```
-- 未包含：`patch/firtool/` 下的 firtool 二进制（由 `make verilog` 里的
-  `patch/update-firtool.sh` 自动下载/打补丁）。
+```bash
+cd ysyxSoC
+git format-patch origin/ysyx6 -o ../patch/ysyxSoC
+```
 
-| 文件 | 说明 |
-|---|---|
-| 01-gitignore.patch | 忽略构建产物 |
-| 02-bitrev.patch ~ 09-sdram_top_axi.patch | perip 下的 bitrev / psram / sdram Verilog 修改 |
-| 10-APBDelayer.patch、11-AXI4Delayer.patch | 两个 APB/AXI 延时模块 |
-| 12-CPU.patch | CPU 黑盒声明 |
-| 13-GPIO.patch ~ 17-VGA.patch | GPIO / Keyboard / SDRAM 模型 / SPI(XIP) / VGA |
-| 18-SoC.patch、19-Top.patch | SoC 顶层连线与平台配置 |
+## 应用
+
+```bash
+# CI / 手动
+cd ysyxSoC
+git am /path/to/ysyx-workbench/patch/ysyxSoC/*.patch
+```
+
+## 说明
+
+- `patch/firtool/` 下的 firtool 二进制（约 36MB）已从分支历史移除并加入 `.gitignore`，
+  改由 `make verilog` 里的 `patch/update-firtool.sh` 自动下载；
+- 当前补丁总大小约 160KB（要求 < 1MB）；
+- 一键拉取 + 打补丁：`./patch/setup.sh`。

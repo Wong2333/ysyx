@@ -1,22 +1,25 @@
-# rt-thread-am 补丁（按文件拆分）
+# rt-thread-am 补丁（`git format-patch`）
 
-基准：**固定在 `BASE`**（`72ba231b`，origin/master），只包含本人的修改，**每个被修改的文件一个 patch**。
+基准：`origin/master`。从上游到本地 `HEAD` 的**每个 commit 一个 patch**。
 
-> 一键拉取 + 打补丁：`./patch/setup.sh`（会先把仓库 checkout 到 `BASE` 再逐个 apply）。
+## 生成
 
-- 应用：在 rt-thread-am 仓库根目录执行
-  ```bash
-  for p in /path/to/ysyx-workbench/patch/rt-thread-am/*.patch; do git apply "$p"; done
-  ```
+```bash
+cd rt-thread-am
+git format-patch origin/master -o ../patch/rt-thread-am
+```
+
+## 应用
+
+```bash
+cd rt-thread-am
+git am /path/to/ysyx-workbench/patch/rt-thread-am/*.patch
+```
 
 ## 内容
 
-- `01-extra.ld.patch`：ysyxSoC 用的原始链接脚本（含 `.data.extra > sdram AT> flash`）
-- `02-extra-npc.ld.patch`：npc 专用链接脚本，去掉 `> sdram AT> flash`，让 `.data.extra`
-  跟着 `.data` 落在 0x80000000 附近（原脚本 nop 平台没有 sdram/flash，段会落到地址 0）
-- `03-Makefile.patch`：按 `$(ARCH)` 在 `extra.ld` / `extra-npc.ld` 之间选择
-- `04-context.c.patch`：`EVENT_YIELD` 上下文切换、`rt_hw_context_switch_to`
-- `05-init.c.patch`：初始化流程微调
-- `06-uart.c.patch`：控制台读入用内置命令脚本，脚本耗尽后走 `AM_UART_RX`
+- npc 平台适配：`extra-npc.ld` + `Makefile` 按 ARCH 选链接脚本、`context.c` 上下文切换、
+  `uart.c` 预置命令、`init.c` 微调（详见提交信息）；
+- 当前补丁总大小约 20KB。
 
-验证：npc 版启动后 `msh` 起来，`memcheck`/`utest_list`/`am_hello` 正常执行。
+> 一键拉取 + 打补丁：`./patch/setup.sh`。

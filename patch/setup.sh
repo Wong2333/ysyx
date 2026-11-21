@@ -1,5 +1,5 @@
 #!/bin/bash
-# setup.sh —— 拉取 ysyxSoC / rt-thread-am，并用 make dev-init 初始化子模块后打补丁
+# setup.sh —— 拉取 ysyxSoC / rt-thread-am，make dev-init 初始化子模块后按 format-patch 逐个 git am
 #
 #   ./patch/setup.sh        # 默认：ysyxSoC -> ./ysyxSoC，rt-thread-am -> ./rt-thread-am（都在 workbench 下）
 #   ./patch/setup.sh -f     # 已存在则删除重来（会丢本地改动）
@@ -7,7 +7,7 @@
 #   SOC_DIR=... RTT_DIR=... 可改目标目录
 #   SOC_REPO/RTT_REPO、SOC_BRANCH/RTT_BRANCH 可换远端
 #
-# 补丁基准见 patch/ysyxSoC/BASE、patch/rt-thread-am/BASE；脚本会先 checkout 到基准再打补丁。
+# 补丁用 git format-patch 生成（每个 commit 一个），脚本按文件名顺序 git am。
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -39,14 +39,13 @@ clone() {
 apply() {
     local p
     for p in "$PATCH_DIR/$1"/*.patch; do
-        git -C "$2" apply "$p"
+        git -C "$2" am "$p"
         log "  patch $(basename "$p")"
     done
 }
 
 # ---------------- ysyxSoC ----------------
 if clone "$SOC_REPO" "$SOC_BRANCH" "$SOC_DIR" ysyxSoC; then
-    git -C "$SOC_DIR" checkout -B "$SOC_BRANCH" "$(cat "$PATCH_DIR/ysyxSoC/BASE")"
     log "make dev-init（拉 rocket-chip 子模块，比较慢）"
     ( cd "$SOC_DIR" && make dev-init )
     apply ysyxSoC "$SOC_DIR"
@@ -54,7 +53,6 @@ fi
 
 # ---------------- rt-thread-am ----------------
 if clone "$RTT_REPO" "$RTT_BRANCH" "$RTT_DIR" rt-thread-am; then
-    git -C "$RTT_DIR" checkout -B "$RTT_BRANCH" "$(cat "$PATCH_DIR/rt-thread-am/BASE")"
     apply rt-thread-am "$RTT_DIR"
 fi
 
