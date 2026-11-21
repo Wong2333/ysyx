@@ -1,7 +1,7 @@
-From 9a42383b73dca7ce1ea746b785686299ad50999d Mon Sep 17 00:00:00 2001
+From a63910c1bed405d612ab2b49a3281d7a9bdfaeb2 Mon Sep 17 00:00:00 2001
 From: wangjingmin <3201884732@qq.com>
 Date: Sat, 25 Jul 2026 21:20:55 +0800
-Subject: [PATCH 1/8] =?UTF-8?q?SDRAM=E4=BD=8D=E6=89=A9=E5=B1=95?=
+Subject: [PATCH 01/18] =?UTF-8?q?SDRAM=E4=BD=8D=E6=89=A9=E5=B1=95?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

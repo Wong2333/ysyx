@@ -1,7 +1,7 @@
-From 3f7de321074c133f0fcc2c322bbf9a46c897444c Mon Sep 17 00:00:00 2001
+From bbae3c795683c557ea29410b4eba9eeebc7ed0fe Mon Sep 17 00:00:00 2001
 From: wangjingmin <3201884732@qq.com>
 Date: Mon, 27 Jul 2026 17:40:16 +0800
-Subject: [PATCH 2/8] =?UTF-8?q?=E5=88=9D=E6=AD=A5=E5=AE=8C=E6=88=90sdram?=
+Subject: [PATCH 02/18] =?UTF-8?q?=E5=88=9D=E6=AD=A5=E5=AE=8C=E6=88=90sdram?=
  =?UTF-8?q?=E5=AD=97=E6=89=A9=E5=B1=95?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

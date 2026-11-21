@@ -1,7 +1,7 @@
-From c506ed3261414ab7505afa4963675c6f7b22e4bc Mon Sep 17 00:00:00 2001
+From a2ab6943e615f09ab53e22d7ced07c540ad08626 Mon Sep 17 00:00:00 2001
 From: wangjingmin <3201884732@qq.com>
 Date: Fri, 31 Jul 2026 09:53:12 +0800
-Subject: [PATCH 4/8] =?UTF-8?q?=E5=AE=9E=E7=8E=B0GPIO?=
+Subject: [PATCH 04/18] =?UTF-8?q?=E5=AE=9E=E7=8E=B0GPIO?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
