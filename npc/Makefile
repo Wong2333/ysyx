@@ -11,6 +11,11 @@ SPLIT_DIR = $(BUILD_DIR)/split
 CORE = $(BUILD_DIR)/ysyx_26030092.sv
 PERF_NAMES_H = $(BUILD_DIR)/perf_names.h
 
+# ysyxSoC 路径：环境变量为空时按仓库相对位置推导（CI 里没有 export 这个变量）
+ifeq ($(strip $(YSYX_SoC_HOME)),)
+  YSYX_SoC_HOME := $(abspath $(CURDIR)/../ysyxSoC)
+endif
+
 INC_PATH ?= $(NPC_HOME)/csrc/include
 INC_PATH += $(NPC_HOME)/tools/capstone/include
 INC_PATH += $(NPC_HOME)/include/generated/
