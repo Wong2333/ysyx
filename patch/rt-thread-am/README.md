@@ -20,6 +20,6 @@ git am /path/to/ysyx-workbench/patch/rt-thread-am/*.patch
 
 - npc 平台适配：`extra-npc.ld` + `Makefile` 按 ARCH 选链接脚本、`context.c` 上下文切换、
   `uart.c` 预置命令、`init.c` 微调（详见提交信息）；
-- 当前补丁总大小约 20KB。
+- 当前 **2 个**补丁、总大小约 16KB。
 
 > 一键拉取 + 打补丁：`./patch/setup.sh`。

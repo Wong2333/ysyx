@@ -22,5 +22,5 @@ git am /path/to/ysyx-workbench/patch/ysyxSoC/*.patch
 
 - `patch/firtool/` 下的 firtool 二进制（约 36MB）已从分支历史移除并加入 `.gitignore`，
   改由 `make verilog` 里的 `patch/update-firtool.sh` 自动下载；
-- 当前补丁总大小约 160KB（要求 < 1MB）；
+- 当前 **15 个**补丁、总大小约 144KB（要求 < 1MB）；
 - 一键拉取 + 打补丁：`./patch/setup.sh`。
